@@ -1,0 +1,25 @@
+<section class="login-wrap">
+    <article class="login-card">
+      <span class="eyebrow">Bienvenido de nuevo</span>
+      <h2>Inicia sesión para continuar con tus análisis.</h2>
+      <p>
+        Esta pantalla transmite seguridad, sobriedad y acceso rápido al historial del usuario,
+        su perfil y sus recomendaciones guardadas.
+      </p>
+  
+      <div class="login-fields">
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input [(ngModel)]="credentials.email" name="email" type="email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input [(ngModel)]="credentials.password" name="password" type="password" placeholder="••••••••">
+        </div>
+      </div>
+  
+      <div class="button-wrap">
+        <button class="btn btn-dark" type="button">Entrar</button>
+      </div>
+    </article>
+  </section>

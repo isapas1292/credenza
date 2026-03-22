@@ -1,1 +1,166 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+    --bg: #f5f7fb;
+    --surface-solid: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --primary: #6d28d9;
+    --primary-2: #2563eb;
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    --warn-bg: #fef3c7;
+    --warn-text: #92400e;
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
+    --soft-purple: rgba(109, 40, 217, 0.08);
+    --soft-blue: rgba(37, 99, 235, 0.08);
+    --shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+    --radius-xl: 30px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+  
+  body {
+    min-height: 100vh;
+  }
+  
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--primary);
+    background: rgba(109,40,217,.10);
+  }
+  
+  .page-title h2,
+  .section-title h3 {
+    margin: 10px 0 0;
+    font-size: 34px;
+    line-height: 1.12;
+  }
+  
+  .page-title p,
+  .section-title p {
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  
+  .btn {
+    border: none;
+    padding: 14px 20px;
+    border-radius: 18px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: .2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary {
+    background: white;
+    color: #111827;
+  }
+  
+  .btn-secondary {
+    background: rgba(255,255,255,.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  
+  .btn-dark {
+    background: linear-gradient(135deg, #111827, var(--primary));
+    color: white;
+    width: 100%;
+  }
+  
+  .btn-inline {
+    width: auto;
+  }
+  
+  .badge-success,
+  .badge-warn,
+  .badge-danger,
+  .badge-neutral {
+    white-space: nowrap;
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+  
+  .badge-warn {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+  }
+  
+  .badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+  }
+  
+  .badge-neutral {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+  
+  label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  
+  input,
+  select,
+  textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px 16px;
+    outline: none;
+    background: white;
+    transition: .2s ease;
+  }
+  
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 4px rgba(139,92,246,.10);
+  }

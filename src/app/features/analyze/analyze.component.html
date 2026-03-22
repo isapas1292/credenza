@@ -1,0 +1,113 @@
+<section class="page-title spacing-bottom">
+    <span class="eyebrow">Analizar productos</span>
+    <h2>Primero elige una categoría</h2>
+    <p>
+      En vez de iniciar con campos fríos, el usuario entra viendo las categorías como
+      tarjetas visuales con iconos. Luego completa solo los datos del producto.
+    </p>
+  </section>
+  
+  <section class="analyze-grid">
+    <article class="analyze-form">
+      <div class="analyze-head">
+        <div>
+          <small>Paso 1</small>
+          <h3>Selecciona el tipo de producto</h3>
+        </div>
+        <span class="badge-neutral">Visual</span>
+      </div>
+  
+      <div class="category-grid">
+        <article
+          class="category-card"
+          *ngFor="let category of categories"
+          [class.active]="selectedCategory === category.title"
+          (click)="selectCategory(category.title)"
+        >
+          <div class="category-icon">{{ category.icon }}</div>
+          <strong>{{ category.title }}</strong>
+          <p>{{ category.description }}</p>
+        </article>
+      </div>
+    </article>
+  
+    <article class="results-panel">
+      <div class="notice-box">
+        <strong>La situación financiera ya no va aquí</strong>
+        <p>
+          Los ingresos, gastos, compromisos y metas del usuario se toman desde la pantalla de perfil.
+          Aquí solo se captura lo necesario para el producto seleccionado.
+        </p>
+      </div>
+  
+      <div class="detail-block top-gap">
+        <small>Paso 2</small>
+        <h3>Información del producto</h3>
+  
+        <div class="field-grid">
+          <div class="field field-full">
+            <label>Nombre o referencia</label>
+            <input
+              [(ngModel)]="product.name"
+              name="name"
+              type="text"
+              placeholder="MacBook Air M3 13 pulgadas"
+            />
+          </div>
+  
+          <div class="field">
+            <label>Precio estimado</label>
+            <input
+              [(ngModel)]="product.price"
+              name="price"
+              type="number"
+            />
+          </div>
+  
+          <div class="field">
+            <label>Forma de pago</label>
+            <select [(ngModel)]="product.paymentType" name="paymentType">
+              <option>Contado</option>
+              <option>Financiado</option>
+              <option>Cuotas</option>
+            </select>
+          </div>
+  
+          <div class="field">
+            <label>Marca o proveedor</label>
+            <input
+              [(ngModel)]="product.provider"
+              name="provider"
+              type="text"
+              placeholder="Apple / Tienda X"
+            />
+          </div>
+  
+          <div class="field">
+            <label>Prioridad</label>
+            <select [(ngModel)]="product.priority" name="priority">
+              <option>Costo-beneficio</option>
+              <option>Cuota mensual baja</option>
+              <option>Mayor durabilidad</option>
+              <option>Mejor rendimiento</option>
+            </select>
+          </div>
+  
+          <div class="field field-full">
+            <label>Notas adicionales</label>
+            <textarea
+              [(ngModel)]="product.notes"
+              name="notes"
+              placeholder="Necesito que sea ligera, duradera y que no afecte demasiado mi flujo mensual."
+            ></textarea>
+          </div>
+        </div>
+  
+        <div class="button-wrap">
+          <button class="btn btn-dark" type="button" (click)="goToResults()">
+            Continuar al resultado
+          </button>
+        </div>
+      </div>
+    </article>
+  </section>

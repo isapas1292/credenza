@@ -1,0 +1,68 @@
+<section class="page-title spacing-bottom">
+    <span class="eyebrow">Inversiones</span>
+    <h2>Explora y monitorea oportunidades de inversión</h2>
+    <p>Esta pantalla sirve para que el usuario vea cómo va su estrategia, qué tipo de instrumentos puede evaluar y cuál es el nivel de riesgo que mejor encaja con su perfil financiero.</p>
+  </section>
+  
+  <section class="investment-grid">
+    <article class="result-hero">
+      <div class="result-head">
+        <div>
+          <span class="mini-label">Resumen del portafolio</span>
+          <h3>Panel de inversiones</h3>
+        </div>
+        <span class="badge-success">Rendimiento positivo</span>
+      </div>
+  
+      <p>
+        Desde aquí el usuario puede visualizar su capital invertido, rendimiento acumulado y tipo de estrategia predominante.
+      </p>
+  
+      <div class="portfolio-grid">
+        <article class="portfolio-card" *ngFor="let item of portfolio">
+          <span>{{ item.title }}</span>
+          <strong>{{ item.value }}</strong>
+        </article>
+      </div>
+  
+      <div class="result-summary">
+        <small>Perfil de inversión detectado</small>
+        <strong>Moderado</strong>
+        <p>Balance entre crecimiento y estabilidad, manteniendo controlado el nivel de riesgo.</p>
+      </div>
+    </article>
+  
+    <article class="results-panel">
+      <div class="results-head">
+        <div>
+          <span class="mini-label muted">Oportunidades sugeridas</span>
+          <h3>Qué puede revisar el usuario</h3>
+        </div>
+        <span class="badge-neutral">Vista dedicada</span>
+      </div>
+  
+      <div class="investment-options">
+        <article class="investment-option" *ngFor="let option of options">
+          <span>Instrumento</span>
+          <strong>{{ option.title }}</strong>
+          <p>{{ option.description }}</p>
+          <div class="risk-line"><span [style.width]="option.width"></span></div>
+          <p class="risk-label">{{ option.riskLabel }}</p>
+        </article>
+      </div>
+  
+      <div class="detail-block top-gap">
+        <small>Distribución sugerida</small>
+        <h3>Asignación del portafolio</h3>
+  
+        <div class="allocation-grid">
+          <article class="allocation-card" *ngFor="let item of allocation">
+            <span>{{ item.title }}</span>
+            <strong>{{ item.value }}</strong>
+          </article>
+        </div>
+  
+        <p>Esta pantalla puede evolucionar luego para mostrar simulaciones, rendimiento histórico, metas de retiro o seguimiento de dividendos.</p>
+      </div>
+    </article>
+  </section>

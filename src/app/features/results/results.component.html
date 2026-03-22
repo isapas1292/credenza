@@ -1,0 +1,70 @@
+<section class="page-title spacing-bottom">
+    <span class="eyebrow">Resultados</span>
+    <h2>Recomendaciones del análisis</h2>
+    <p>Esta pantalla existe por separado para que el usuario pueda enfocarse en las opciones, compararlas y entender mejor el impacto de cada una.</p>
+  </section>
+  
+  <section class="results-grid">
+    <article class="result-hero">
+      <div class="result-head">
+        <div>
+          <span class="mini-label">Resultado general</span>
+          <h3>Laptop de trabajo</h3>
+        </div>
+        <span class="badge-success">88% compatible</span>
+      </div>
+  
+      <p>
+        Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.
+      </p>
+  
+      <div class="result-summary">
+        <small>Impacto estimado</small>
+        <strong>RD$3,500/mes</strong>
+        <p>Quedaría una capacidad libre cómoda luego de asumir este producto.</p>
+      </div>
+  
+      <div class="scenario-grid">
+        <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
+          <small>{{ scenario.subtitle }}</small>
+          <strong>{{ scenario.title }}</strong>
+          <p>{{ scenario.description }}</p>
+        </article>
+      </div>
+    </article>
+  
+    <article class="results-panel">
+      <div class="results-head">
+        <div>
+          <span class="mini-label muted">Opciones comparadas</span>
+          <h3>Comparación de recomendaciones</h3>
+        </div>
+        <span class="badge-neutral">Pantalla dedicada</span>
+      </div>
+  
+      <div class="recommendation-grid">
+        <article class="recommendation-card" *ngFor="let item of recommendations">
+          <div class="recommendation-top">
+            <div>
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.description }}</p>
+            </div>
+            <span [class]="item.labelType === 'success' ? 'badge-success' : item.labelType === 'warn' ? 'badge-warn' : 'badge-danger'">
+              {{ item.label }}
+            </span>
+          </div>
+  
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>Compatibilidad</span>
+              <strong>{{ item.compatibility }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Impacto mensual</span>
+              <strong>{{ item.impact }}</strong>
+            </article>
+          </div>
+        </article>
+      </div>
+    </article>
+  </section>

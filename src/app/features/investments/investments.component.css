@@ -1,0 +1,175 @@
+.investment-grid,
+.portfolio-grid,
+.investment-options,
+.allocation-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.spacing-bottom {
+  margin-bottom: 22px;
+}
+
+.investment-grid {
+  grid-template-columns: 0.9fr 1.1fr;
+  align-items: start;
+}
+
+.result-hero,
+.results-panel,
+.portfolio-card,
+.investment-option,
+.allocation-card,
+.detail-block {
+  background: var(--surface-solid);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.result-hero,
+.results-panel,
+.portfolio-card,
+.investment-option,
+.allocation-card,
+.detail-block {
+  padding: 24px;
+}
+
+.result-hero {
+  background: linear-gradient(135deg, #0f172a, #312e81);
+  color: white;
+}
+
+.result-hero p {
+  color: rgba(255,255,255,0.82);
+}
+
+.result-head,
+.results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.result-head h3,
+.results-head h3,
+.detail-block h3 {
+  margin: 6px 0 0;
+}
+
+.mini-label {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.mini-label.muted {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.portfolio-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+}
+
+.portfolio-card {
+  background: #f8fafc;
+  box-shadow: none;
+  border: 1px solid #eef2f7;
+}
+
+.portfolio-card span,
+.allocation-card span,
+.investment-option span,
+.detail-block small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.portfolio-card strong,
+.allocation-card strong,
+.investment-option strong {
+  display: block;
+  font-size: 22px;
+  margin-top: 8px;
+}
+
+.result-summary {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #f8fafc;
+}
+
+.result-summary strong {
+  font-size: 30px;
+  display: block;
+  margin-top: 8px;
+  color: #111827;
+}
+
+.result-summary p {
+  color: var(--muted);
+}
+
+.investment-options {
+  margin-top: 18px;
+}
+
+.investment-option {
+  background: #f8fafc;
+  box-shadow: none;
+  border: 1px solid #eef2f7;
+}
+
+.investment-option + .investment-option {
+  margin-top: 14px;
+}
+
+.investment-option p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.risk-line {
+  height: 12px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.risk-line span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #8b5cf6);
+}
+
+.risk-label {
+  margin-top: 8px;
+}
+
+.top-gap {
+  margin-top: 18px;
+}
+
+.allocation-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+}
+
+.allocation-card {
+  background: #f8fafc;
+  box-shadow: none;
+  border: 1px solid #eef2f7;
+}
+
+@media (max-width: 1100px) {
+  .investment-grid,
+  .portfolio-grid,
+  .allocation-grid {
+    grid-template-columns: 1fr;
+  }
+}

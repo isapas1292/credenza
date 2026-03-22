@@ -1,0 +1,85 @@
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow inverse">Decisiones económicas con más claridad</span>
+    <h2>Analiza productos antes de comprarlos y entiende su impacto real en tu bolsillo.</h2>
+    <p>
+      Credenza te ayuda a evaluar compras, servicios, préstamos o productos de alto valor usando
+      tu información financiera registrada dentro de la plataforma. Todo se presenta de forma clara,
+      visual y fácil de entender.
+    </p>
+
+    <div class="actions">
+      <a class="btn btn-primary" routerLink="/analizar">Analizar productos</a>
+      <a class="btn btn-secondary" routerLink="/registro">Crear cuenta</a>
+    </div>
+
+    <div class="hero-stats">
+      <article>
+        <strong>Selección visual</strong>
+        <span>categorías en cuadros con iconos</span>
+      </article>
+      <article>
+        <strong>Perfil financiero</strong>
+        <span>datos guardados en una sola pantalla</span>
+      </article>
+      <article>
+        <strong>Resultados aparte</strong>
+        <span>para analizar mejor las recomendaciones</span>
+      </article>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="head-row">
+      <div>
+        <small>Resumen ejemplo</small>
+        <h3>Estado financiero</h3>
+      </div>
+      <span class="badge-success">Saludable</span>
+    </div>
+
+    <div class="summary-grid">
+      <article class="mini-card">
+        <span>Ingresos</span>
+        <strong>RD$85,000</strong>
+      </article>
+      <article class="mini-card">
+        <span>Gastos fijos</span>
+        <strong>RD$38,500</strong>
+      </article>
+      <article class="mini-card">
+        <span>Compromisos</span>
+        <strong>RD$20,000</strong>
+      </article>
+      <article class="mini-card">
+        <span>Capacidad libre</span>
+        <strong>RD$26,500</strong>
+      </article>
+    </div>
+
+    <div class="compat-box">
+      <div class="metrics-head">
+        <span>Compatibilidad del último análisis</span>
+        <strong>88%</strong>
+      </div>
+      <div class="bar">
+        <span></span>
+      </div>
+      <p>La mejor alternativa evaluada se ajusta bien a tu presupuesto mensual.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-title">
+    <span class="eyebrow">Beneficios</span>
+    <h3>Una experiencia simple, moderna y centrada en el usuario</h3>
+  </div>
+
+  <div class="feature-grid">
+    <article class="feature-card" *ngFor="let benefit of benefits">
+      <h4>{{ benefit.title }}</h4>
+      <p>{{ benefit.description }}</p>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,150 @@
+.results-grid,
+.scenario-grid,
+.metric-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.spacing-bottom {
+  margin-bottom: 22px;
+}
+
+.results-grid {
+  grid-template-columns: 0.82fr 1.18fr;
+  align-items: start;
+}
+
+.result-hero,
+.results-panel,
+.scenario-card,
+.recommendation-card,
+.metric-card {
+  background: var(--surface-solid);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.result-hero,
+.results-panel,
+.scenario-card,
+.recommendation-card,
+.metric-card {
+  padding: 24px;
+}
+
+.result-hero {
+  background: linear-gradient(135deg, #0f172a, #312e81);
+  color: white;
+}
+
+.result-hero p {
+  color: rgba(255,255,255,0.82);
+}
+
+.result-head,
+.results-head,
+.recommendation-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.result-head h3,
+.results-head h3 {
+  margin: 6px 0 0;
+}
+
+.mini-label {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.mini-label.muted {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.result-summary {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #f8fafc;
+}
+
+.result-summary strong {
+  font-size: 30px;
+  display: block;
+  margin-top: 8px;
+  color: #111827;
+}
+
+.result-summary p {
+  color: var(--muted);
+}
+
+.scenario-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+}
+
+.scenario-card {
+  background: #ffffff;
+  box-shadow: none;
+  border: 1px solid #eef2f7;
+}
+
+.scenario-card.highlight {
+  border-color: rgba(22, 163, 74, 0.24);
+  background: linear-gradient(135deg, rgba(220,252,231,0.70), #ffffff);
+}
+
+.scenario-card small,
+.metric-card span {
+  color: var(--muted);
+  font-size: 13px;
+  display: block;
+}
+
+.scenario-card strong,
+.metric-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.recommendation-grid {
+  margin-top: 18px;
+}
+
+.recommendation-card {
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.recommendation-card + .recommendation-card {
+  margin-top: 14px;
+}
+
+.metric-grid {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 18px;
+}
+
+.metric-card {
+  background: white;
+  box-shadow: none;
+}
+
+.recommendation-card p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+@media (max-width: 1100px) {
+  .results-grid,
+  .scenario-grid,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}

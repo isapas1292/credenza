@@ -1,0 +1,26 @@
+<div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">C</div>
+        <div>
+          <h1>Credenza</h1>
+          <p>Vista moderna del producto</p>
+        </div>
+      </div>
+  
+      <nav class="nav">
+        <a
+          *ngFor="let item of navItems"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+        >
+          {{ item.label }}
+        </a>
+      </nav>
+    </header>
+  
+    <main class="container">
+      <router-outlet></router-outlet>
+    </main>
+  </div>

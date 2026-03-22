@@ -1,0 +1,52 @@
+<section class="auth-grid">
+    <article class="auth-panel">
+      <span class="eyebrow inverse">Registro seguro</span>
+      <h2>Crea tu cuenta para guardar tus análisis y recomendaciones.</h2>
+      <p>
+        El registro se ve limpio, rápido y sin fricción. La idea es que el usuario entre con confianza,
+        se registre sin complicaciones y luego complete su perfil financiero dentro del sistema.
+      </p>
+    </article>
+  
+    <article class="auth-form">
+      <div class="page-title">
+        <span class="eyebrow">Registro</span>
+        <h2>Empieza en pocos pasos</h2>
+      </div>
+  
+      <div class="field-grid">
+        <div class="field">
+          <label>Nombre</label>
+          <input [(ngModel)]="model.firstName" name="firstName" type="text" placeholder="Ramon">
+        </div>
+        <div class="field">
+          <label>Apellido</label>
+          <input [(ngModel)]="model.lastName" name="lastName" type="text" placeholder="Gómez">
+        </div>
+        <div class="field field-full">
+          <label>Correo electrónico</label>
+          <input [(ngModel)]="model.email" name="email" type="email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input [(ngModel)]="model.password" name="password" type="password" placeholder="••••••••">
+        </div>
+        <div class="field">
+          <label>Confirmar contraseña</label>
+          <input [(ngModel)]="model.confirmPassword" name="confirmPassword" type="password" placeholder="••••••••">
+        </div>
+        <div class="field field-full">
+          <label>Ciudad</label>
+          <input [(ngModel)]="model.city" name="city" type="text" placeholder="Santo Domingo">
+        </div>
+        <div class="field field-full">
+          <label>Objetivo principal</label>
+          <textarea [(ngModel)]="model.goal" name="goal" placeholder="Quiero evaluar productos y compromisos sin afectar mi estabilidad financiera."></textarea>
+        </div>
+      </div>
+  
+      <div class="button-wrap">
+        <button class="btn btn-dark" type="button">Crear cuenta</button>
+      </div>
+    </article>
+  </section>
