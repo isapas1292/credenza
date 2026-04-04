@@ -10,7 +10,7 @@
 
     <div class="actions">
       <a class="btn btn-primary" routerLink="/analizar">Analizar productos</a>
-      <a class="btn btn-secondary" routerLink="/registro">Crear cuenta</a>
+      <a class="btn btn-secondary" routerLink="/cuenta">Crear cuenta</a>
     </div>
 
     <div class="hero-stats">
@@ -81,5 +81,95 @@
       <h4>{{ benefit.title }}</h4>
       <p>{{ benefit.description }}</p>
     </article>
+  </div>
+</section>
+
+<section class="section culture-section">
+  <div class="culture-hero">
+    <div class="culture-copy">
+      <span class="culture-tag">Sobre nosotros</span>
+      <h3>Queremos que las decisiones financieras se sientan más claras, más útiles y menos intimidantes.</h3>
+      <p>
+        Credenza combina organización, diseño y análisis para que el usuario pueda entender mejor
+        su situación, comparar alternativas y actuar con más seguridad. La plataforma no se limita
+        a mostrar datos: los ordena de una forma que tenga sentido para la vida real.
+      </p>
+      <p>
+        Nuestro enfoque es simple: reducir fricción, eliminar ruido y convertir el análisis en una
+        experiencia visual, confiable y profesional.
+      </p>
+    </div>
+
+    <div class="culture-visual">
+      <div class="visual-block visual-block-main">
+        <div class="visual-badge">CULTURA CREDENZA</div>
+        <div class="visual-shape shape-one"></div>
+        <div class="visual-shape shape-two"></div>
+        <div class="visual-shape shape-three"></div>
+      </div>
+
+      <div class="visual-block visual-block-card">
+        <span>Producto + experiencia</span>
+        <strong>Una plataforma financiera diseñada para acompañar decisiones con criterio.</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section values-section">
+  <div class="section-title">
+    <span class="eyebrow">Cómo trabajamos</span>
+    <h3>Los principios que le dan forma a la experiencia</h3>
+  </div>
+
+  <div class="values-grid">
+    <article class="value-card" *ngFor="let card of cultureCards">
+      <div class="value-icon">{{ card.icon }}</div>
+      <h4>{{ card.title }}</h4>
+      <p>{{ card.description }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="section contact-section">
+  <div class="contact-layout">
+    <article class="contact-copy">
+      <span class="eyebrow">Contacto</span>
+      <h3>Empieza a explorar la plataforma o gestiona tu cuenta desde un solo lugar.</h3>
+      <p>
+        Reunimos acceso, registro y perfil dentro de una experiencia más limpia para que el menú
+        principal se mantenga profesional, claro y enfocado en lo importante.
+      </p>
+
+      <div class="contact-actions">
+        <a class="btn btn-dark btn-inline" routerLink="/cuenta">Ir a cuenta</a>
+        <a class="btn contact-light-btn" routerLink="/analizar">Explorar análisis</a>
+      </div>
+    </article>
+
+    <div class="contact-info-grid">
+      <article class="contact-info-card" *ngFor="let item of contactMethods">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section closing-section">
+  <div class="closing-banner">
+    <div class="closing-copy">
+      <span class="eyebrow inverse">Empieza hoy</span>
+      <h3>Organiza tu perfil, analiza productos y revisa oportunidades dentro de una sola experiencia.</h3>
+      <p>
+        Desde el registro hasta el análisis y la exploración de inversiones, todo vive en una
+        navegación más limpia, ordenada y coherente.
+      </p>
+    </div>
+
+    <div class="closing-actions">
+      <a class="btn btn-primary" routerLink="/cuenta">Acceder a cuenta</a>
+      <a class="btn btn-secondary" routerLink="/inversiones">Ver inversiones</a>
+    </div>
   </div>
 </section>

@@ -1,26 +1,35 @@
 <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">C</div>
-        <div>
-          <h1>Credenza</h1>
-          <p>Vista moderna del producto</p>
-        </div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <h1>Credenza</h1>
       </div>
-  
-      <nav class="nav">
+    </div>
+
+    <nav class="nav">
+      <div class="nav-main">
         <a
-          *ngFor="let item of navItems"
+          *ngFor="let item of mainNavItems"
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/' }"
         >
           {{ item.label }}
         </a>
-      </nav>
-    </header>
-  
-    <main class="container">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+      </div>
+
+      <a
+        class="account-btn"
+        [routerLink]="accountNavItem.route"
+        routerLinkActive="active"
+      >
+        {{ accountNavItem.label }}
+      </a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <router-outlet></router-outlet>
+  </main>
+</div>

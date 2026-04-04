@@ -1,68 +1,141 @@
 <section class="page-title spacing-bottom">
-    <span class="eyebrow">Inversiones</span>
-    <h2>Explora y monitorea oportunidades de inversión</h2>
-    <p>Esta pantalla sirve para que el usuario vea cómo va su estrategia, qué tipo de instrumentos puede evaluar y cuál es el nivel de riesgo que mejor encaja con su perfil financiero.</p>
-  </section>
-  
-  <section class="investment-grid">
-    <article class="result-hero">
-      <div class="result-head">
-        <div>
-          <span class="mini-label">Resumen del portafolio</span>
-          <h3>Panel de inversiones</h3>
+  <span class="eyebrow">Inversiones</span>
+  <h2>Explora oportunidades y monitorea tu estrategia</h2>
+  <p>
+    Esta pantalla permite revisar rendimiento, comportamiento reciente y sugerencias
+    visuales de acciones dentro de una experiencia más atractiva y fácil de interpretar.
+  </p>
+</section>
+
+<section class="investment-hero-grid">
+  <article class="hero-panel">
+    <div class="hero-head">
+      <div>
+        <span class="mini-label">Resumen del portafolio</span>
+        <h3>Panel de inversiones</h3>
+      </div>
+      <span class="badge-success">Rendimiento positivo</span>
+    </div>
+
+    <p class="hero-text">
+      Visualiza el capital invertido, la evolución reciente y las oportunidades
+      que mejor encajan con un perfil de riesgo moderado.
+    </p>
+
+    <div class="portfolio-grid">
+      <article class="portfolio-card" *ngFor="let item of portfolio">
+        <span>{{ item.title }}</span>
+        <strong>{{ item.value }}</strong>
+      </article>
+    </div>
+  </article>
+
+  <article class="hero-side-panel">
+    <span class="mini-label muted">Perfil actual</span>
+    <h3>Moderado</h3>
+    <p>
+      Balance entre crecimiento y estabilidad, priorizando oportunidades con
+      potencial atractivo sin asumir una volatilidad extrema.
+    </p>
+
+    <div class="allocation-preview">
+      <div class="allocation-bar">
+        <span class="fixed-income"></span>
+        <span class="index-funds"></span>
+        <span class="stocks"></span>
+      </div>
+
+      <div class="allocation-legend">
+        <div><i class="dot fixed"></i> Renta fija</div>
+        <div><i class="dot index"></i> Fondos indexados</div>
+        <div><i class="dot stock"></i> Acciones</div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="investment-content-grid">
+  <article class="chart-panel">
+    <div class="panel-head">
+      <div>
+        <span class="mini-label muted">Rendimiento semanal</span>
+        <h3>Crecimiento en días</h3>
+      </div>
+      <span class="chart-badge">+8.4% esta semana</span>
+    </div>
+
+    <div class="chart-area">
+      <div class="chart-grid-lines">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="bars-wrap">
+        <div class="bar-item" *ngFor="let day of trendDays">
+          <div class="bar-outer">
+            <div class="bar-inner" [style.height.%]="day.value"></div>
+          </div>
+          <small>{{ day.day }}</small>
         </div>
-        <span class="badge-success">Rendimiento positivo</span>
       </div>
-  
-      <p>
-        Desde aquí el usuario puede visualizar su capital invertido, rendimiento acumulado y tipo de estrategia predominante.
-      </p>
-  
-      <div class="portfolio-grid">
-        <article class="portfolio-card" *ngFor="let item of portfolio">
-          <span>{{ item.title }}</span>
-          <strong>{{ item.value }}</strong>
-        </article>
+    </div>
+
+    <div class="chart-footer">
+      <div>
+        <span>Pico reciente</span>
+        <strong>Domingo</strong>
       </div>
-  
-      <div class="result-summary">
-        <small>Perfil de inversión detectado</small>
-        <strong>Moderado</strong>
-        <p>Balance entre crecimiento y estabilidad, manteniendo controlado el nivel de riesgo.</p>
+      <div>
+        <span>Mejor tramo</span>
+        <strong>Jue → Dom</strong>
       </div>
+      <div>
+        <span>Tendencia</span>
+        <strong>Alcista</strong>
+      </div>
+    </div>
+  </article>
+
+  <article class="stocks-panel">
+    <div class="panel-head">
+      <div>
+        <span class="mini-label muted">Sugerencias</span>
+        <h3>Mejores acciones a vigilar</h3>
+      </div>
+      <span class="badge-neutral">Top picks</span>
+    </div>
+
+    <div class="stocks-grid">
+      <article class="stock-card" *ngFor="let stock of topStocks">
+        <div class="stock-top">
+          <div class="stock-badge">{{ stock.symbol }}</div>
+          <span [class]="stock.type === 'positive' ? 'stock-change positive' : 'stock-change neutral'">
+            {{ stock.change }}
+          </span>
+        </div>
+
+        <strong>{{ stock.name }}</strong>
+        <p class="stock-price">{{ stock.price }}</p>
+        <p class="stock-note">{{ stock.sentiment }}</p>
+      </article>
+    </div>
+  </article>
+</section>
+
+<section class="allocation-section">
+  <div class="panel-head">
+    <div>
+      <span class="mini-label muted">Distribución sugerida</span>
+      <h3>Asignación del portafolio</h3>
+    </div>
+  </div>
+
+  <div class="allocation-grid">
+    <article class="allocation-card" *ngFor="let item of allocation">
+      <span>{{ item.title }}</span>
+      <strong>{{ item.value }}</strong>
     </article>
-  
-    <article class="results-panel">
-      <div class="results-head">
-        <div>
-          <span class="mini-label muted">Oportunidades sugeridas</span>
-          <h3>Qué puede revisar el usuario</h3>
-        </div>
-        <span class="badge-neutral">Vista dedicada</span>
-      </div>
-  
-      <div class="investment-options">
-        <article class="investment-option" *ngFor="let option of options">
-          <span>Instrumento</span>
-          <strong>{{ option.title }}</strong>
-          <p>{{ option.description }}</p>
-          <div class="risk-line"><span [style.width]="option.width"></span></div>
-          <p class="risk-label">{{ option.riskLabel }}</p>
-        </article>
-      </div>
-  
-      <div class="detail-block top-gap">
-        <small>Distribución sugerida</small>
-        <h3>Asignación del portafolio</h3>
-  
-        <div class="allocation-grid">
-          <article class="allocation-card" *ngFor="let item of allocation">
-            <span>{{ item.title }}</span>
-            <strong>{{ item.value }}</strong>
-          </article>
-        </div>
-  
-        <p>Esta pantalla puede evolucionar luego para mostrar simulaciones, rendimiento histórico, metas de retiro o seguimiento de dividendos.</p>
-      </div>
-    </article>
-  </section>
+  </div>
+</section>

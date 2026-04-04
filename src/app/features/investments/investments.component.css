@@ -1,6 +1,7 @@
-.investment-grid,
+.investment-hero-grid,
+.investment-content-grid,
 .portfolio-grid,
-.investment-options,
+.stocks-grid,
 .allocation-grid {
   display: grid;
   gap: 18px;
@@ -10,57 +11,63 @@
   margin-bottom: 22px;
 }
 
-.investment-grid {
-  grid-template-columns: 0.9fr 1.1fr;
-  align-items: start;
+.investment-hero-grid {
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: stretch;
 }
 
-.result-hero,
-.results-panel,
+.investment-content-grid {
+  grid-template-columns: 1.05fr 0.95fr;
+  margin-top: 26px;
+}
+
+.hero-panel,
+.hero-side-panel,
+.chart-panel,
+.stocks-panel,
+.allocation-section,
 .portfolio-card,
-.investment-option,
-.allocation-card,
-.detail-block {
+.stock-card,
+.allocation-card {
   background: var(--surface-solid);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
 
-.result-hero,
-.results-panel,
+.hero-panel,
+.hero-side-panel,
+.chart-panel,
+.stocks-panel,
+.allocation-section,
 .portfolio-card,
-.investment-option,
-.allocation-card,
-.detail-block {
+.stock-card,
+.allocation-card {
   padding: 24px;
 }
 
-.result-hero {
+.hero-panel {
   background: linear-gradient(135deg, #0f172a, #312e81);
   color: white;
 }
 
-.result-hero p {
-  color: rgba(255,255,255,0.82);
-}
-
-.result-head,
-.results-head {
+.hero-head,
+.panel-head,
+.stock-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
 }
 
-.result-head h3,
-.results-head h3,
-.detail-block h3 {
+.hero-head h3,
+.panel-head h3 {
   margin: 6px 0 0;
+  font-size: 28px;
 }
 
 .mini-label {
   font-size: 13px;
-  opacity: 0.8;
+  opacity: 0.82;
 }
 
 .mini-label.muted {
@@ -68,108 +75,305 @@
   opacity: 1;
 }
 
+.hero-text {
+  margin-top: 14px;
+  color: rgba(255,255,255,0.84);
+  line-height: 1.9;
+}
+
 .portfolio-grid {
   grid-template-columns: repeat(3, 1fr);
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .portfolio-card {
-  background: #f8fafc;
+  background: rgba(255,255,255,0.08);
   box-shadow: none;
-  border: 1px solid #eef2f7;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-.portfolio-card span,
-.allocation-card span,
-.investment-option span,
-.detail-block small {
+.portfolio-card span {
+  display: block;
+  font-size: 13px;
+  color: rgba(255,255,255,0.78);
+}
+
+.portfolio-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  color: white;
+}
+
+.hero-side-panel h3 {
+  margin: 6px 0 8px;
+  font-size: 38px;
+}
+
+.hero-side-panel p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.allocation-preview {
+  margin-top: 24px;
+}
+
+.allocation-bar {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.fixed-income {
+  width: 35%;
+  background: #8b5cf6;
+}
+
+.index-funds {
+  width: 40%;
+  background: #22c55e;
+}
+
+.stocks {
+  width: 25%;
+  background: #06b6d4;
+}
+
+.allocation-legend {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.allocation-legend div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.dot.fixed {
+  background: #8b5cf6;
+}
+
+.dot.index {
+  background: #22c55e;
+}
+
+.dot.stock {
+  background: #06b6d4;
+}
+
+.chart-panel,
+.stocks-panel,
+.allocation-section {
+  background: #ffffff;
+}
+
+.chart-badge {
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #166534;
+  background: #dcfce7;
+}
+
+.chart-area {
+  position: relative;
+  margin-top: 22px;
+  padding: 18px 12px 10px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  border: 1px solid #edf2f7;
+  min-height: 320px;
+}
+
+.chart-grid-lines {
+  position: absolute;
+  inset: 18px 12px 36px 12px;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  pointer-events: none;
+}
+
+.chart-grid-lines span {
+  border-top: 1px dashed #dbe4ef;
+}
+
+.bars-wrap {
+  position: relative;
+  z-index: 2;
+  height: 260px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 16px;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  justify-content: end;
+}
+
+.bar-outer {
+  width: 100%;
+  max-width: 46px;
+  height: 220px;
+  border-radius: 999px;
+  background: #e8eef7;
+  display: flex;
+  align-items: end;
+  overflow: hidden;
+}
+
+.bar-inner {
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8b5cf6, #06b6d4);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.22);
+}
+
+.bar-item small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chart-footer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.chart-footer div {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.chart-footer span {
   display: block;
   font-size: 13px;
   color: var(--muted);
 }
 
-.portfolio-card strong,
-.allocation-card strong,
-.investment-option strong {
+.chart-footer strong {
   display: block;
-  font-size: 22px;
   margin-top: 8px;
+  font-size: 20px;
+  color: var(--text);
 }
 
-.result-summary {
+.stocks-grid {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 20px;
+}
+
+.stock-card {
+  background: linear-gradient(135deg, #ffffff, #f8faff);
+  border: 1px solid #edf2f7;
+  box-shadow: none;
+}
+
+.stock-badge {
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #312e81;
+  background: #ede9fe;
+}
+
+.stock-change {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.stock-change.positive {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.stock-change.neutral {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.stock-card strong {
+  display: block;
   margin-top: 18px;
-  padding: 18px;
-  border-radius: 20px;
-  background: #f8fafc;
+  font-size: 24px;
+  color: var(--text);
 }
 
-.result-summary strong {
-  font-size: 30px;
-  display: block;
-  margin-top: 8px;
+.stock-price {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 800;
   color: #111827;
 }
 
-.result-summary p {
+.stock-note {
+  margin: 10px 0 0;
   color: var(--muted);
+  line-height: 1.7;
 }
 
-.investment-options {
-  margin-top: 18px;
-}
-
-.investment-option {
-  background: #f8fafc;
-  box-shadow: none;
-  border: 1px solid #eef2f7;
-}
-
-.investment-option + .investment-option {
-  margin-top: 14px;
-}
-
-.investment-option p {
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.risk-line {
-  height: 12px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-  margin-top: 12px;
-}
-
-.risk-line span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #8b5cf6);
-}
-
-.risk-label {
-  margin-top: 8px;
-}
-
-.top-gap {
-  margin-top: 18px;
+.allocation-section {
+  margin-top: 26px;
 }
 
 .allocation-grid {
   grid-template-columns: repeat(3, 1fr);
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .allocation-card {
   background: #f8fafc;
+  border: 1px solid #edf2f7;
   box-shadow: none;
-  border: 1px solid #eef2f7;
+}
+
+.allocation-card span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.allocation-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  color: var(--text);
 }
 
 @media (max-width: 1100px) {
-  .investment-grid,
+  .investment-hero-grid,
+  .investment-content-grid,
   .portfolio-grid,
-  .allocation-grid {
+  .stocks-grid,
+  .allocation-grid,
+  .chart-footer {
     grid-template-columns: 1fr;
   }
 }

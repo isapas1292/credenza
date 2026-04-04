@@ -1,0 +1,447 @@
+<section class="setup-shell">
+    <header class="setup-header">
+      <div class="setup-heading">
+        <span class="eyebrow">Perfil de recomendaciones</span>
+        <h2>Configuremos el perfil del usuario paso a paso</h2>
+        <p>
+          Estas pantallas recogen la información necesaria para generar recomendaciones
+          más precisas, útiles y alineadas con la realidad financiera del usuario.
+        </p>
+      </div>
+  
+      <div class="progress-card">
+        <div class="progress-top">
+          <span>Progreso</span>
+          <strong>{{ step }}/{{ totalSteps }}</strong>
+        </div>
+        <div class="progress-bar">
+          <span [style.width.%]="progressPercentage"></span>
+        </div>
+      </div>
+    </header>
+  
+    <section class="wizard-layout">
+      <aside class="wizard-sidebar">
+        <button
+          type="button"
+          class="step-pill"
+          [class.active]="step === 1"
+          (click)="goToStep(1)"
+        >
+          1. Personal
+        </button>
+  
+        <button
+          type="button"
+          class="step-pill"
+          [class.active]="step === 2"
+          (click)="goToStep(2)"
+        >
+          2. Finanzas
+        </button>
+  
+        <button
+          type="button"
+          class="step-pill"
+          [class.active]="step === 3"
+          (click)="goToStep(3)"
+        >
+          3. Objetivos
+        </button>
+  
+        <button
+          type="button"
+          class="step-pill"
+          [class.active]="step === 4"
+          (click)="goToStep(4)"
+        >
+          4. Preferencias
+        </button>
+  
+        <button
+          type="button"
+          class="step-pill"
+          [class.active]="step === 5"
+          (click)="goToStep(5)"
+        >
+          5. Resumen
+        </button>
+      </aside>
+  
+      <main class="wizard-main">
+        <!-- STEP 1 -->
+        <section class="step-card" *ngIf="step === 1">
+          <div class="step-head">
+            <div>
+              <small>Pantalla 1</small>
+              <h3>Información personal</h3>
+            </div>
+            <span class="step-badge">Base del perfil</span>
+          </div>
+  
+          <div class="question-grid">
+            <div class="field">
+              <label>Nombre</label>
+              <input [(ngModel)]="model.personal.firstName" name="firstName" type="text" placeholder="Ramon" />
+            </div>
+  
+            <div class="field">
+              <label>Apellido</label>
+              <input [(ngModel)]="model.personal.lastName" name="lastName" type="text" placeholder="Gómez" />
+            </div>
+  
+            <div class="field">
+              <label>Edad</label>
+              <input [(ngModel)]="model.personal.age" name="age" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Ciudad</label>
+              <input [(ngModel)]="model.personal.city" name="city" type="text" placeholder="Santo Domingo" />
+            </div>
+  
+            <div class="field">
+              <label>Estado civil</label>
+              <select [(ngModel)]="model.personal.maritalStatus" name="maritalStatus">
+                <option>Soltero/a</option>
+                <option>Casado/a</option>
+                <option>Unión libre</option>
+                <option>Divorciado/a</option>
+              </select>
+            </div>
+  
+            <div class="field">
+              <label>Dependientes</label>
+              <input [(ngModel)]="model.personal.dependents" name="dependents" type="number" />
+            </div>
+  
+            <div class="field field-full">
+              <label>Situación laboral</label>
+              <select [(ngModel)]="model.personal.employmentType" name="employmentType">
+                <option>Empleado/a</option>
+                <option>Independiente</option>
+                <option>Emprendedor/a</option>
+                <option>Mixto</option>
+              </select>
+            </div>
+          </div>
+        </section>
+  
+        <!-- STEP 2 -->
+        <section class="step-card" *ngIf="step === 2">
+          <div class="step-head">
+            <div>
+              <small>Pantalla 2</small>
+              <h3>Situación financiera</h3>
+            </div>
+            <span class="step-badge">Capacidad económica</span>
+          </div>
+  
+          <div class="question-grid">
+            <div class="field">
+              <label>Ingreso mensual principal</label>
+              <input [(ngModel)]="model.finances.monthlyIncome" name="monthlyIncome" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Ingresos extra</label>
+              <input [(ngModel)]="model.finances.extraIncome" name="extraIncome" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Gastos fijos mensuales</label>
+              <input [(ngModel)]="model.finances.fixedExpenses" name="fixedExpenses" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Gastos variables mensuales</label>
+              <input [(ngModel)]="model.finances.variableExpenses" name="variableExpenses" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Compromisos o deudas activas</label>
+              <input [(ngModel)]="model.finances.activeDebts" name="activeDebts" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Capacidad de ahorro mensual</label>
+              <input [(ngModel)]="model.finances.monthlySavingsCapacity" name="monthlySavingsCapacity" type="number" />
+            </div>
+  
+            <div class="field field-full">
+              <label>¿Cuántos meses de fondo de emergencia tiene?</label>
+              <input [(ngModel)]="model.finances.emergencyFundMonths" name="emergencyFundMonths" type="number" />
+            </div>
+          </div>
+        </section>
+  
+        <!-- STEP 3 -->
+        <section class="step-card" *ngIf="step === 3">
+          <div class="step-head">
+            <div>
+              <small>Pantalla 3</small>
+              <h3>Objetivos e intereses</h3>
+            </div>
+            <span class="step-badge">Necesidades del usuario</span>
+          </div>
+  
+          <div class="block-group">
+            <label class="block-label">¿Cuál es su objetivo principal?</label>
+            <div class="option-grid">
+              <button
+                type="button"
+                class="option-card"
+                *ngFor="let goal of goalOptions"
+                [class.active]="model.goals.mainGoal === goal"
+                (click)="setGoal(goal)"
+              >
+                {{ goal }}
+              </button>
+            </div>
+          </div>
+  
+          <div class="question-grid top-gap">
+            <div class="field">
+              <label>Horizonte de decisión</label>
+              <select [(ngModel)]="model.goals.timeHorizon" name="timeHorizon">
+                <option>Menos de 3 meses</option>
+                <option>3 a 6 meses</option>
+                <option>6 a 12 meses</option>
+                <option>Más de 1 año</option>
+              </select>
+            </div>
+  
+            <div class="field">
+              <label>Presupuesto mensual para nuevos compromisos</label>
+              <input [(ngModel)]="model.goals.monthlyBudgetForNewCommitments" name="monthlyBudgetForNewCommitments" type="number" />
+            </div>
+  
+            <div class="field field-full">
+              <label>Nivel de urgencia</label>
+              <select [(ngModel)]="model.goals.urgency" name="urgency">
+                <option *ngFor="let urgency of urgencyOptions">{{ urgency }}</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="block-group top-gap">
+            <label class="block-label">¿Qué categorías le interesan?</label>
+            <div class="chip-grid">
+              <button
+                type="button"
+                class="chip-option"
+                *ngFor="let option of categoryOptions"
+                [class.active]="model.goals.preferredCategories.includes(option)"
+                (click)="toggleCategory(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
+        </section>
+  
+        <!-- STEP 4 -->
+        <section class="step-card" *ngIf="step === 4">
+          <div class="step-head">
+            <div>
+              <small>Pantalla 4</small>
+              <h3>Preferencias y tolerancia al riesgo</h3>
+            </div>
+            <span class="step-badge">Forma de recomendar</span>
+          </div>
+  
+          <div class="question-grid">
+            <div class="field">
+              <label>Estilo de decisión</label>
+              <select [(ngModel)]="model.preferences.decisionStyle" name="decisionStyle">
+                <option>Analítico</option>
+                <option>Práctico</option>
+                <option>Rápido</option>
+                <option>Con mucha comparación</option>
+              </select>
+            </div>
+  
+            <div class="field">
+              <label>Interés en inversiones</label>
+              <select [(ngModel)]="model.preferences.investmentInterestLevel" name="investmentInterestLevel">
+                <option>Bajo</option>
+                <option>Medio</option>
+                <option>Alto</option>
+              </select>
+            </div>
+  
+            <div class="field field-full">
+              <label>Necesidad de liquidez</label>
+              <select [(ngModel)]="model.preferences.liquidityNeed" name="liquidityNeed">
+                <option>Baja</option>
+                <option>Media</option>
+                <option>Alta</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="block-group top-gap">
+            <label class="block-label">Tolerancia al riesgo</label>
+            <div class="risk-grid">
+              <button
+                type="button"
+                class="risk-card"
+                *ngFor="let risk of riskCards"
+                [class.active]="model.preferences.riskTolerance === risk.value"
+                (click)="setRisk(risk.value)"
+              >
+                <strong>{{ risk.title }}</strong>
+                <p>{{ risk.description }}</p>
+              </button>
+            </div>
+          </div>
+  
+          <div class="toggle-grid top-gap">
+            <label class="toggle-card">
+              <input [(ngModel)]="model.preferences.prefersLowInstallment" name="prefersLowInstallment" type="checkbox" />
+              <span>Prefiere cuotas mensuales bajas</span>
+            </label>
+  
+            <label class="toggle-card">
+              <input [(ngModel)]="model.preferences.prioritizesBrand" name="prioritizesBrand" type="checkbox" />
+              <span>Da prioridad a marca o reputación</span>
+            </label>
+  
+            <label class="toggle-card">
+              <input [(ngModel)]="model.preferences.prefersLongTermValue" name="prefersLongTermValue" type="checkbox" />
+              <span>Prefiere valor a largo plazo</span>
+            </label>
+  
+            <label class="toggle-card">
+              <input [(ngModel)]="model.preferences.wantsSimpleRecommendations" name="wantsSimpleRecommendations" type="checkbox" />
+              <span>Quiere recomendaciones simples y directas</span>
+            </label>
+          </div>
+  
+          <div class="block-group top-gap">
+            <label class="block-label">Activos que más le interesan</label>
+            <div class="chip-grid">
+              <button
+                type="button"
+                class="chip-option"
+                *ngFor="let option of assetOptions"
+                [class.active]="model.investments.preferredAssets.includes(option)"
+                (click)="toggleAsset(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
+  
+          <div class="question-grid top-gap">
+            <div class="field">
+              <label>¿Tiene experiencia invirtiendo?</label>
+              <select [(ngModel)]="model.investments.hasExperience" name="hasExperience">
+                <option>No</option>
+                <option>Poca</option>
+                <option>Intermedia</option>
+                <option>Alta</option>
+              </select>
+            </div>
+  
+            <div class="field">
+              <label>Capital actual para invertir</label>
+              <input [(ngModel)]="model.investments.currentCapital" name="currentCapital" type="number" />
+            </div>
+  
+            <div class="field">
+              <label>Retorno esperado</label>
+              <select [(ngModel)]="model.investments.expectedReturn" name="expectedReturn">
+                <option>Conservador</option>
+                <option>Moderado</option>
+                <option>Agresivo</option>
+              </select>
+            </div>
+  
+            <div class="field">
+              <label>Frecuencia de aporte</label>
+              <select [(ngModel)]="model.investments.frequency" name="frequency">
+                <option>Mensual</option>
+                <option>Quincenal</option>
+                <option>Trimestral</option>
+                <option>Esporádica</option>
+              </select>
+            </div>
+          </div>
+        </section>
+  
+        <!-- STEP 5 -->
+        <section class="step-card" *ngIf="step === 5">
+          <div class="step-head">
+            <div>
+              <small>Pantalla 5</small>
+              <h3>Resumen del perfil</h3>
+            </div>
+            <span class="step-badge">Listo para guardar</span>
+          </div>
+  
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span>Usuario</span>
+              <strong>{{ model.personal.firstName }} {{ model.personal.lastName }}</strong>
+              <p>{{ model.personal.city }} · {{ model.personal.employmentType }}</p>
+            </article>
+  
+            <article class="summary-card">
+              <span>Ingreso mensual</span>
+              <strong>RD${{ model.finances.monthlyIncome }}</strong>
+              <p>Con capacidad de ahorro de RD${{ model.finances.monthlySavingsCapacity }}</p>
+            </article>
+  
+            <article class="summary-card">
+              <span>Objetivo principal</span>
+              <strong>{{ model.goals.mainGoal }}</strong>
+              <p>Urgencia: {{ model.goals.urgency }}</p>
+            </article>
+  
+            <article class="summary-card">
+              <span>Riesgo</span>
+              <strong>{{ model.preferences.riskTolerance }}</strong>
+              <p>Liquidez: {{ model.preferences.liquidityNeed }}</p>
+            </article>
+  
+            <article class="summary-card summary-card-wide">
+              <span>Categorías preferidas</span>
+              <strong>{{ model.goals.preferredCategories.join(', ') || 'Sin selección' }}</strong>
+              <p>Esto ayuda a personalizar las recomendaciones por tipo de necesidad.</p>
+            </article>
+  
+            <article class="summary-card summary-card-wide">
+              <span>Activos de interés</span>
+              <strong>{{ model.investments.preferredAssets.join(', ') || 'Sin selección' }}</strong>
+              <p>Esto ayuda a personalizar el módulo de inversiones y sugerencias.</p>
+            </article>
+          </div>
+        </section>
+  
+        <div class="wizard-actions">
+          <button type="button" class="secondary-btn" (click)="previousStep()" [disabled]="step === 1">
+            Atrás
+          </button>
+  
+          <button
+            type="button"
+            class="primary-btn"
+            *ngIf="step < totalSteps"
+            (click)="nextStep()"
+          >
+            Continuar
+          </button>
+  
+          <button
+            type="button"
+            class="primary-btn"
+            *ngIf="step === totalSteps"
+            (click)="saveProfile()"
+          >
+            Guardar perfil
+          </button>
+        </div>
+      </main>
+    </section>
+  </section>

@@ -7,6 +7,8 @@ import { ProfileComponent } from './features/profile/profile.component';
 import { AnalyzeComponent } from './features/analyze/analyze.component';
 import { ResultsComponent } from './features/results/results.component';
 import { InvestmentsComponent } from './features/investments/investments.component';
+import { AccountComponent } from './features/account/account.component';
+import { ProfileSetupComponent } from './features/profile-setup/profile-setup.component';
 
 export const routes: Routes = [
   {
@@ -14,12 +16,15 @@ export const routes: Routes = [
     component: MainShellComponent,
     children: [
       { path: '', component: HomeComponent, title: 'Credenza | Inicio' },
-      { path: 'registro', component: RegisterComponent, title: 'Credenza | Registro' },
-      { path: 'login', component: LoginComponent, title: 'Credenza | Iniciar sesión' },
-      { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil' },
-      { path: 'analizar', component: AnalyzeComponent, title: 'Credenza | Analizar productos' },
-      { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados' },
+      { path: 'analizar', component: AnalyzeComponent, title: 'Credenza | Analizar' },
       { path: 'inversiones', component: InvestmentsComponent, title: 'Credenza | Inversiones' },
+      { path: 'cuenta', component: AccountComponent, title: 'Credenza | Cuenta' },
+
+      { path: 'login', component: LoginComponent, title: 'Credenza | Iniciar sesión' },
+      { path: 'registro', component: RegisterComponent, title: 'Credenza | Registro' },
+      { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil' },
+      { path: 'perfil-configuracion', component: ProfileSetupComponent, title: 'Credenza | Configurar perfil' },
+      { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados' }
     ]
   },
   { path: '**', redirectTo: '' }

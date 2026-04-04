@@ -7,16 +7,17 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './main-shell.component.html',
-  styleUrl: './main-shell.component.css'
+  styleUrls: ['./main-shell.component.css']
 })
 export class MainShellComponent {
-  navItems = [
-    { label: 'Home', route: '/' },
-    { label: 'Registro', route: '/registro' },
-    { label: 'Inicio de sesión', route: '/login' },
-    { label: 'Perfil', route: '/perfil' },
-    { label: 'Analizar productos', route: '/analizar' },
-    { label: 'Resultados', route: '/resultados' },
+  mainNavItems = [
+    { label: 'Inicio', route: '/' },
+    { label: 'Analizar', route: '/analizar' },
     { label: 'Inversiones', route: '/inversiones' }
   ];
+
+  accountNavItem = {
+    label: 'Cuenta',
+    route: '/cuenta'
+  };
 }
