@@ -9,6 +9,7 @@ import { ResultsComponent } from './features/results/results.component';
 import { InvestmentsComponent } from './features/investments/investments.component';
 import { AccountComponent } from './features/account/account.component';
 import { ProfileSetupComponent } from './features/profile-setup/profile-setup.component';
+import { AnalysisBasisComponent } from './features/analysis-basis/analysis-basis.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +25,7 @@ export const routes: Routes = [
       { path: 'registro', component: RegisterComponent, title: 'Credenza | Registro' },
       { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil' },
       { path: 'perfil-configuracion', component: ProfileSetupComponent, title: 'Credenza | Configurar perfil' },
+      { path: 'base-analisis', component: AnalysisBasisComponent, title: 'Credenza | Base del Análisis' },
       { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados' }
     ]
   },

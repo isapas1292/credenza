@@ -21,13 +21,19 @@ export class AnalyzeComponent {
   ];
 
   selectedCategory = 'Laptop';
+  currentStep = 1;
 
   product = {
     name: '',
-    price: 50000,
+    price: null as number | null,
+    condition: 'Nuevo',
     paymentType: 'Contado',
     provider: '',
-    priority: 'Costo-beneficio',
+    
+    // Context and Preferences
+    purpose: '',
+    lifespan: '',
+    mainConstraint: '',
     notes: ''
   };
 
@@ -35,6 +41,34 @@ export class AnalyzeComponent {
 
   selectCategory(title: string): void {
     this.selectedCategory = title;
+  }
+
+  nextStep(): void {
+    if (this.currentStep < 3) {
+      this.currentStep++;
+    }
+  }
+
+  prevStep(): void {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+    }
+  }
+
+  selectCondition(condition: string): void {
+    this.product.condition = condition;
+  }
+
+  selectPurpose(purpose: string): void {
+    this.product.purpose = purpose;
+  }
+
+  selectLifespan(lifespan: string): void {
+    this.product.lifespan = lifespan;
+  }
+
+  selectConstraint(constraint: string): void {
+    this.product.mainConstraint = constraint;
   }
 
   goToResults(): void {

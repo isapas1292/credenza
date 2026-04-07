@@ -1,113 +1,174 @@
 <section class="page-title spacing-bottom">
-    <span class="eyebrow">Analizar productos</span>
-    <h2>Primero elige una categoría</h2>
-    <p>
-      En vez de iniciar con campos fríos, el usuario entra viendo las categorías como
-      tarjetas visuales con iconos. Luego completa solo los datos del producto.
-    </p>
-  </section>
-  
-  <section class="analyze-grid">
-    <article class="analyze-form">
-      <div class="analyze-head">
-        <div>
-          <small>Paso 1</small>
-          <h3>Selecciona el tipo de producto</h3>
-        </div>
-        <span class="badge-neutral">Visual</span>
-      </div>
-  
+  <span class="eyebrow">Analizar productos</span>
+  <h2 *ngIf="currentStep === 1">Primero elige una categoría</h2>
+  <h2 *ngIf="currentStep === 2">Detalles del producto</h2>
+  <h2 *ngIf="currentStep === 3">Contexto y prioridades</h2>
+  <p *ngIf="currentStep === 1">
+    Para empezar, indícanos qué tipo de producto o servicio estás considerando.
+    Esto nos ayudará a adaptar las siguientes preguntas.
+  </p>
+  <p *ngIf="currentStep === 2">
+    Ingresa los datos básicos de lo que estás planeando comprar.
+  </p>
+  <p *ngIf="currentStep === 3">
+    Ayúdanos a entender por qué necesitas esto y qué es lo más importante para ti.
+  </p>
+</section>
+
+<section class="analyze-wizard">
+  <!-- Progress Indicator -->
+  <div class="wizard-progress">
+    <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+      <span class="step-num">1</span>
+      <span class="step-label">Categoría</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep >= 2"></div>
+    <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+      <span class="step-num">2</span>
+      <span class="step-label">Detalles</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep >= 3"></div>
+    <div class="step" [class.active]="currentStep >= 3" [class.completed]="currentStep > 3">
+      <span class="step-num">3</span>
+      <span class="step-label">Contexto</span>
+    </div>
+  </div>
+
+  <article class="wizard-panel">
+
+    <!-- STEP 1: CATEGORY -->
+    <div class="step-content" *ngIf="currentStep === 1">
       <div class="category-grid">
-        <article
-          class="category-card"
-          *ngFor="let category of categories"
-          [class.active]="selectedCategory === category.title"
-          (click)="selectCategory(category.title)"
-        >
+        <article class="category-card" *ngFor="let category of categories"
+          [class.active]="selectedCategory === category.title" (click)="selectCategory(category.title)">
           <div class="category-icon">{{ category.icon }}</div>
           <strong>{{ category.title }}</strong>
           <p>{{ category.description }}</p>
         </article>
       </div>
-    </article>
-  
-    <article class="results-panel">
-      <div class="notice-box">
-        <strong>La situación financiera ya no va aquí</strong>
-        <p>
-          Los ingresos, gastos, compromisos y metas del usuario se toman desde la pantalla de perfil.
-          Aquí solo se captura lo necesario para el producto seleccionado.
-        </p>
+
+      <div class="wizard-actions">
+        <span></span> <!-- empty spacer -->
+        <button class="btn btn-dark btn-inline" type="button" (click)="nextStep()">
+          Siguiente: Detalles <i class="icon-arrow-right"></i>
+        </button>
       </div>
-  
-      <div class="detail-block top-gap">
-        <small>Paso 2</small>
-        <h3>Información del producto</h3>
-  
-        <div class="field-grid">
-          <div class="field field-full">
-            <label>Nombre o referencia</label>
-            <input
-              [(ngModel)]="product.name"
-              name="name"
-              type="text"
-              placeholder="MacBook Air M3 13 pulgadas"
-            />
-          </div>
-  
-          <div class="field">
-            <label>Precio estimado</label>
-            <input
-              [(ngModel)]="product.price"
-              name="price"
-              type="number"
-            />
-          </div>
-  
-          <div class="field">
-            <label>Forma de pago</label>
-            <select [(ngModel)]="product.paymentType" name="paymentType">
-              <option>Contado</option>
-              <option>Financiado</option>
-              <option>Cuotas</option>
-            </select>
-          </div>
-  
-          <div class="field">
-            <label>Marca o proveedor</label>
-            <input
-              [(ngModel)]="product.provider"
-              name="provider"
-              type="text"
-              placeholder="Apple / Tienda X"
-            />
-          </div>
-  
-          <div class="field">
-            <label>Prioridad</label>
-            <select [(ngModel)]="product.priority" name="priority">
-              <option>Costo-beneficio</option>
-              <option>Cuota mensual baja</option>
-              <option>Mayor durabilidad</option>
-              <option>Mejor rendimiento</option>
-            </select>
-          </div>
-  
-          <div class="field field-full">
-            <label>Notas adicionales</label>
-            <textarea
-              [(ngModel)]="product.notes"
-              name="notes"
-              placeholder="Necesito que sea ligera, duradera y que no afecte demasiado mi flujo mensual."
-            ></textarea>
+    </div>
+
+    <!-- STEP 2: PRODUCT DETAILS -->
+    <div class="step-content animate-in" *ngIf="currentStep === 2">
+
+      <div class="field-grid">
+        <div class="field field-full">
+          <label>Nombre o referencia</label>
+          <input [(ngModel)]="product.name" name="name" type="text" placeholder="Ej. MacBook Air M3 13 pulgadas" />
+        </div>
+
+        <div class="field">
+          <label>Precio estimado</label>
+          <div class="input-with-prefix">
+            <span class="prefix">RD$</span>
+            <input [(ngModel)]="product.price" name="price" type="number" placeholder="0.00" />
           </div>
         </div>
-  
-        <div class="button-wrap">
-          <button class="btn btn-dark" type="button" (click)="goToResults()">
-            Continuar al resultado
-          </button>
+
+        <div class="field">
+          <label>Marca o proveedor</label>
+          <input [(ngModel)]="product.provider" name="provider" type="text" placeholder="Ej. Apple Store" />
+        </div>
+
+        <div class="field field-full selection-group" *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Seguro'">
+          <label>Condición del producto</label>
+          <div class="options-row">
+            <button class="option-btn" [class.active]="product.condition === 'Nuevo'"
+              (click)="selectCondition('Nuevo')">✨ Nuevo</button>
+            <button class="option-btn" [class.active]="product.condition === 'Usado'"
+              (click)="selectCondition('Usado')">♻️ Usado</button>
+            <button *ngIf="selectedCategory !== 'Hogar'" class="option-btn" [class.active]="product.condition === 'Refurbished'"
+              (click)="selectCondition('Refurbished')">🛠️ Refurbished</button>
+          </div>
+        </div>
+
+        <div class="field field-full selection-group">
+          <label>Método de pago principal</label>
+          <div class="options-row">
+            <button class="option-btn" [class.active]="product.paymentType === 'Contado'"
+              (click)="product.paymentType = 'Contado'">💵 Contado</button>
+            <button class="option-btn" [class.active]="product.paymentType === 'Financiado'"
+              (click)="product.paymentType = 'Financiado'">🏦 Financiado</button>
+            <button class="option-btn" [class.active]="product.paymentType === 'Tarjeta / Cuotas'"
+              (click)="product.paymentType = 'Tarjeta / Cuotas'">💳 Tarjeta / Cuotas</button>
+          </div>
         </div>
       </div>
-    </article>
-  </section>
+
+      <div class="wizard-actions">
+        <button class="btn btn-back" type="button" (click)="prevStep()">Volver</button>
+        <button class="btn btn-dark btn-inline" type="button" (click)="nextStep()">
+          Siguiente: Contexto <i class="icon-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: CONTEXT & PREFERENCES -->
+    <div class="step-content animate-in" *ngIf="currentStep === 3">
+
+      <div class="field field-full selection-group spacing-large">
+        <label>¿Cuál es el propósito principal de esta compra?</label>
+        <div class="grid-options">
+          <article class="option-card" [class.active]="product.purpose === 'Trabajo'"
+            (click)="selectPurpose('Trabajo')">
+            <strong>💼 Trabajo / Estudio</strong>
+            <span>Esencial para generar ingresos o formarme.</span>
+          </article>
+          <article class="option-card" [class.active]="product.purpose === 'Reemplazo'"
+            (click)="selectPurpose('Reemplazo')">
+            <strong>🔄 Reemplazo por daño</strong>
+            <span>Mi equipo actual falló y necesito uno nuevo urgente.</span>
+          </article>
+          <article class="option-card" [class.active]="product.purpose === 'Mejora'" (click)="selectPurpose('Mejora')">
+            <strong>🚀 Mejora (Upgrade)</strong>
+            <span>Quiero algo mejor, aunque el actual aún funciona.</span>
+          </article>
+          <article class="option-card" [class.active]="product.purpose === 'Entretenimiento'"
+            (click)="selectPurpose('Entretenimiento')">
+            <strong>🎮 Entretenimiento</strong>
+            <span>Para disfrutar en mi tiempo libre.</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="field field-full selection-group spacing-large">
+        <label>¿Qué tiempo de vida esperas sacarle a este producto?</label>
+        <div class="options-row">
+          <button class="option-btn" [class.active]="product.lifespan === '1-2'" (click)="selectLifespan('1-2')">Corto
+            plazo (1-2 años)</button>
+          <button class="option-btn" [class.active]="product.lifespan === '3-5'" (click)="selectLifespan('3-5')">Medio
+            plazo (3-5 años)</button>
+          <button class="option-btn" [class.active]="product.lifespan === '5+'" (click)="selectLifespan('5+')">Largo
+            plazo (5+ años)</button>
+        </div>
+      </div>
+
+      <div class="field field-full selection-group spacing-large">
+        <label>Al evaluar opciones, ¿qué es lo más importante para ti?</label>
+        <div class="options-row">
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Presupuesto'"
+            (click)="selectConstraint('Presupuesto')">💰 Ajustarse al Presupuesto</button>
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Calidad'"
+            (click)="selectConstraint('Calidad')">⭐ Calidad y Durabilidad</button>
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Urgencia'"
+            (click)="selectConstraint('Urgencia')">⏳ Urgencia y Disponibilidad</button>
+        </div>
+      </div>
+
+      <div class="wizard-actions final-action">
+        <button class="btn btn-back" type="button" (click)="prevStep()">Volver</button>
+        <button class="btn btn-primary btn-glow" type="button" (click)="goToResults()">
+          Finalizar y Analizar ✨
+        </button>
+      </div>
+
+    </div>
+  </article>
+</section>

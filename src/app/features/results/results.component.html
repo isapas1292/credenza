@@ -5,33 +5,41 @@
   </section>
   
   <section class="results-grid">
-    <article class="result-hero">
-      <div class="result-head">
-        <div>
-          <span class="mini-label">Resultado general</span>
-          <h3>Laptop de trabajo</h3>
+    <div>
+      <article class="result-hero">
+        <div class="result-head">
+          <div>
+            <span class="mini-label">Resultado general</span>
+            <h3>Laptop de trabajo</h3>
+          </div>
+          <span class="badge-success">88% compatible</span>
         </div>
-        <span class="badge-success">88% compatible</span>
+    
+        <p>
+          Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.
+        </p>
+    
+        <div class="result-summary">
+          <small>Impacto estimado</small>
+          <strong>RD$3,500/mes</strong>
+          <p>Quedaría una capacidad libre cómoda luego de asumir este producto.</p>
+        </div>
+    
+        <div class="scenario-grid">
+          <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
+            <small>{{ scenario.subtitle }}</small>
+            <strong>{{ scenario.title }}</strong>
+            <p>{{ scenario.description }}</p>
+          </article>
+        </div>
+      </article>
+
+      <div style="margin-top: 24px; margin-bottom: 24px; display: flex; justify-content: center;">
+        <a routerLink="/base-analisis" class="btn btn-dark btn-inline" style="background-color: var(--primary); color: white; border: 1px solid var(--primary);">
+          👁 Ver base financiera del análisis
+        </a>
       </div>
-  
-      <p>
-        Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.
-      </p>
-  
-      <div class="result-summary">
-        <small>Impacto estimado</small>
-        <strong>RD$3,500/mes</strong>
-        <p>Quedaría una capacidad libre cómoda luego de asumir este producto.</p>
-      </div>
-  
-      <div class="scenario-grid">
-        <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
-          <small>{{ scenario.subtitle }}</small>
-          <strong>{{ scenario.title }}</strong>
-          <p>{{ scenario.description }}</p>
-        </article>
-      </div>
-    </article>
+    </div>
   
     <article class="results-panel">
       <div class="results-head">

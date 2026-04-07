@@ -46,7 +46,12 @@
       </div>
   
       <div class="button-wrap">
-        <button class="btn btn-dark" type="button">Crear cuenta</button>
+        <button class="btn btn-dark" type="button" (click)="register()">Crear cuenta</button>
+      </div>
+
+      <div class="auth-switch" style="margin-top: 24px; text-align: center; font-size: 14px; color: var(--muted);">
+        <span>¿Ya tienes cuenta?</span>
+        <a routerLink="/login" style="color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 6px;">Inicia sesión aquí</a>
       </div>
     </article>
   </section>

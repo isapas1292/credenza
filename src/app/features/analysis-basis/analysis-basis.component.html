@@ -1,0 +1,130 @@
+<section class="basis-layout">
+  <div class="page-title basis-title">
+    <div class="title-flex">
+      <div>
+        <span class="eyebrow inverse">Motor de Recomendaciones</span>
+        <h2>La Base del Análisis</h2>
+        <p>
+          Credenza utiliza esta información financiera y conductual para proyectar
+          recomendaciones exactas sin que tengas que volver a escribir todo desde cero.
+        </p>
+      </div>
+      <div>
+        <a class="btn btn-dark" routerLink="/perfil-configuracion">Editar base del análisis</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="basis-grid">
+    <!-- Ecuación de Liquidez -->
+    <article class="basis-panel equation-panel">
+      <div class="panel-head">
+        <h3>Ecuación de Liquidez Activa</h3>
+        <span>Tu flujo de efectivo real disponible cada mes</span>
+      </div>
+
+      <div class="equation-track">
+        <div class="eq-item eq-income">
+          <small>Ingresos Fijos</small>
+          <strong>RD${{ financialMetrics.monthlyIncome | number }}</strong>
+        </div>
+        <div class="eq-operator">−</div>
+        <div class="eq-item eq-expense">
+          <small>Gastos Fijos</small>
+          <strong>RD${{ financialMetrics.fixedExpenses | number }}</strong>
+        </div>
+        <div class="eq-operator">−</div>
+        <div class="eq-item eq-expense">
+          <small>Deudas Activas</small>
+          <strong>RD${{ financialMetrics.debts | number }}</strong>
+        </div>
+        <div class="eq-operator">=</div>
+        <div class="eq-item eq-free">
+          <small>Flujo Libre (Base)</small>
+          <strong>RD${{ financialMetrics.freeCashFlow | number }}</strong>
+        </div>
+      </div>
+      
+      <div class="panel-footer notice">
+        <p>
+          <i class="icon">ℹ️</i> El <b>Flujo Libre</b> es la métrica principal usada para 
+          calcular qué tan seguro o riesgoso es tomar un compromiso financiero nuevo de pago recurrente.
+        </p>
+      </div>
+    </article>
+
+    <!-- Límites de Seguridad -->
+    <article class="basis-panel limits-panel">
+      <div class="panel-head">
+        <h3>Límites de Seguridad Recomendados</h3>
+        <span>Rieles preventivos del sistema</span>
+      </div>
+
+      <div class="limits-card-grid">
+        <div class="limit-card">
+          <span class="limit-label">Capacidad máxima nueva recomendada</span>
+          <strong class="limit-value text-primary">RD${{ financialMetrics.maxCapacityForNewDebt | number }}</strong>
+          <div class="bar-container">
+            <div class="bar-fill bg-primary" style="width: 39%"></div>
+          </div>
+          <p class="limit-hint">Recomendamos no usar más del 40% del flujo libre</p>
+        </div>
+
+        <div class="limit-card">
+          <span class="limit-label">Estatus del Fondo de Emergencia</span>
+          <strong class="limit-value text-success">{{ financialMetrics.emergencyFundStatus }}</strong>
+          <div class="bar-container">
+            <div class="bar-fill bg-success" style="width: 100%"></div>
+          </div>
+          <p class="limit-hint">Basado en tu reporte de 3+ meses ahorrados</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Perfil del Consumidor -->
+    <article class="basis-panel profile-panel">
+      <div class="panel-head">
+        <h3>Matriz del Consumidor</h3>
+        <span>Tu ADN financiero según tus respuestas</span>
+      </div>
+
+      <div class="profile-map">
+        <div class="profile-trait">
+          <div class="trait-icon">🧠</div>
+          <div class="trait-info">
+            <strong>Mentalidad de dinero extra</strong>
+            <span>{{ consumerProfile.extraMoneyDisposition }}</span>
+          </div>
+        </div>
+
+        <div class="profile-trait">
+          <div class="trait-icon">🛒</div>
+          <div class="trait-info">
+            <strong>Instinto ante gran compra</strong>
+            <span>{{ consumerProfile.bigPurchaseHabit }}</span>
+          </div>
+        </div>
+
+        <div class="profile-trait">
+          <div class="trait-icon">📊</div>
+          <div class="trait-info">
+            <strong>Nivel de control de gastos</strong>
+            <span>{{ consumerProfile.expenseTracking }}</span>
+          </div>
+        </div>
+
+        <div class="profile-trait">
+          <div class="trait-icon">🎯</div>
+          <div class="trait-info">
+            <strong>Meta central del análisis</strong>
+            <span>{{ consumerProfile.financialGoal }}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <div class="bottom-actions">
+      <a class="btn btn-secondary btn-inline" routerLink="/resultados">Volver a Resultados</a>
+    </div>
+  </div>
+</section>

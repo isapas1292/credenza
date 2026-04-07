@@ -19,7 +19,12 @@
       </div>
   
       <div class="button-wrap">
-        <button class="btn btn-dark" type="button">Entrar</button>
+        <button class="btn btn-dark" type="button" (click)="login()">Entrar</button>
+      </div>
+
+      <div class="auth-switch">
+        <span>¿No tienes cuenta?</span>
+        <a routerLink="/registro">Crea una cuenta aquí</a>
       </div>
     </article>
   </section>

@@ -317,6 +317,45 @@
               <span>Quiere recomendaciones simples y directas</span>
             </label>
           </div>
+          
+          <div class="block-group top-gap">
+            <label class="block-label">Comportamiento de Consumo (Nuevo)</label>
+            
+            <div class="question-grid">
+              <div class="field field-full">
+                <label>Si este mes te sobra el 20% de tu sueldo, ¿qué sueles hacer?</label>
+                <select [(ngModel)]="model.preferences.extraMoneyAction" name="extraMoneyAction">
+                  <option value="">Selecciona una opción</option>
+                  <option value="Comprar algo deseado">Gastarlo en algo que quería hace tiempo</option>
+                  <option value="Ahorrar">Ahorrarlo intacto</option>
+                  <option value="Pagar deuda">Adelantar pagos de deudas</option>
+                  <option value="Invertir">Invertirlo</option>
+                </select>
+              </div>
+
+              <div class="field field-full">
+                <label>Al enfrentar la compra de un producto muy costoso:</label>
+                <select [(ngModel)]="model.preferences.bigPurchaseHabit" name="bigPurchaseHabit">
+                  <option value="">Selecciona una opción</option>
+                  <option value="Crédito inmediato">Suelo sacarlo a crédito casi de inmediato</option>
+                  <option value="Ahorrar el 100%">Ahorro hasta tener el 100% en efectivo</option>
+                  <option value="Buscar ofertas">Espero meses buscando la gran oferta o descuento</option>
+                  <option value="Financiamiento inteligente">Busco financiamiento a meses sin intereses</option>
+                </select>
+              </div>
+
+              <div class="field field-full">
+                <label>Control de gastos mensuales:</label>
+                <select [(ngModel)]="model.preferences.expenseTracking" name="expenseTracking">
+                  <option value="">Selecciona una opción</option>
+                  <option value="Estricto">Llevo registro puntual (app/excel) de cada centavo</option>
+                  <option value="Mental">Tengo un presupuesto mental pero sé a dónde va</option>
+                  <option value="Laxo">Intento controlarlo pero a veces no sé cómo desaparece</option>
+                  <option value="Ninguno">No llevo ningún registro</option>
+                </select>
+              </div>
+            </div>
+          </div>
   
           <div class="block-group top-gap">
             <label class="block-label">Activos que más le interesan</label>

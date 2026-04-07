@@ -102,7 +102,12 @@ export class ProfileSetupComponent {
       prefersLongTermValue: true,
       wantsSimpleRecommendations: true,
       investmentInterestLevel: 'Medio',
-      liquidityNeed: 'Media'
+      liquidityNeed: 'Media',
+      
+      // Consumer profiling
+      extraMoneyAction: '',
+      bigPurchaseHabit: '',
+      expenseTracking: ''
     },
     investments: {
       hasExperience: 'No',
