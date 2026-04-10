@@ -10,19 +10,19 @@
         <div class="result-head">
           <div>
             <span class="mini-label">Resultado general</span>
-            <h3>Laptop de trabajo</h3>
+            <h3>{{ analysisTitle }}</h3>
           </div>
-          <span class="badge-success">88% compatible</span>
+          <span [class]="overallCompatibility.class">{{ overallCompatibility.score }} compatible</span>
         </div>
     
         <p>
-          Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.
+          {{ overallCompatibility.message }}
         </p>
     
         <div class="result-summary">
           <small>Impacto estimado</small>
-          <strong>RD$3,500/mes</strong>
-          <p>Quedaría una capacidad libre cómoda luego de asumir este producto.</p>
+          <strong>{{ primaryImpact }}</strong>
+          <p>Esta sería tu cuota promediada al asumir este producto asumiendo un plazo de 12 meses.</p>
         </div>
     
         <div class="scenario-grid">
@@ -39,6 +39,32 @@
           👁 Ver base financiera del análisis
         </a>
       </div>
+
+      <article class="results-panel" style="margin-top: 24px; padding: 24px; border: 1px solid #eef2f7; box-shadow: none;">
+        <div class="results-head">
+          <div>
+            <span class="mini-label muted">Alternativas inteligentes</span>
+            <h3>Productos similares sugeridos</h3>
+          </div>
+          <span class="badge-neutral">Ahorro inteligente</span>
+        </div>
+      
+        <div style="margin-top: 18px; display: grid; gap: 14px;">
+          <article class="recommendation-card" *ngFor="let item of similarProducts" style="border-left: 4px solid var(--primary); background: #ffffff; border-top: 1px solid #eef2f7; border-right: 1px solid #eef2f7; border-bottom: 1px solid #eef2f7;">
+            <div class="recommendation-top">
+              <div>
+                <strong style="font-size: 16px;">{{ item.name }}</strong>
+                <p>{{ item.desc }}</p>
+              </div>
+              <span class="badge-success">{{ item.price }}</span>
+            </div>
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; align-items: center; gap: 8px;">
+               <span style="color: #64748b; font-size: 13px;">Plan de pago propuesto:</span>
+               <strong style="font-size: 14px; margin: 0; color: #0f172a;">{{ item.payment }}</strong>
+            </div>
+          </article>
+        </div>
+      </article>
     </div>
   
     <article class="results-panel">

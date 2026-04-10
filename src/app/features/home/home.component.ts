@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MockDataService } from '../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-home',
@@ -10,6 +11,8 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
+  public mockDataService = inject(MockDataService);
+  
   benefits = [
     {
       title: 'Elige visualmente',

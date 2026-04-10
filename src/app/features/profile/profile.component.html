@@ -4,7 +4,10 @@
       <h2>Perfil de usuario y situación financiera</h2>
       <p>Aquí se concentra toda la información financiera para que el usuario no tenga que volver a escribirla cuando quiera analizar un producto.</p>
     </div>
-    <button class="btn btn-dark btn-inline" type="button">Editar perfil</button>
+    <div style="display: flex; gap: 12px;">
+      <button class="btn btn-secondary btn-inline" type="button" style="color: var(--text); border-color: var(--line); background: white;">Editar perfil</button>
+      <button class="btn btn-dark btn-inline" type="button" (click)="logout()">Cerrar sesión</button>
+    </div>
   </section>
   
   <section class="stats-grid">

@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MockDataService } from '../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-login',
@@ -16,10 +17,12 @@ export class LoginComponent {
     password: ''
   };
 
-  constructor(private router: Router) {}
+  private router = inject(Router);
+  private mockDataService = inject(MockDataService);
 
   login() {
     if (this.credentials.email && this.credentials.password) {
+      this.mockDataService.login(this.credentials.email);
       this.router.navigate(['/perfil']);
     }
   }

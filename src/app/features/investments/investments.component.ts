@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MockDataService } from '../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-investments',
@@ -65,4 +66,33 @@ export class InvestmentsComponent {
     { title: 'Fondos indexados', value: '40%' },
     { title: 'Acciones', value: '25%' }
   ];
+
+  private mockDataService = inject(MockDataService);
+  user = this.mockDataService.currentUser;
+
+  get riskProfile() {
+    return this.user()?.consumerProfile.riskTolerance || 'Moderado';
+  }
+
+  get recommendedAreas() {
+    const risk = this.riskProfile;
+
+    if (risk === 'Conservador') {
+      return [
+        { name: 'Certificados Financieros', desc: 'Tu meta central es mantener capital. Tasas fijas minimizan el riesgo drásticamente.' },
+        { name: 'Bienes Raíces (Terrenos)', desc: 'Excelente reserva de valor a largo plazo con depreciación casi inexistente.' }
+      ];
+    } else if (risk === 'Agresivo') {
+      return [
+        { name: 'Acciones (Stocks)', desc: 'Tolera mayor volatilidad buscando máximos retornos en empresas de tecnología.' },
+        { name: 'Startups / Cripto', desc: 'Aunque de alto riesgo, encaja con tu disposición a la volatilidad por ganancias asimétricas.' }
+      ];
+    }
+
+    // Default Moderado
+    return [
+      { name: 'Fondos Indexados (S&P 500)', desc: 'Perfecto balance riesgo-rendimiento histórico para tu perfil.' },
+      { name: 'Renta Inmobiliaria', desc: 'Ofrece flujo de caja mensual con apreciación estable de activo.' }
+    ];
+  }
 }

@@ -19,13 +19,24 @@
         </a>
       </div>
 
-      <a
-        class="account-btn"
-        [routerLink]="accountNavItem.route"
-        routerLinkActive="active"
-      >
-        {{ accountNavItem.label }}
-      </a>
+      <ng-container *ngIf="mockDataService.isLoggedIn()">
+        <a
+          class="account-btn"
+          routerLink="/perfil"
+          routerLinkActive="active"
+        >
+          Cuenta
+        </a>
+      </ng-container>
+      <ng-container *ngIf="!mockDataService.isLoggedIn()">
+        <a
+          class="account-btn"
+          routerLink="/login"
+          routerLinkActive="active"
+        >
+          Iniciar sesión
+        </a>
+      </ng-container>
     </nav>
   </header>
 

@@ -32,11 +32,17 @@
 
   <article class="hero-side-panel">
     <span class="mini-label muted">Perfil actual</span>
-    <h3>Moderado</h3>
-    <p>
-      Balance entre crecimiento y estabilidad, priorizando oportunidades con
-      potencial atractivo sin asumir una volatilidad extrema.
+    <h3>{{ riskProfile }}</h3>
+    <p style="margin-bottom: 24px;">
+      Basado en tu perfil actual de inversionista, las mejores áreas para empezar a colocar tu dinero son las siguientes:
     </p>
+
+    <div style="display: grid; gap: 12px;">
+      <div *ngFor="let area of recommendedAreas" style="background: rgba(255,255,255,0.6); padding: 12px; border-radius: var(--radius-md); border: 1px solid rgba(0,0,0,0.05);">
+        <strong style="display: block; font-size: 14px; margin-bottom: 4px;">{{ area.name }}</strong>
+        <p style="font-size: 13px; margin: 0; color: var(--muted); line-height: 1.5;">{{ area.desc }}</p>
+      </div>
+    </div>
 
     <div class="allocation-preview">
       <div class="allocation-bar">

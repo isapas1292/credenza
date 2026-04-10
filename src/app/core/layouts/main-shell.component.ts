@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { MockDataService } from '../services/mock-data.service';
 
 @Component({
   selector: 'app-main-shell',
@@ -16,8 +17,5 @@ export class MainShellComponent {
     { label: 'Inversiones', route: '/inversiones' }
   ];
 
-  accountNavItem = {
-    label: 'Cuenta',
-    route: '/cuenta'
-  };
+  public mockDataService = inject(MockDataService);
 }

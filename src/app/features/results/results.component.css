@@ -92,18 +92,23 @@
   background: #ffffff;
   box-shadow: none;
   border: 1px solid #eef2f7;
+  color: #1e293b;
 }
 
 .scenario-card.highlight {
-  border-color: rgba(22, 163, 74, 0.24);
-  background: linear-gradient(135deg, rgba(220,252,231,0.70), #ffffff);
+  border-color: rgba(22, 163, 74, 0.4);
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.95), #ffffff);
 }
 
 .scenario-card small,
 .metric-card span {
-  color: var(--muted);
+  color: #64748b;
   font-size: 13px;
   display: block;
+}
+
+.scenario-card p {
+  color: #475569;
 }
 
 .scenario-card strong,
@@ -111,6 +116,7 @@
   display: block;
   margin-top: 8px;
   font-size: 24px;
+  color: #0f172a;
 }
 
 .recommendation-grid {

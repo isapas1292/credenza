@@ -1,19 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { MockDataService } from '../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.css']
 })
-export class AccountComponent implements OnInit {
-  constructor(private router: Router) {}
+export class AccountComponent {
+  public mockDataService = inject(MockDataService);
+  private router = inject(Router);
 
-  ngOnInit() {
-    // Redirigir directamente al login para entrar al flujo de cuenta
+  logout() {
+    this.mockDataService.logout();
     this.router.navigate(['/login']);
   }
 }

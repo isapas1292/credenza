@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MockDataService } from '../../core/services/mock-data.service';
 
 type StepNumber = 1 | 2 | 3 | 4 | 5;
 
@@ -118,7 +119,8 @@ export class ProfileSetupComponent {
     }
   };
 
-  constructor(private readonly router: Router) {}
+  private router = inject(Router);
+  private mockDataService = inject(MockDataService);
 
   get progressPercentage(): number {
     return (this.step / this.totalSteps) * 100;
@@ -165,7 +167,29 @@ export class ProfileSetupComponent {
   }
 
   saveProfile(): void {
-    console.log('Perfil listo para enviar al backend:', this.model);
+    this.mockDataService.register({
+      firstName: this.model.personal.firstName || 'Nuevo',
+      lastName: this.model.personal.lastName || 'Usuario',
+      email: 'usuario.nuevo@credenza.com',
+      city: this.model.personal.city || 'Santo Domingo',
+      goal: this.model.goals.mainGoal,
+      financialMetrics: {
+        monthlyIncome: this.model.finances.monthlyIncome,
+        fixedExpenses: this.model.finances.fixedExpenses,
+        debts: this.model.finances.activeDebts,
+        freeCashFlow: this.model.finances.monthlyIncome - this.model.finances.fixedExpenses - this.model.finances.activeDebts,
+        emergencyFundStatus: this.model.finances.emergencyFundMonths >= 3 ? 'Saludable' : 'En construcción',
+        maxCapacityForNewDebt: (this.model.finances.monthlyIncome - this.model.finances.fixedExpenses - this.model.finances.activeDebts) * 0.5
+      },
+      consumerProfile: {
+        riskTolerance: this.model.preferences.riskTolerance,
+        dealHunter: this.model.preferences.wantsSimpleRecommendations,
+        extraMoneyDisposition: this.model.preferences.extraMoneyAction,
+        bigPurchaseHabit: this.model.preferences.bigPurchaseHabit,
+        expenseTracking: this.model.preferences.expenseTracking,
+        financialGoal: this.model.goals.mainGoal,
+      }
+    });
     this.router.navigate(['/perfil']);
   }
 }

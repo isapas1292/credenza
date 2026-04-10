@@ -1,4 +1,4 @@
-<section class="hero">
+<section class="hero" [class.logged-out]="!mockDataService.isLoggedIn()">
   <div class="hero-copy">
     <span class="eyebrow inverse">Decisiones económicas con más claridad</span>
     <h2>Analiza productos antes de comprarlos y entiende su impacto real en tu bolsillo.</h2>
@@ -29,31 +29,31 @@
     </div>
   </div>
 
-  <div class="dashboard">
+  <div class="dashboard" *ngIf="mockDataService.isLoggedIn() && mockDataService.currentUser() as user">
     <div class="head-row">
       <div>
-        <small>Resumen ejemplo</small>
+        <small>Mi perfil (Resumen real)</small>
         <h3>Estado financiero</h3>
       </div>
-      <span class="badge-success">Saludable</span>
+      <span class="badge-success">{{ user.financialMetrics.emergencyFundStatus }}</span>
     </div>
 
     <div class="summary-grid">
       <article class="mini-card">
         <span>Ingresos</span>
-        <strong>RD$85,000</strong>
+        <strong>RD${{ user.financialMetrics.monthlyIncome.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Gastos fijos</span>
-        <strong>RD$38,500</strong>
+        <strong>RD${{ user.financialMetrics.fixedExpenses.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Compromisos</span>
-        <strong>RD$20,000</strong>
+        <strong>RD${{ user.financialMetrics.debts.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Capacidad libre</span>
-        <strong>RD$26,500</strong>
+        <strong>RD${{ user.financialMetrics.freeCashFlow.toLocaleString() }}</strong>
       </article>
     </div>
 
