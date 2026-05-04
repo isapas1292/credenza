@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "start:backend": "node backend/server.js"
   },
   "private": true,
   "packageManager": "npm@11.9.0",
@@ -17,6 +18,10 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mssql": "^12.5.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-account',
@@ -11,11 +11,11 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrls: ['./account.component.css']
 })
 export class AccountComponent {
-  public mockDataService = inject(MockDataService);
+  public authService = inject(AuthService);
   private router = inject(Router);
 
   logout() {
-    this.mockDataService.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

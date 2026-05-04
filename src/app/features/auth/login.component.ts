@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -18,12 +18,20 @@ export class LoginComponent {
   };
 
   private router = inject(Router);
-  private mockDataService = inject(MockDataService);
+  private authService = inject(AuthService);
 
   login() {
     if (this.credentials.email && this.credentials.password) {
-      this.mockDataService.login(this.credentials.email);
-      this.router.navigate(['/perfil']);
+      this.authService.login(this.credentials).subscribe({
+        next: (res) => {
+          console.log('Login exitoso', res);
+          this.router.navigate(['/perfil']);
+        },
+        error: (err) => {
+          console.error('Error de login', err);
+          alert('Email o contraseña incorrectos');
+        }
+      });
     }
   }
 }

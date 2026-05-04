@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { MockDataService } from '../services/mock-data.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-main-shell',
@@ -17,5 +17,5 @@ export class MainShellComponent {
     { label: 'Inversiones', route: '/inversiones' }
   ];
 
-  public mockDataService = inject(MockDataService);
+  public authService = inject(AuthService);
 }

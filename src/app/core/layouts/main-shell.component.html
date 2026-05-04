@@ -19,7 +19,7 @@
         </a>
       </div>
 
-      <ng-container *ngIf="mockDataService.isLoggedIn()">
+      <ng-container *ngIf="authService.currentUser()">
         <a
           class="account-btn"
           routerLink="/perfil"
@@ -28,7 +28,7 @@
           Cuenta
         </a>
       </ng-container>
-      <ng-container *ngIf="!mockDataService.isLoggedIn()">
+      <ng-container *ngIf="!authService.currentUser()">
         <a
           class="account-btn"
           routerLink="/login"
