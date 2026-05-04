@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -53,6 +53,10 @@ export class ProfileComponent {
     { title: 'Vehículo compacto', amount: 'RD$17,100/mes', label: 'Con cautela', type: 'warn' },
     { title: 'Seguro de salud', amount: 'RD$1,850/mes', label: 'Buena opción', type: 'success' }
   ];
+
+  editProfile() {
+    this.router.navigate(['/perfil-configuracion']);
+  }
 
   logout() {
     this.authService.logout();

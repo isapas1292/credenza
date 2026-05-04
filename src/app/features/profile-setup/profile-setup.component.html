@@ -82,12 +82,12 @@
           <div class="question-grid">
             <div class="field">
               <label>Nombre</label>
-              <input [(ngModel)]="model.personal.firstName" name="firstName" type="text" placeholder="Ramon" />
+              <input [(ngModel)]="model.personal.firstName" name="firstName" type="text" placeholder="Ramon" [disabled]="isFromRegister" />
             </div>
   
             <div class="field">
               <label>Apellido</label>
-              <input [(ngModel)]="model.personal.lastName" name="lastName" type="text" placeholder="Gómez" />
+              <input [(ngModel)]="model.personal.lastName" name="lastName" type="text" placeholder="Gómez" [disabled]="isFromRegister" />
             </div>
   
             <div class="field">
@@ -97,7 +97,7 @@
   
             <div class="field">
               <label>Ciudad</label>
-              <input [(ngModel)]="model.personal.city" name="city" type="text" placeholder="Santo Domingo" />
+              <input [(ngModel)]="model.personal.city" name="city" type="text" placeholder="Santo Domingo" [disabled]="isFromRegister" />
             </div>
   
             <div class="field">

@@ -59,6 +59,20 @@ export class AuthService {
     );
   }
 
+  updateProfile(userId: number, profileData: any): Observable<any> {
+    return this.http.put(`http://localhost:3000/api/usuarios/${userId}/perfil`, { perfil: profileData }).pipe(
+      tap(() => {
+        // Actualizar el perfil localmente
+        const user = this.currentUser();
+        if (user) {
+          user.perfil = profileData;
+          this.currentUser.set({ ...user });
+          localStorage.setItem('credenza_user', JSON.stringify(user));
+        }
+      })
+    );
+  }
+
   logout() {
     this.currentUser.set(null);
     localStorage.removeItem('credenza_user');

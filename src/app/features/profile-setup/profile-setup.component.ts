@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -13,7 +13,7 @@ type StepNumber = 1 | 2 | 3 | 4 | 5;
   templateUrl: './profile-setup.component.html',
   styleUrls: ['./profile-setup.component.css']
 })
-export class ProfileSetupComponent {
+export class ProfileSetupComponent implements OnInit {
   step: StepNumber = 1;
   readonly totalSteps = 5;
 
@@ -122,6 +122,33 @@ export class ProfileSetupComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
 
+  isFromRegister = false;
+  isEditMode = false;
+
+  ngOnInit() {
+    const tempReg = this.authService.tempRegisterData();
+    const currentUser = this.authService.currentUser();
+
+    if (currentUser && currentUser.perfil) {
+      // Estamos en modo edición
+      this.isEditMode = true;
+      this.isFromRegister = true; // Para bloquear los campos personales básicos
+      this.model = JSON.parse(JSON.stringify(currentUser.perfil)); // Clonar para no mutar el estado
+      
+      // Asegurarnos de que firstName, lastName, y city vengan de la tabla si no están en el perfil
+      if (!this.model.personal.firstName) this.model.personal.firstName = currentUser.nombre;
+    } else if (tempReg) {
+      // Estamos en modo registro
+      this.isFromRegister = true;
+      this.model.personal.firstName = tempReg.firstName || '';
+      this.model.personal.lastName = tempReg.lastName || '';
+      this.model.personal.city = tempReg.city || '';
+      if (tempReg.goal) {
+        this.model.goals.mainGoal = tempReg.goal;
+      }
+    }
+  }
+
   get progressPercentage(): number {
     return (this.step / this.totalSteps) * 100;
   }
@@ -169,16 +196,30 @@ export class ProfileSetupComponent {
   saveProfile(): void {
     // Mostrar un estado de carga opcional aquí (por ejemplo this.loading = true)
     
-    // Llamar al backend usando AuthService
-    this.authService.register(this.model).subscribe({
-      next: (response) => {
-        console.log('Registro exitoso', response);
-        this.router.navigate(['/perfil']);
-      },
-      error: (error) => {
-        console.error('Error al registrar usuario', error);
-        alert('Hubo un error al registrarse. Inténtalo de nuevo.');
-      }
-    });
+    if (this.isEditMode) {
+      const user = this.authService.currentUser();
+      this.authService.updateProfile(user.id, this.model).subscribe({
+        next: () => {
+          console.log('Perfil actualizado');
+          this.router.navigate(['/perfil']);
+        },
+        error: (err) => {
+          console.error('Error al actualizar', err);
+          alert('Hubo un error al actualizar. Inténtalo de nuevo.');
+        }
+      });
+    } else {
+      // Llamar al backend usando AuthService
+      this.authService.register(this.model).subscribe({
+        next: (response) => {
+          console.log('Registro exitoso', response);
+          this.router.navigate(['/perfil']);
+        },
+        error: (error) => {
+          console.error('Error al registrar usuario', error);
+          alert('Hubo un error al registrarse. Inténtalo de nuevo.');
+        }
+      });
+    }
   }
 }
