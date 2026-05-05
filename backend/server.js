@@ -2,12 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
+const axios = require('axios');
+const recommendationRoutes = require('./routes/recommendation.routes');
+
+const AI_SERVICE_URL = 'http://localhost:8001';
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Rutas de recomendaciones IA
+app.use('/api/recommendations', recommendationRoutes);
 
 // Configuración de la base de datos
 const dbConfig = {
@@ -26,17 +33,46 @@ async function initDb() {
     try {
         await sql.connect(dbConfig);
         console.log('Conectado a la base de datos SQL Server (Credenza)');
-
-        // La creación se omite o se ajusta porque la tabla ya existe con otro esquema.
-        // Asumimos que la tabla ya tiene Id, Nombre, Apellido, Email, ContrasenaHash, Ciudad, ObjetivoPrincipalTexto, Perfil, etc.
         console.log('Verificación de BD completa.');
     } catch (error) {
         console.error('Error al conectar a la base de datos:', error.message);
-        // Si el error es que la base de datos no existe, podríamos intentar crearla (requiere master)
-        // Por ahora, asumimos que "Credenza" ya está creada en el motor.
     }
 }
 initDb();
+
+// Helper: clasificar perfil con AI y guardar en BD
+async function clasificarYGuardarSegmento(usuarioId, perfil) {
+    try {
+        const response = await axios.post(`${AI_SERVICE_URL}/profile/segment`, { perfil }, { timeout: 8000 });
+        const { segment_id, segment_name, profile_score, summary } = response.data.data;
+
+        const req = new sql.Request();
+        req.input('UsuarioId', sql.Int, usuarioId);
+        req.input('SegmentoId', sql.Int, segment_id);
+        req.input('NombreSegmento', sql.NVarChar, segment_name);
+        req.input('PuntajePerfil', sql.Int, profile_score);
+        req.input('Resumen', sql.NVarChar, summary);
+
+        // Upsert: si ya existe un segmento para este usuario, actualizar
+        await req.query(`
+            IF EXISTS (SELECT 1 FROM SegmentosFinancierosUsuario WHERE UsuarioId = @UsuarioId)
+                UPDATE SegmentosFinancierosUsuario
+                SET SegmentoId = @SegmentoId, NombreSegmento = @NombreSegmento,
+                    PuntajePerfil = @PuntajePerfil, Resumen = @Resumen,
+                    FechaActualizacion = GETDATE()
+                WHERE UsuarioId = @UsuarioId
+            ELSE
+                INSERT INTO SegmentosFinancierosUsuario (UsuarioId, SegmentoId, NombreSegmento, PuntajePerfil, Resumen)
+                VALUES (@UsuarioId, @SegmentoId, @NombreSegmento, @PuntajePerfil, @Resumen)
+        `);
+
+        console.log(`[AI] Usuario ${usuarioId} → Segmento: "${segment_name}" (score: ${profile_score})`);
+        return { segment_id, segment_name, profile_score, summary };
+    } catch (err) {
+        console.warn(`[AI] No se pudo clasificar al usuario ${usuarioId}:`, err.message);
+        return null;
+    }
+}
 
 // Endpoint de Registro
 app.post('/api/auth/register', async (req, res) => {
@@ -93,13 +129,20 @@ app.post('/api/auth/register', async (req, res) => {
         const result = await request.query(insertQuery);
         const newUser = result.recordset[0];
 
+        // Clasificar al usuario con IA (async, no bloquea la respuesta)
+        let segmento = null;
+        if (perfil) {
+            segmento = await clasificarYGuardarSegmento(newUser.Id, perfil);
+        }
+
         res.status(201).json({
             mensaje: 'Usuario registrado exitosamente',
             usuario: {
                 id: newUser.Id,
                 nombre: newUser.Nombre,
                 email: newUser.Email,
-                perfil: newUser.Perfil ? JSON.parse(newUser.Perfil) : null
+                perfil: newUser.Perfil ? JSON.parse(newUser.Perfil) : null,
+                segmento
             }
         });
 
@@ -178,7 +221,10 @@ app.put('/api/usuarios/:id/perfil', async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        res.json({ mensaje: 'Perfil actualizado exitosamente' });
+        // Reclasificar segmento con el perfil actualizado
+        const segmento = await clasificarYGuardarSegmento(parseInt(userId), perfil);
+
+        res.json({ mensaje: 'Perfil actualizado exitosamente', segmento });
 
     } catch (error) {
         console.error('Error en actualizar perfil:', error);

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +11,20 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
-  public mockDataService = inject(MockDataService);
+  public authService = inject(AuthService);
+  
+  get financialSummary() {
+    const user = this.authService.currentUser();
+    if (!user || !user.perfil || !user.perfil.finances) return null;
+    const f = user.perfil.finances;
+    return {
+      monthlyIncome: f.monthlyIncome,
+      fixedExpenses: f.fixedExpenses,
+      activeDebts: f.activeDebts,
+      freeCashFlow: f.monthlyIncome - f.fixedExpenses - f.activeDebts,
+      emergencyStatus: f.emergencyFundMonths >= 3 ? 'Saludable' : 'En construcción'
+    };
+  }
   
   benefits = [
     {

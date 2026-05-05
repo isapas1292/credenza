@@ -1,4 +1,4 @@
-<section class="hero" [class.logged-out]="!mockDataService.isLoggedIn()">
+<section class="hero" [class.logged-out]="!authService.currentUser()">
   <div class="hero-copy">
     <span class="eyebrow inverse">Decisiones económicas con más claridad</span>
     <h2>Analiza productos antes de comprarlos y entiende su impacto real en tu bolsillo.</h2>
@@ -10,7 +10,8 @@
 
     <div class="actions">
       <a class="btn btn-primary" routerLink="/analizar">Analizar productos</a>
-      <a class="btn btn-secondary" routerLink="/cuenta">Crear cuenta</a>
+      <a class="btn btn-secondary" routerLink="/registro" *ngIf="!authService.currentUser()">Crear cuenta</a>
+      <a class="btn btn-secondary" routerLink="/perfil" *ngIf="authService.currentUser()">Ver mi perfil</a>
     </div>
 
     <div class="hero-stats">
@@ -29,31 +30,31 @@
     </div>
   </div>
 
-  <div class="dashboard" *ngIf="mockDataService.isLoggedIn() && mockDataService.currentUser() as user">
+  <div class="dashboard" *ngIf="authService.currentUser() && financialSummary as summary">
     <div class="head-row">
       <div>
         <small>Mi perfil (Resumen real)</small>
         <h3>Estado financiero</h3>
       </div>
-      <span class="badge-success">{{ user.financialMetrics.emergencyFundStatus }}</span>
+      <span class="badge-success">{{ summary.emergencyStatus }}</span>
     </div>
 
     <div class="summary-grid">
       <article class="mini-card">
         <span>Ingresos</span>
-        <strong>RD${{ user.financialMetrics.monthlyIncome.toLocaleString() }}</strong>
+        <strong>RD${{ summary.monthlyIncome.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Gastos fijos</span>
-        <strong>RD${{ user.financialMetrics.fixedExpenses.toLocaleString() }}</strong>
+        <strong>RD${{ summary.fixedExpenses.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Compromisos</span>
-        <strong>RD${{ user.financialMetrics.debts.toLocaleString() }}</strong>
+        <strong>RD${{ summary.activeDebts.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Capacidad libre</span>
-        <strong>RD${{ user.financialMetrics.freeCashFlow.toLocaleString() }}</strong>
+        <strong>RD${{ summary.freeCashFlow.toLocaleString() }}</strong>
       </article>
     </div>
 
@@ -66,6 +67,37 @@
         <span></span>
       </div>
       <p>La mejor alternativa evaluada se ajusta bien a tu presupuesto mensual.</p>
+    </div>
+  </div>
+
+  <!-- Placeholder cuando el usuario NO está logueado -->
+  <div class="dashboard" *ngIf="!authService.currentUser()">
+    <div class="head-row">
+      <div>
+        <small>Mi perfil (Resumen real)</small>
+        <h3>Estado financiero</h3>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <article class="mini-card">
+        <span>Ingresos</span>
+        <strong>—</strong>
+      </article>
+      <article class="mini-card">
+        <span>Gastos fijos</span>
+        <strong>—</strong>
+      </article>
+      <article class="mini-card">
+        <span>Compromisos</span>
+        <strong>—</strong>
+      </article>
+      <article class="mini-card">
+        <span>Capacidad libre</span>
+        <strong>—</strong>
+      </article>
+    </div>
+    <div class="compat-box">
+      <p>Crea una cuenta o inicia sesión para ver tu resumen financiero aquí.</p>
     </div>
   </div>
 </section>

@@ -6,20 +6,20 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
-  
+
   currentUser = this.authService.currentUser;
 
   get stats() {
     const user = this.currentUser();
     if (!user || !user.perfil || !user.perfil.finances) return [];
-    
+
     const f = user.perfil.finances;
     const freeCashFlow = f.monthlyIncome - f.fixedExpenses - f.activeDebts;
 
