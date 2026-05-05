@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AnalysisService } from '../../core/services/analysis.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-results',
@@ -11,10 +12,11 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrl: './results.component.css'
 })
 export class ResultsComponent {
-  private mockDataService = inject(MockDataService);
+  private analysisService = inject(AnalysisService);
+  private authService = inject(AuthService);
   
-  draft = this.mockDataService.analysisDraft;
-  user = this.mockDataService.currentUser;
+  draft = this.analysisService.analysisDraft;
+  user = computed(() => this.authService.currentUser()?.perfil);
 
   get analysisTitle() {
     return this.draft()?.product?.name || 'Laptop de trabajo';
@@ -40,8 +42,25 @@ export class ResultsComponent {
   get primaryImpact() {
     const d = this.draft();
     if (!d || !d.product.price) return 'RD$3,500/mes';
-    // Assume 12 months for cash/credit mockup
-    return `RD$${(d.product.price / 12).toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`;
+    
+    if (d.product.paymentType === 'Contado') {
+      return `RD$${d.product.price.toLocaleString(undefined, {maximumFractionDigits: 0})} (Único)`;
+    }
+
+    const duration = d.product.paymentDuration || 12;
+    return `RD$${(d.product.price / duration).toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`;
+  }
+
+  get impactMessage() {
+    const d = this.draft();
+    if (!d) return 'Esta sería tu cuota promediada al asumir este producto asumiendo un plazo de 12 meses.';
+    
+    if (d.product.paymentType === 'Contado') {
+      return 'Este es el impacto total de la compra al realizarse en un único pago.';
+    }
+
+    const duration = d.product.paymentDuration || 12;
+    return `Esta sería tu cuota mensual estimada basada en el plazo de ${duration} meses indicado.`;
   }
 
   get scenarios() {

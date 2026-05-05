@@ -100,6 +100,15 @@
               (click)="product.paymentType = 'Tarjeta / Cuotas'">💳 Tarjeta / Cuotas</button>
           </div>
         </div>
+
+        <div class="field field-full animate-in" *ngIf="product.paymentType !== 'Contado'">
+          <label>¿A cuántos meses planeas pagarlo?</label>
+          <div class="input-with-suffix">
+            <input [(ngModel)]="product.paymentDuration" name="paymentDuration" type="number" placeholder="Ej. 12" />
+            <span class="suffix">Meses</span>
+          </div>
+          <p class="field-hint">Esto nos ayuda a calcular el impacto en tu flujo de caja mensual.</p>
+        </div>
       </div>
 
       <div class="wizard-actions">

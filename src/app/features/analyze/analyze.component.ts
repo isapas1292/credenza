@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AnalysisService } from '../../core/services/analysis.service';
 
 @Component({
   selector: 'app-analyze',
@@ -12,6 +12,7 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrl: './analyze.component.css'
 })
 export class AnalyzeComponent {
+  // ... (categories remain the same)
   categories = [
     { icon: '💻', title: 'Laptop', description: 'Equipos para estudio, trabajo o uso profesional.' },
     { icon: '🚗', title: 'Vehículo', description: 'Compra o financiamiento de un automóvil.' },
@@ -29,6 +30,7 @@ export class AnalyzeComponent {
     price: null as number | null,
     condition: 'Nuevo',
     paymentType: 'Contado',
+    paymentDuration: null as number | null,
     provider: '',
     
     // Context and Preferences
@@ -39,8 +41,9 @@ export class AnalyzeComponent {
   };
 
   private router = inject(Router);
-  private mockDataService = inject(MockDataService);
+  private analysisService = inject(AnalysisService);
 
+  // ... (select methods remain the same)
   selectCategory(title: string): void {
     this.selectedCategory = title;
   }
@@ -74,13 +77,14 @@ export class AnalyzeComponent {
   }
 
   goToResults(): void {
-    this.mockDataService.setAnalysisDraft({
+    this.analysisService.setAnalysisDraft({
       category: this.selectedCategory,
       product: {
         name: this.product.name,
         price: this.product.price,
         condition: this.product.condition,
         paymentType: this.product.paymentType,
+        paymentDuration: this.product.paymentDuration,
         provider: this.product.provider,
         purpose: this.product.purpose,
         lifespan: this.product.lifespan,

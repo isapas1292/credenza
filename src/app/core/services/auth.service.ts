@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -12,14 +12,17 @@ export class AuthService {
   tempRegisterData = signal<any>(null);
 
   // Usuario actual logueado
-  currentUser = signal<any>(null);
+  private currentUserSig = signal<any>(null);
+  public currentUser = this.currentUserSig.asReadonly();
+  
+  public isLoggedIn = computed(() => !!this.currentUserSig());
 
   constructor(private http: HttpClient) {
     // Cargar usuario del localStorage si existe
     const storedUser = localStorage.getItem('credenza_user');
     if (storedUser) {
       try {
-        this.currentUser.set(JSON.parse(storedUser));
+        this.currentUserSig.set(JSON.parse(storedUser));
       } catch (e) {}
     }
   }
@@ -40,7 +43,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/register`, payload).pipe(
       tap((res: any) => {
         if (res && res.usuario) {
-          this.currentUser.set(res.usuario);
+          this.currentUserSig.set(res.usuario);
           localStorage.setItem('credenza_user', JSON.stringify(res.usuario));
           this.tempRegisterData.set(null); // Limpiar datos temporales
         }
@@ -52,7 +55,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
         if (res && res.usuario) {
-          this.currentUser.set(res.usuario);
+          this.currentUserSig.set(res.usuario);
           localStorage.setItem('credenza_user', JSON.stringify(res.usuario));
         }
       })
@@ -63,10 +66,10 @@ export class AuthService {
     return this.http.put(`http://localhost:3000/api/usuarios/${userId}/perfil`, { perfil: profileData }).pipe(
       tap(() => {
         // Actualizar el perfil localmente
-        const user = this.currentUser();
+        const user = this.currentUserSig();
         if (user) {
           user.perfil = profileData;
-          this.currentUser.set({ ...user });
+          this.currentUserSig.set({ ...user });
           localStorage.setItem('credenza_user', JSON.stringify(user));
         }
       })
@@ -74,7 +77,7 @@ export class AuthService {
   }
 
   logout() {
-    this.currentUser.set(null);
+    this.currentUserSig.set(null);
     localStorage.removeItem('credenza_user');
   }
 }

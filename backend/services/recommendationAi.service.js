@@ -1,43 +1,35 @@
 const axios = require('axios');
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8001';
 
 const RecommendationAiService = {
 
     /**
      * Envía el perfil del usuario y los datos del producto al servicio AI de Python
-     * y obtiene una recomendación personalizada.
-     * @param {Object} perfil - Perfil financiero del usuario (viene del JSON en BD)
+     * y obtiene una recomendación personalizada detallada.
+     * @param {Object} perfil - Perfil financiero del usuario
      * @param {Object} productData - Datos del producto a analizar
-     * @returns {Object} Respuesta con score, label y explicación
+     * @returns {Object} Respuesta con score, viabilidad, riesgo y explicaciones
      */
     async getRecommendation(perfil, productData) {
         try {
-            const response = await axios.post(`${AI_SERVICE_URL}/recommend`, {
+            console.log(`[AI Service] Llamando a /product/recommend para análisis detallado...`);
+            const response = await axios.post(`${AI_SERVICE_URL}/product/recommend`, {
                 perfil,
                 product: productData
             });
             return response.data;
         } catch (error) {
             console.error('Error llamando al AI service:', error.message);
+            if (error.response) {
+                console.error('Detalle error AI:', error.response.data);
+            }
             // Fallback: retornar un análisis básico si el servicio AI no está disponible
-            return this.fallbackAnalysis(perfil, productData);
-        }
-    },
-
-    /**
-     * Análisis de compatibilidad financiera sin IA (fallback)
-     */
-    async analyzeCompatibility(perfil, product) {
-        try {
-            const response = await axios.post(`${AI_SERVICE_URL}/analyze`, {
-                perfil,
-                product
-            });
-            return response.data;
-        } catch (error) {
-            console.error('AI service no disponible, usando fallback:', error.message);
-            return this.fallbackAnalysis(perfil, product);
+            return { 
+                succeeded: false, 
+                error: 'Servicio de IA no disponible',
+                fallback: this.fallbackAnalysis(perfil, productData)
+            };
         }
     },
 
@@ -45,44 +37,45 @@ const RecommendationAiService = {
      * Análisis de reglas básicas cuando el servicio AI no está disponible
      */
     fallbackAnalysis(perfil, product) {
-        const f = perfil?.finances || {};
-        const monthlyIncome = f.monthlyIncome || 0;
-        const fixedExpenses = f.fixedExpenses || 0;
-        const activeDebts = f.activeDebts || 0;
-        const freeCashFlow = monthlyIncome - fixedExpenses - activeDebts;
-        const maxDebtCapacity = freeCashFlow * 0.5;
-
-        const productCost = product?.price || 0;
-        const installment = product?.monthlyInstallment || (productCost / 24);
+        const finances = perfil?.finances || perfil || {};
+        const income = parseFloat(finances.monthlyIncome || finances.monthly_income_avg || 0);
+        const fixed = parseFloat(finances.fixedExpenses || finances.fixed_expenses_monthly || 0);
+        const debt = parseFloat(finances.activeDebts || finances.current_debt_payment_monthly || 0);
+        
+        const freeCashFlow = income - fixed - debt;
+        const installment = parseFloat(product?.estimated_installment_monthly || product?.price / 24 || 0);
 
         let score = 0;
-        let label = 'No recomendado';
-        let explanation = '';
-
-        if (installment <= maxDebtCapacity * 0.3) {
-            score = 90;
-            label = 'Recomendado';
-            explanation = 'La cuota mensual es cómoda para tu capacidad financiera actual.';
-        } else if (installment <= maxDebtCapacity * 0.6) {
-            score = 65;
-            label = 'Con cautela';
-            explanation = 'La cuota representa un esfuerzo moderado sobre tu presupuesto libre.';
+        let band = 'Riesgo alto';
+        if (freeCashFlow > installment * 2) {
+            score = 0.85;
+            band = 'Viable saludable';
+        } else if (freeCashFlow > installment) {
+            score = 0.60;
+            band = 'Viable con ajustes';
         } else {
-            score = 30;
-            label = 'No recomendado';
-            explanation = 'La cuota supera el 60% de tu capacidad máxima de endeudamiento.';
+            score = 0.30;
+            band = 'No recomendable';
         }
 
-        return {
-            score,
-            label,
-            explanation,
-            details: {
-                freeCashFlow,
-                maxDebtCapacity,
-                estimatedInstallment: installment,
-                source: 'fallback-rules'
+        const analysis = {
+            recommendation_score: score,
+            risk_band_name: band,
+            explanation: `Análisis de respaldo: El flujo libre estimado es ${freeCashFlow.toFixed(2)}.`,
+            viable: freeCashFlow > installment,
+            scenario_details: {
+                type: 'usuario',
+                name: 'Tu elección',
+                installment: installment
             }
+        };
+
+        return {
+            chosen_analysis: analysis,
+            best_option: analysis,
+            all_scenarios: [analysis],
+            is_optimal: true,
+            suggestion_text: 'Análisis basado en reglas de respaldo.'
         };
     }
 };

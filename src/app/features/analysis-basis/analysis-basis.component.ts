@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-analysis-basis',
@@ -11,8 +11,8 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrl: './analysis-basis.component.css'
 })
 export class AnalysisBasisComponent {
-  private mockDataService = inject(MockDataService);
-  currentUser = this.mockDataService.currentUser;
+  private authService = inject(AuthService);
+  currentUser = computed(() => this.authService.currentUser()?.perfil);
 
   get financialMetrics() {
     const user = this.currentUser();

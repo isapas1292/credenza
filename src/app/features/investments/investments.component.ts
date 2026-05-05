@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { Component, inject, computed } from '@angular/core';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-investments',
@@ -10,6 +10,7 @@ import { MockDataService } from '../../core/services/mock-data.service';
   styleUrls: ['./investments.component.css']
 })
 export class InvestmentsComponent {
+  // ... (portfolio, trendDays, topStocks, allocation remain the same)
   portfolio = [
     { title: 'Capital invertido', value: 'RD$420,000' },
     { title: 'Ganancia acumulada', value: '+RD$28,500' },
@@ -67,8 +68,8 @@ export class InvestmentsComponent {
     { title: 'Acciones', value: '25%' }
   ];
 
-  private mockDataService = inject(MockDataService);
-  user = this.mockDataService.currentUser;
+  private authService = inject(AuthService);
+  user = computed(() => this.authService.currentUser()?.perfil);
 
   get riskProfile() {
     return this.user()?.consumerProfile.riskTolerance || 'Moderado';
