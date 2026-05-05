@@ -1,14 +1,21 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { AnalysisDraft } from '../models/financial.model';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AnalysisDraft, UserProfile } from '../models/financial.model';
+import { Observable, tap, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AnalysisService {
+  private http = inject(HttpClient);
   private readonly STORAGE_KEY = 'credenza_analysis_draft';
+  private readonly API_URL = 'http://localhost:3000/api/recommendations';
   
   private analysisDraftSig = signal<AnalysisDraft | null>(null);
   public analysisDraft = this.analysisDraftSig.asReadonly();
+
+  private latestResultSig = signal<any>(null);
+  public latestResult = this.latestResultSig.asReadonly();
 
   constructor() {
     this.loadDraft();
@@ -17,6 +24,26 @@ export class AnalysisService {
   setAnalysisDraft(draft: AnalysisDraft) {
     this.analysisDraftSig.set(draft);
     this.saveDraft();
+  }
+
+  getRecommendation(userId: number, draft: AnalysisDraft, profile: UserProfile): Observable<any> {
+    // Map frontend draft to backend expected structure
+    const productData = {
+      product_category: draft.category.toLowerCase(),
+      price: draft.product.price,
+      term_months: draft.product.paymentDuration || 12,
+      payment_method: draft.product.paymentType === 'Contado' ? 'contado' : 'cuotas'
+    };
+
+    const payload = {
+      userId,
+      productData,
+      perfil: profile
+    };
+
+    return this.http.post(this.API_URL, payload).pipe(
+      tap(res => this.latestResultSig.set(res))
+    );
   }
 
   clearAnalysisDraft() {

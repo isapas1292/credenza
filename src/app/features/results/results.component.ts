@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AnalysisService } from '../../core/services/analysis.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -11,95 +11,106 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './results.component.html',
   styleUrl: './results.component.css'
 })
-export class ResultsComponent {
+export class ResultsComponent implements OnInit {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   
   draft = this.analysisService.analysisDraft;
   user = computed(() => this.authService.currentUser()?.perfil);
+  
+  loading = signal<boolean>(true);
+  error = signal<string | null>(null);
+
+  ngOnInit(): void {
+    const draft = this.draft();
+    const user = this.authService.currentUser();
+    const profile = user?.perfil;
+
+    if (draft && user && profile) {
+      this.analysisService.getRecommendation(user.id, draft, profile).subscribe({
+        next: () => this.loading.set(false),
+        error: (err) => {
+          console.error('Error fetching recommendation', err);
+          this.error.set('No se pudo obtener el análisis de la IA. Mostrando datos locales.');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.loading.set(false);
+    }
+  }
 
   get analysisTitle() {
-    return this.draft()?.product?.name || 'Laptop de trabajo';
+    return this.draft()?.product?.name || 'Producto analizado';
+  }
+
+  get aiResult() {
+    return this.analysisService.latestResult()?.data;
   }
 
   get overallCompatibility() {
-    const d = this.draft();
-    const u = this.user();
-    if (!d || !u) return { score: '88%', class: 'badge-success', message: 'Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.' };
-
-    const price = d.product.price || 0;
-    const capacity = u.financialMetrics.freeCashFlow;
-
-    if (price > capacity * 2) {
-      return { score: '35%', class: 'badge-danger', message: 'Esta compra representa un riesgo alto. El costo supera por mucho tu margen libre, forzándote a adquirir nueva deuda.' };
-    } else if (price > capacity * 0.8) {
-      return { score: '60%', class: 'badge-warn', message: 'Toma precauciones. Esta compra absorbería gran parte de tu margen mensual libre actual.' };
+    const res = this.aiResult;
+    if (!res) {
+      return { 
+        score: '88%', 
+        class: 'badge-success', 
+        message: 'No hay datos de la IA disponibles actualmente.' 
+      };
     }
 
-    return { score: '95%', class: 'badge-success', message: 'Excelente decisión basada en tus números de este mes. Tu margen absorbe fácilmente esta transacción.' };
+    const analysis = res.chosen_analysis;
+    return {
+      score: `${Math.round(analysis.recommendation_score * 100)}%`,
+      class: analysis.viable ? 'badge-success' : analysis.risk_band === 1 ? 'badge-warn' : 'badge-danger',
+      message: analysis.explanation
+    };
   }
 
   get primaryImpact() {
-    const d = this.draft();
-    if (!d || !d.product.price) return 'RD$3,500/mes';
+    const res = this.aiResult;
+    if (!res) return 'RD$0/mes';
     
-    if (d.product.paymentType === 'Contado') {
-      return `RD$${d.product.price.toLocaleString(undefined, {maximumFractionDigits: 0})} (Único)`;
+    const analysis = res.chosen_analysis;
+    const installment = analysis.scenario_details?.installment || 0;
+    
+    if (installment === 0) {
+      return `RD$${(this.draft()?.product.price || 0).toLocaleString()} (Único)`;
     }
 
-    const duration = d.product.paymentDuration || 12;
-    return `RD$${(d.product.price / duration).toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`;
+    return `RD$${installment.toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`;
   }
 
   get impactMessage() {
-    const d = this.draft();
-    if (!d) return 'Esta sería tu cuota promediada al asumir este producto asumiendo un plazo de 12 meses.';
-    
-    if (d.product.paymentType === 'Contado') {
-      return 'Este es el impacto total de la compra al realizarse en un único pago.';
-    }
-
-    const duration = d.product.paymentDuration || 12;
-    return `Esta sería tu cuota mensual estimada basada en el plazo de ${duration} meses indicado.`;
+    const res = this.aiResult;
+    if (!res) return 'Análisis pendiente...';
+    return res.suggestion_text || 'Análisis basado en tu perfil financiero.';
   }
 
   get scenarios() {
+    const res = this.aiResult;
+    if (!res) return [];
+    
     return [
-      { title: 'Pago al contado', subtitle: 'Mejor escenario', description: 'Sin intereses, liquidación inmediata.', highlight: true },
-      { title: 'Financiamiento corto', subtitle: 'Escenario medio', description: 'Impacto mensual manejable, poco interés.', highlight: false },
-      { title: 'Financiamiento largo', subtitle: 'Escenario riesgoso', description: 'Compromete tu flexibilidad por más tiempo.', highlight: false }
+      { title: 'Contado', subtitle: 'Sin intereses', description: 'Pago único de contado.', highlight: res.best_option.scenario_details.type === 'contado' },
+      { title: 'Sugerido', subtitle: 'Óptimo', description: 'Plazo recomendado por la IA.', highlight: res.best_option.scenario_details.type === 'sugerido' },
+      { title: 'Largo Plazo', subtitle: 'Cuota mínima', description: 'Mayor plazo, menor cuota.', highlight: res.best_option.scenario_details.type === 'largo_plazo' }
     ];
   }
 
   get recommendations() {
-    const baseImpact = this.draft()?.product?.price ? (this.draft()!.product.price! / 12) : 3500;
+    const res = this.aiResult;
+    if (!res || !res.all_scenarios) return [];
     
-    return [
-      {
-        title: 'Pago al contado',
-        description: 'La opción financieramente más inteligente, pagando 0 intereses.',
-        label: 'Recomendada',
-        labelType: 'success',
-        compatibility: '95%',
-        impact: `RD$${(baseImpact * 12).toLocaleString(undefined, {maximumFractionDigits: 0})} (Único)`
-      },
-      {
-        title: 'Préstamo a 6 meses',
-        description: 'Viable si prefieres mantener liquidez, pero tiene un costo.',
-        label: 'Con cautela',
-        labelType: 'warn',
-        compatibility: '70%',
-        impact: `RD$${(baseImpact * 2.1).toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`
-      },
-      {
-        title: 'Préstamo a 24 meses',
-        description: 'Costoso a largo plazo. Tu perfil actual sugiere evitar este sobrecargo.',
-        label: 'No ideal',
-        labelType: 'danger',
-        compatibility: '30%',
-        impact: `RD$${(baseImpact * 0.6).toLocaleString(undefined, {maximumFractionDigits: 0})}/mes`
-      }
-    ];
+    return res.all_scenarios.map((s: any) => ({
+      title: s.scenario_details.name,
+      description: s.scenario_details.description,
+      label: s.risk_band_name,
+      labelType: s.viable ? 'success' : s.risk_band === 1 ? 'warn' : 'danger',
+      compatibility: `${Math.round(s.recommendation_score * 100)}%`,
+      impact: s.scenario_details.installment > 0 
+        ? `RD$${s.scenario_details.installment.toLocaleString()}/mes`
+        : `RD$${s.scenario_details.down_payment.toLocaleString()} (Único)`
+    }));
   }
 
   get similarProducts() {
@@ -109,19 +120,14 @@ export class ResultsComponent {
 
     if (category === 'Vehículo') {
       return [
-        { name: 'Sedán compacto (Asumiendo usado)', price: `RD$${(price * 0.7).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Cumple tu necesidad ahorrando un 30% en el precio inicial.', payment: 'Financiamiento 36 cuotas' },
-        { name: 'Vehículo eléctrico/híbrido usado', price: `RD$${(price * 1.1).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Ligeramente más caro pero ahorras en combustible mensual.', payment: 'Financiamiento 48 cuotas (Tasa verde)' }
-      ];
-    } else if (category === 'Tecnología' || category === 'Laptop') {
-      return [
-        { name: 'Modelo anterior (Refurbished)', price: `RD$${(price * 0.6).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Mismo rendimiento para uso básico con una rebaja significativa.', payment: 'Pago al contado recomendado' },
-        { name: 'Alternativa de marca media', price: `RD$${(price * 0.75).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Esquema de especificaciones bastante similares a un menor precio.', payment: 'Diferido en 3 cuotas sin interés' }
+        { name: 'Sedán compacto (Usado)', price: `RD$${(price * 0.7).toLocaleString()}`, desc: 'Cumple tu necesidad ahorrando un 30% en el precio inicial.', payment: 'Financiamiento 36 cuotas' },
+        { name: 'Híbrido usado', price: `RD$${(price * 1.1).toLocaleString()}`, desc: 'Ligeramente más caro pero ahorras en combustible mensual.', payment: 'Tasa verde' }
       ];
     }
     
     return [
-      { name: 'Alternativa más económica', price: `RD$${(price * 0.7).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Excelente forma de liberar margen reteniendo valor base.', payment: 'Pago al contado' },
-      { name: 'Alternativa premium duradera', price: `RD$${(price * 1.2).toLocaleString(undefined, {maximumFractionDigits: 0})}`, desc: 'Un poco más cara, pero duplica la vida útil del producto.', payment: 'Financiamiento a 12 meses' }
+      { name: 'Alternativa económica', price: `RD$${(price * 0.7).toLocaleString()}`, desc: 'Excelente forma de liberar margen reteniendo valor base.', payment: 'Pago al contado' },
+      { name: 'Alternativa duradera', price: `RD$${(price * 1.2).toLocaleString()}`, desc: 'Un poco más cara, pero duplica la vida útil del producto.', payment: '12 meses' }
     ];
   }
 }
