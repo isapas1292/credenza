@@ -114,20 +114,11 @@ export class ResultsComponent implements OnInit {
   }
 
   get similarProducts() {
-    const d = this.draft();
-    const category = d?.category || 'Laptop';
-    const price = d?.product?.price || 50000;
-
-    if (category === 'Vehículo') {
-      return [
-        { name: 'Sedán compacto (Usado)', price: `RD$${(price * 0.7).toLocaleString()}`, desc: 'Cumple tu necesidad ahorrando un 30% en el precio inicial.', payment: 'Financiamiento 36 cuotas' },
-        { name: 'Híbrido usado', price: `RD$${(price * 1.1).toLocaleString()}`, desc: 'Ligeramente más caro pero ahorras en combustible mensual.', payment: 'Tasa verde' }
-      ];
+    const res = this.aiResult;
+    if (res && res.alternatives) {
+      return res.alternatives;
     }
     
-    return [
-      { name: 'Alternativa económica', price: `RD$${(price * 0.7).toLocaleString()}`, desc: 'Excelente forma de liberar margen reteniendo valor base.', payment: 'Pago al contado' },
-      { name: 'Alternativa duradera', price: `RD$${(price * 1.2).toLocaleString()}`, desc: 'Un poco más cara, pero duplica la vida útil del producto.', payment: '12 meses' }
-    ];
+    return [];
   }
 }

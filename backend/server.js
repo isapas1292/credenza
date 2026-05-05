@@ -50,11 +50,11 @@ async function clasificarYGuardarSegmento(usuarioId, perfil) {
         const { segment_id, segment_name, profile_score, summary } = response.data.data;
 
         const req = new sql.Request();
-        req.input('UsuarioId',    sql.Int,          usuarioId);
-        req.input('SegmentId',    sql.Int,          segment_id);
-        req.input('SegmentName',  sql.NVarChar(255), segment_name);
-        req.input('ProfileScore', sql.Decimal(5,2),  profile_score);
-        req.input('Summary',      sql.NVarChar(500), summary);
+        req.input('UsuarioId', sql.Int, usuarioId);
+        req.input('SegmentId', sql.Int, segment_id);
+        req.input('SegmentName', sql.NVarChar(255), segment_name);
+        req.input('ProfileScore', sql.Decimal(5, 2), profile_score);
+        req.input('Summary', sql.NVarChar(500), summary);
 
         console.log(`[AI] Ejecutando UPSERT en SegmentosFinancierosUsuario para UsuarioId=${usuarioId}...`);
 
@@ -98,7 +98,7 @@ app.post('/api/auth/register', async (req, res) => {
         }
 
         const request = new sql.Request();
-        
+
         // Verificar si el correo ya existe
         const checkResult = await request.query(`SELECT Id FROM Usuarios WHERE Email = '${email}'`);
         if (checkResult.recordset.length > 0) {
@@ -179,7 +179,7 @@ app.post('/api/auth/login', async (req, res) => {
         request.input('Email', sql.VarChar, email);
 
         const result = await request.query(`SELECT * FROM Usuarios WHERE Email = @Email`);
-        
+
         if (result.recordset.length === 0) {
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
         }
@@ -188,7 +188,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         // Verificar la contraseña con bcrypt
         const isMatch = await bcrypt.compare(password, usuario.ContrasenaHash);
-        
+
         if (!isMatch) {
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
         }

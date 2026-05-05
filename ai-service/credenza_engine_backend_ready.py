@@ -634,13 +634,55 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
             "description": "Basado en los términos que seleccionaste manualmente."
         }
 
+    # Generamos alternativas inteligentes (productos similares)
+    alternatives = generate_alternatives(user_dict, option_dict)
+
     return {
         "chosen_analysis": user_choice,
         "best_option": best_overall,
         "all_scenarios": all_scenarios,
+        "alternatives": alternatives,
         "is_optimal": user_choice["recommendation_score"] >= best_overall["recommendation_score"] - 0.05,
         "suggestion_text": f"Nuestra recomendación ideal es {best_overall['scenario_details']['name']}." if user_choice["recommendation_score"] < best_overall["recommendation_score"] - 0.1 else "Tu elección es financieramente sólida."
     }
+
+def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
+    """Genera alternativas inteligentes basadas en el perfil del usuario."""
+    price = _num(product_data.get("price", 50000))
+    category = normalize_category(product_data.get("product_category", "technology"))
+    
+    # 1. Alternativa Económica (Ahorro inmediato)
+    # Si el usuario tiene un DTI alto, sugerimos algo mucho más barato
+    eco_price = price * 0.65
+    alternatives = [
+        {
+            "name": f"{product_data.get('name', 'Producto')} (Versión Económica / Usada)",
+            "price": f"RD${_num(eco_price):,.0f}",
+            "desc": "Excelente forma de liberar margen reteniendo el valor base y funcionalidad principal.",
+            "payment": "Pago al contado recomendado"
+        }
+    ]
+    
+    # 2. Alternativa Premium / Duradera
+    # Si el usuario tiene buen flujo libre, sugerimos invertir más para mayor durabilidad
+    premium_price = price * 1.25
+    alternatives.append({
+        "name": f"{product_data.get('name', 'Producto')} Premium (Alta Durabilidad)",
+        "price": f"RD${_num(premium_price):,.0f}",
+        "desc": "Un poco más cara, pero duplica la vida útil esperada, reduciendo el costo por año.",
+        "payment": f"Financiamiento a {find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18)} meses"
+    })
+    
+    # 3. Alternativa de Ahorro Inteligente (Refurbished o Generación anterior)
+    smart_price = price * 0.80
+    alternatives.append({
+        "name": f"{product_data.get('name', 'Producto')} (Refurbished Certificado)",
+        "price": f"RD${_num(smart_price):,.0f}",
+        "desc": "Mismo rendimiento que el modelo actual con un ahorro del 20% garantizado.",
+        "payment": "Diferido a 3 cuotas sin interés"
+    })
+    
+    return alternatives
 
 def load_or_train_artifacts(path: str) -> dict:
     if os.path.exists(path):
