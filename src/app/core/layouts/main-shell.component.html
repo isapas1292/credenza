@@ -1,16 +1,9 @@
 <div class="app-shell">
-  <header class="topbar glass-panel">
+  <header class="topbar">
     <div class="brand">
-      <div class="brand-mark">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+      <div class="brand-mark">C</div>
       <div>
         <h1>Credenza</h1>
-        <p>AI Financial Engine</p>
       </div>
     </div>
 
@@ -26,20 +19,24 @@
         </a>
       </div>
 
-      <div class="auth-section">
-        <ng-container *ngIf="authService.currentUser() as user">
-          <div class="user-info">
-            <span class="user-name">Hola, {{ user.nombre }}</span>
-          </div>
-          <a class="btn btn-secondary account-btn" routerLink="/cuenta" routerLinkActive="active">Mi Cuenta</a>
-          <button class="btn btn-secondary logout-btn" (click)="authService.logout()">Salir</button>
-        </ng-container>
-        
-        <ng-container *ngIf="!authService.currentUser()">
-          <a class="btn btn-secondary account-btn" routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
-          <a class="btn btn-primary account-btn" routerLink="/registro" routerLinkActive="active">Crear cuenta</a>
-        </ng-container>
-      </div>
+      <ng-container *ngIf="authService.currentUser()">
+        <a
+          class="account-btn"
+          routerLink="/perfil"
+          routerLinkActive="active"
+        >
+          Cuenta
+        </a>
+      </ng-container>
+      <ng-container *ngIf="!authService.currentUser()">
+        <a
+          class="account-btn"
+          routerLink="/login"
+          routerLinkActive="active"
+        >
+          Iniciar sesión
+        </a>
+      </ng-container>
     </nav>
   </header>
 
