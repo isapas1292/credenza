@@ -1,181 +1,36 @@
-.results-grid,
-.scenario-grid,
-.metric-grid {
-  display: grid;
-  gap: 18px;
-}
-
-.spacing-bottom {
-  margin-bottom: 22px;
-}
-
 .results-grid {
-  grid-template-columns: 0.82fr 1.18fr;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
   align-items: start;
 }
 
-.result-hero,
-.results-panel,
-.scenario-card,
-.recommendation-card,
-.metric-card {
-  background: var(--surface-solid);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+@media (max-width: 900px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.result-hero,
-.results-panel,
-.scenario-card,
-.recommendation-card,
-.metric-card {
-  padding: 24px;
+.animate-in {
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.result-hero {
-  background: linear-gradient(135deg, #0f172a, #312e81);
-  color: white;
-}
-
-.result-hero p {
-  color: rgba(255,255,255,0.82);
-}
-
-.result-head,
-.results-head,
-.recommendation-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.result-head h3,
-.results-head h3 {
-  margin: 6px 0 0;
-}
-
-.mini-label {
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-.mini-label.muted {
-  color: var(--muted);
-  opacity: 1;
-}
-
-.result-summary {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 20px;
-  background: #f8fafc;
-}
-
-.result-summary strong {
-  font-size: 30px;
-  display: block;
-  margin-top: 8px;
-  color: #111827;
-}
-
-.result-summary p {
-  color: var(--muted);
-}
-
-.scenario-grid {
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 18px;
-}
-
-.scenario-card {
-  background: #ffffff;
-  box-shadow: none;
-  border: 1px solid #eef2f7;
-  color: #1e293b;
-}
-
-.scenario-card.highlight {
-  border-color: rgba(22, 163, 74, 0.4);
-  background: linear-gradient(135deg, rgba(220, 252, 231, 0.95), #ffffff);
-}
-
-.scenario-card small,
-.metric-card span {
-  color: #64748b;
-  font-size: 13px;
-  display: block;
-}
-
-.scenario-card p {
-  color: #475569;
-}
-
-.scenario-card strong,
-.metric-card strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 24px;
-  color: #0f172a;
-}
-
-.recommendation-grid {
-  margin-top: 18px;
-}
-
-.recommendation-card {
-  background: #f8fafc;
-  box-shadow: none;
-}
-
-.recommendation-card + .recommendation-card {
-  margin-top: 14px;
-}
-
-.metric-grid {
-  grid-template-columns: repeat(2, 1fr);
-  margin-top: 18px;
-}
-
-.metric-card {
-  background: white;
-  box-shadow: none;
-}
-
-.recommendation-card p {
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-/* Loading and Error States */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-  background: var(--surface-solid);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  margin: 40px 0;
-}
-
-.loading-state h3 {
-  margin: 20px 0 10px;
-  color: var(--text);
-}
-
-.loading-state p {
-  color: var(--muted);
-  max-width: 500px;
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(109, 40, 217, 0.1);
-  border-left-color: var(--primary);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -184,31 +39,25 @@
   to { transform: rotate(360deg); }
 }
 
-.error-banner {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #991b1b;
-  padding: 16px 24px;
-  border-radius: var(--radius-md);
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.results-head h3 {
+  margin: 0;
 }
 
-.animate-in {
-  animation: fadeUp 0.5s ease-out;
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  margin-top: -6px;
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 1100px) {
-  .results-grid,
-  .scenario-grid,
-  .metric-grid {
-    grid-template-columns: 1fr;
-  }
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: var(--line);
+  border-radius: 3px;
 }

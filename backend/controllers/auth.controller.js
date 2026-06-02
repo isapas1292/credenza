@@ -30,13 +30,22 @@ const AuthController = {
             let apellido = '';
             let ciudad = '';
             let objetivo = '';
+            let ingresos = 0, gastos = 0, deudas = 0, emergencia = 0;
             
-            if (perfil && perfil.personal) {
-                apellido = perfil.personal.lastName || '';
-                ciudad = perfil.personal.city || '';
-            }
-            if (perfil && perfil.goals) {
-                objetivo = perfil.goals.mainGoal || '';
+            if (perfil) {
+                if (perfil.personal) {
+                    apellido = perfil.personal.lastName || '';
+                    ciudad = perfil.personal.city || '';
+                }
+                if (perfil.goals) {
+                    objetivo = perfil.goals.mainGoal || '';
+                }
+                if (perfil.finances) {
+                    ingresos = parseFloat(perfil.finances.monthlyIncome || perfil.finances.monthly_income_avg || 0);
+                    gastos = parseFloat(perfil.finances.fixedExpenses || perfil.finances.fixed_expenses_monthly || 0);
+                    deudas = parseFloat(perfil.finances.activeDebts || perfil.finances.current_debt_payment_monthly || 0);
+                    emergencia = parseFloat(perfil.finances.emergencyFund || perfil.finances.emergency_fund_amount || 0);
+                }
             }
 
             request.input('Nombre', sql.VarChar, nombre || 'Usuario');
@@ -56,6 +65,21 @@ const AuthController = {
             const result = await request.query(insertQuery);
             const newUser = result.recordset[0];
 
+            // 1. Guardar en tabla normalizada FinanzasUsuario
+            if (perfil && perfil.finances) {
+                const finanzasReq = new sql.Request();
+                finanzasReq.input('UserId', sql.Int, newUser.Id);
+                finanzasReq.input('Ingresos', sql.Decimal(18,2), ingresos);
+                finanzasReq.input('Gastos', sql.Decimal(18,2), gastos);
+                finanzasReq.input('Deudas', sql.Decimal(18,2), deudas);
+                finanzasReq.input('Emergencia', sql.Decimal(18,2), emergencia);
+                await finanzasReq.query(`
+                    INSERT INTO FinanzasUsuario (UsuarioId, IngresoMensual, GastosFijos, DeudasActivas, FondoEmergencia)
+                    VALUES (@UserId, @Ingresos, @Gastos, @Deudas, @Emergencia)
+                `);
+            }
+
+            // 2. Clasificar segmento
             let segmento = null;
             if (perfil) {
                 segmento = await AiService.clasificarYGuardarSegmento(newUser.Id, perfil);
@@ -100,14 +124,12 @@ const AuthController = {
             }
 
             const usuario = result.recordset[0];
-
             const isMatch = await bcrypt.compare(password, usuario.ContrasenaHash);
 
             if (!isMatch) {
                 return res.status(401).json({ error: 'Email o contraseña incorrectos' });
             }
 
-            // Generar JWT
             const token = jwt.sign({ id: usuario.Id, email: usuario.Email }, JWT_SECRET, { expiresIn: '24h' });
 
             res.json({
@@ -132,7 +154,6 @@ const AuthController = {
             const userId = req.params.id;
             const { perfil } = req.body; 
             
-            // Verificación de seguridad: el ID del token debe coincidir con el ID del param
             if (req.user && req.user.id !== parseInt(userId)) {
                 return res.status(403).json({ error: 'No tienes permiso para modificar este perfil' });
             }
@@ -142,23 +163,44 @@ const AuthController = {
             }
 
             const perfilJson = JSON.stringify(perfil);
-
             const request = new sql.Request();
             request.input('Id', sql.Int, userId);
             request.input('Perfil', sql.NVarChar, perfilJson);
 
             const result = await request.query(`
-                UPDATE Usuarios 
-                SET Perfil = @Perfil 
-                WHERE Id = @Id
+                UPDATE Usuarios SET Perfil = @Perfil WHERE Id = @Id
             `);
 
             if (result.rowsAffected[0] === 0) {
                 return res.status(404).json({ error: 'Usuario no encontrado' });
             }
 
-            const segmento = await AiService.clasificarYGuardarSegmento(parseInt(userId), perfil);
+            // Actualizar tabla relacional
+            if (perfil.finances) {
+                const ingresos = parseFloat(perfil.finances.monthlyIncome || perfil.finances.monthly_income_avg || 0);
+                const gastos = parseFloat(perfil.finances.fixedExpenses || perfil.finances.fixed_expenses_monthly || 0);
+                const deudas = parseFloat(perfil.finances.activeDebts || perfil.finances.current_debt_payment_monthly || 0);
+                const emergencia = parseFloat(perfil.finances.emergencyFund || perfil.finances.emergency_fund_amount || 0);
 
+                const finanzasReq = new sql.Request();
+                finanzasReq.input('UserId', sql.Int, userId);
+                finanzasReq.input('Ingresos', sql.Decimal(18,2), ingresos);
+                finanzasReq.input('Gastos', sql.Decimal(18,2), gastos);
+                finanzasReq.input('Deudas', sql.Decimal(18,2), deudas);
+                finanzasReq.input('Emergencia', sql.Decimal(18,2), emergencia);
+                
+                await finanzasReq.query(`
+                    IF EXISTS (SELECT 1 FROM FinanzasUsuario WHERE UsuarioId = @UserId)
+                        UPDATE FinanzasUsuario 
+                        SET IngresoMensual=@Ingresos, GastosFijos=@Gastos, DeudasActivas=@Deudas, FondoEmergencia=@Emergencia, FechaActualizacion=GETDATE()
+                        WHERE UsuarioId = @UserId
+                    ELSE
+                        INSERT INTO FinanzasUsuario (UsuarioId, IngresoMensual, GastosFijos, DeudasActivas, FondoEmergencia)
+                        VALUES (@UserId, @Ingresos, @Gastos, @Deudas, @Emergencia)
+                `);
+            }
+
+            const segmento = await AiService.clasificarYGuardarSegmento(parseInt(userId), perfil);
             res.json({ mensaje: 'Perfil actualizado exitosamente', segmento });
 
         } catch (error) {

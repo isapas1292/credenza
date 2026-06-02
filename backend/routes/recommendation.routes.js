@@ -3,11 +3,6 @@ const router = express.Router();
 const sql = require('mssql');
 const RecommendationAiService = require('../services/recommendationAi.service');
 
-/**
- * POST /api/recommendations
- * Cuerpo: { userId, productData, perfil? }
- * Si no se envía 'perfil', se busca en la base de datos usando 'userId'.
- */
 router.post('/', async (req, res) => {
     try {
         let { userId, productData, perfil } = req.body;
@@ -16,11 +11,8 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Se requiere productData para el análisis' });
         }
 
-        // Si no se proporcionó perfil en el request, lo buscamos en la BD
         if (!perfil && userId) {
-            console.log(`[Backend] Buscando perfil en BD para usuario ${userId}...`);
             const result = await sql.query`SELECT Perfil FROM Usuarios WHERE Id = ${userId}`;
-            
             if (result.recordset.length > 0 && result.recordset[0].Perfil) {
                 perfil = JSON.parse(result.recordset[0].Perfil);
             } else {
@@ -32,14 +24,38 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Se requiere perfil o userId válido para el análisis' });
         }
 
-        console.log(`[Backend] Solicitando análisis de recomendación para producto: ${productData.product_category || 'general'}`);
         const result = await RecommendationAiService.getRecommendation(perfil, productData);
         
-        // También podemos traer el segmento actual de la tabla SegmentosFinancierosUsuario para complementar
         if (userId) {
             const segmentResult = await sql.query`SELECT * FROM SegmentosFinancierosUsuario WHERE UsuarioId = ${userId}`;
             if (segmentResult.recordset.length > 0) {
                 result.db_segment = segmentResult.recordset[0];
+            }
+
+            // [NUEVO] Guardar en HistorialAnalisis
+            try {
+                const histReq = new sql.Request();
+                const score = result.data?.chosen_analysis?.recommendation_score || 0;
+                const viable = result.data?.chosen_analysis?.viable ? 1 : 0;
+                const msg = result.data?.suggestion_text || '';
+                const jsonRes = JSON.stringify(result.data || {});
+
+                histReq.input('UsuarioId', sql.Int, userId);
+                histReq.input('ProductoNombre', sql.NVarChar(255), productData.name || 'Desconocido');
+                histReq.input('ProductoPrecio', sql.Decimal(18,2), productData.price || 0);
+                histReq.input('ProductoCategoria', sql.NVarChar(100), productData.product_category || 'General');
+                histReq.input('Score', sql.Decimal(5,2), score);
+                histReq.input('Viable', sql.Bit, viable);
+                histReq.input('Mensaje', sql.NVarChar(1000), msg);
+                histReq.input('Json', sql.NVarChar(sql.MAX), jsonRes);
+
+                await histReq.query(`
+                    INSERT INTO HistorialAnalisis (UsuarioId, ProductoNombre, ProductoPrecio, ProductoCategoria, RecomendacionScore, Viable, MensajeSugerencia, ResultadoCompletoJSON, FechaAnalisis)
+                    VALUES (@UsuarioId, @ProductoNombre, @ProductoPrecio, @ProductoCategoria, @Score, @Viable, @Mensaje, @Json, GETDATE())
+                `);
+            } catch (err) {
+                console.error('Error guardando historial:', err);
+                // No detenemos el request por esto
             }
         }
 
@@ -50,10 +66,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-/**
- * POST /api/recommendations/analyze
- * Análisis rápido de compatibilidad (alias de la ruta principal o simplificado)
- */
 router.post('/analyze', async (req, res) => {
     try {
         const { perfil, product } = req.body;

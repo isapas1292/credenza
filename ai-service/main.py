@@ -1,6 +1,7 @@
 import os
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List
+import typing_extensions as typing
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,7 +29,7 @@ app.add_middleware(
 ARTIFACTS_PATH = os.path.join(os.path.dirname(__file__), "credenza_artifacts.joblib")
 artifacts = load_or_train_artifacts(ARTIFACTS_PATH)
 
-# ─── Schemas ────────────────────────────────────────────────
+# ─── Schemas para Pydantic y Gemini ─────────────────────────
 
 class SegmentRequest(BaseModel):
     perfil: Dict[str, Any]
@@ -37,16 +38,26 @@ class RecommendationRequest(BaseModel):
     perfil: Dict[str, Any]
     product: Dict[str, Any]
 
+class Alternative(typing.TypedDict):
+    name: str
+    price: str
+    desc: str
+    payment: str
+
+class GeminiResponse(typing.TypedDict):
+    suggestion_text: str
+    alternatives: List[Alternative]
+
 # Configuración de Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.0-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash') # Usando el modelo optimizado
 else:
     model = None
 
 def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> dict:
-    """Usa Gemini para mejorar las explicaciones y las alternativas con productos reales."""
+    """Usa Gemini con Structured Outputs para evitar parse errors."""
     if not model:
         return analysis_result
 
@@ -65,34 +76,31 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         - Análisis Técnico de Viabilidad: {json.dumps(analysis_result['chosen_analysis'])}
 
         TAREA:
-        1. Genera un 'suggestion_text': Un párrafo empático que resuma si la compra es segura o si hay un riesgo real, dando un consejo práctico (máximo 4 líneas).
-        2. Genera 3 'alternativas' REALES de productos:
-           - Deben ser MODELOS ESPECÍFICOS (ej. si busca Laptop, sugiere modelos como 'Dell Vostro 3400' o 'MacBook Air M1').
-           - Alternativa 1 (Ahorro): Un modelo que cueste un 30-40% menos pero cumpla la función.
-           - Alternativa 2 (Inversión): Un modelo premium o de mayor durabilidad (20% más caro).
-           - Alternativa 3 (Smart): Un modelo de generación anterior o 'Certified Refurbished'.
-
-        Responde ÚNICAMENTE en JSON con esta estructura:
-        {{
-            "suggestion_text": "...",
-            "alternatives": [
-                {{"name": "Modelo Específico", "price": "RD$...", "desc": "...", "payment": "Plan sugerido..."}},
-                ...
-            ]
-        }}
+        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra ahoga su presupuesto o es segura, sugiriendo un plan de acción real (ej. "Ahorra 2 meses más antes de comprarlo").
+        2. Provee 3 `alternativas` REALES de productos con nombres de modelos reales en el mercado actual:
+           - Opción Ahorro (más barato)
+           - Opción Smart (mejor relación calidad-precio)
+           - Opción Premium (más duradero)
         """
-        response = model.generate_content(prompt)
-        # Limpiar la respuesta por si Gemini incluye markdown
-        text = response.text.strip().replace("```json", "").replace("```", "")
-        gemini_data = json.loads(text)
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                response_mime_type="application/json",
+                response_schema=GeminiResponse
+            )
+        )
+        
+        gemini_data = json.loads(response.text)
         
         if "suggestion_text" in gemini_data:
             analysis_result["suggestion_text"] = gemini_data["suggestion_text"]
         if "alternatives" in gemini_data:
             analysis_result["alternatives"] = gemini_data["alternatives"]
-        
+            
     except Exception as e:
         print(f"Error enriqueciendo con Gemini: {e}")
+        # Si falla, mantenemos el resultado original sin colapsar el backend
         
     return analysis_result
 
@@ -100,7 +108,7 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
 
 @app.get("/")
 def health():
-    return {"status": "ok", "service": "Credenza AI Service", "version": "2.1.0", "gemini_active": model is not None}
+    return {"status": "ok", "service": "Credenza AI Service", "version": "2.2.0 (Structured Outputs)", "gemini_active": model is not None}
 
 
 @app.get("/health")
@@ -110,7 +118,6 @@ def health_check():
 
 @app.post("/profile/segment")
 def segment_profile(body: SegmentRequest) -> Dict[str, Any]:
-    # ... (sin cambios)
     try:
         user_features = build_user_dict_from_payload(body.perfil)
         import pandas as pd
@@ -137,16 +144,10 @@ def segment_profile(body: SegmentRequest) -> Dict[str, Any]:
 
 @app.post("/product/recommend")
 def recommend_product(body: RecommendationRequest) -> Dict[str, Any]:
-    """
-    Analiza la viabilidad de un producto para un perfil de usuario.
-    """
     try:
         user_features = build_user_dict_from_payload(body.perfil)
         result = predict_recommendation(user_features, body.product, artifacts)
-        
-        # Enriquecer con Gemini si está disponible
         result = enrich_with_gemini(result, body.perfil, body.product)
-        
         return {"succeeded": True, "data": result}
     except Exception as ex:
         print(f"Error en recommend_product: {ex}")
