@@ -34,7 +34,7 @@ export class ResultsComponent implements OnInit {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: '#a1a1aa', font: { family: 'Inter', size: 13 } }
+        labels: { color: '#000000', font: { family: 'Inter', size: 13 } }
       }
     },
     cutout: '70%'

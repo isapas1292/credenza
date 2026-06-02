@@ -12,6 +12,7 @@ export class AuthService {
   // Estado reactivo usando Signals
   currentUser = signal<any | null>(null);
   token = signal<string | null>(null);
+  private _tempRegisterData = signal<any | null>(null);
 
   constructor(private http: HttpClient, private router: Router) {
     this.loadTokenFromStorage();
@@ -67,6 +68,17 @@ export class AuthService {
       this.token.set(res.token);
       this.currentUser.set(res.usuario);
     }
+  }
+
+  // Retrieve temporary registration data (used during multi-step registration)
+  // Retrieve temporary registration data (used during multi-step registration)
+  setTempRegisterData(data: any): void {
+    this._tempRegisterData.set(data);
+  }
+
+  // Returns the stored temporary registration data or null
+  tempRegisterData(): any {
+    return this._tempRegisterData();
   }
 
   isAuthenticated(): boolean {
