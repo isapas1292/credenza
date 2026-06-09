@@ -1,43 +1,49 @@
-<div class="app-shell">
+<div class="app-shell animate-fade-in">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">C</div>
-      <div>
-        <h1>Credenza</h1>
+    <div class="topbar-inner">
+      <div class="brand" routerLink="/">
+        <div class="brand-mark">C</div>
+        <div class="brand-text">
+          <h1>Credenza</h1>
+          <p>Financial clarity</p>
+        </div>
       </div>
+
+      <nav class="nav">
+        <div class="nav-main">
+          <a
+            *ngFor="let item of mainNavItems"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          >
+            {{ item.label }}
+          </a>
+        </div>
+
+        <div class="nav-actions">
+          <ng-container *ngIf="authService.currentUser()">
+            <a
+              class="btn btn-primary"
+              routerLink="/perfil"
+              routerLinkActive="active"
+            >
+              Mi Cuenta
+            </a>
+          </ng-container>
+          <ng-container *ngIf="!authService.currentUser()">
+            <a
+              class="btn btn-secondary"
+              routerLink="/login"
+              routerLinkActive="active"
+            >
+              Iniciar sesión
+            </a>
+            <a class="btn btn-primary" routerLink="/registro">Registrarse</a>
+          </ng-container>
+        </div>
+      </nav>
     </div>
-
-    <nav class="nav">
-      <div class="nav-main">
-        <a
-          *ngFor="let item of mainNavItems"
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-        >
-          {{ item.label }}
-        </a>
-      </div>
-
-      <ng-container *ngIf="authService.currentUser()">
-        <a
-          class="account-btn"
-          routerLink="/perfil"
-          routerLinkActive="active"
-        >
-          Cuenta
-        </a>
-      </ng-container>
-      <ng-container *ngIf="!authService.currentUser()">
-        <a
-          class="account-btn"
-          routerLink="/login"
-          routerLinkActive="active"
-        >
-          Iniciar sesión
-        </a>
-      </ng-container>
-    </nav>
   </header>
 
   <main class="container">

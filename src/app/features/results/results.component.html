@@ -1,54 +1,55 @@
-<section class="page-title spacing-bottom">
+<section class="page-title spacing-bottom animate-fade-in">
   <span class="eyebrow">Dashboard Interactivo</span>
   <h2>Impacto de tu Análisis</h2>
-  <p>Evalúa cómo afectaría esta compra a tu presupuesto mensual usando nuestra simulación gráfica.</p>
+  <p>Evalúa cómo afectaría esta compra a tu presupuesto mensual y revisa opciones recomendadas por IA.</p>
 </section>
 
-<div *ngIf="loading()" class="loading-state animate-in">
-  <div class="spinner" style="margin: 0 auto;"></div>
-  <h3 style="margin-top: 20px;">Analizando estructuradamente...</h3>
-  <p style="color: var(--muted);">Procesando tu perfil financiero y estructurando recomendaciones con Inteligencia Artificial.</p>
+<div *ngIf="loading()" class="loading-state animate-fade-in-up">
+  <div class="spinner"></div>
+  <h3>Analizando tu perfil...</h3>
+  <p>Procesando variables financieras, buscando opciones de mercado y estructurando recomendaciones con Inteligencia Artificial.</p>
 </div>
 
-<div *ngIf="!loading() && error()" class="error-banner animate-in">
-  <i class="icon">⚠️</i> {{ error() }}
+<div *ngIf="!loading() && error()" class="error-banner animate-fade-in">
+  <div class="error-icon">⚠️</div>
+  <span>{{ error() }}</span>
 </div>
 
-<section class="results-grid animate-in" *ngIf="!loading() && !error()">
+<section class="results-grid animate-fade-in-up" *ngIf="!loading() && !error()">
   
   <!-- Panel Principal Gráfico -->
-  <article class="results-panel" style="display: flex; flex-direction: column;">
-    <div class="results-head" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+  <article class="results-panel main-panel">
+    <div class="results-head">
       <div>
-        <span class="mini-label" style="color: var(--primary); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.1em;">Simulación Mensual</span>
-        <h3 style="font-size: 24px; margin-top: 4px;">Tu Dinero en Acción</h3>
+        <span class="mini-label accent">Simulación Mensual</span>
+        <h3>Tu Dinero en Acción</h3>
       </div>
-      <span [class]="overallCompatibility.class" style="padding: 8px 16px; font-size: 16px;">{{ overallCompatibility.score }} Viable</span>
+      <span [class]="overallCompatibility.class + ' compatibility-badge'">{{ overallCompatibility.score }} Viable</span>
     </div>
 
-    <p style="color: var(--muted); margin-bottom: 24px; font-size: 15px;">{{ overallCompatibility.message }}</p>
+    <p class="compatibility-msg">{{ overallCompatibility.message }}</p>
 
     <!-- Visualización Gráfica -->
-    <div style="position: relative; height: 260px; margin-bottom: 30px;">
+    <div class="chart-container">
       <canvas baseChart
               [data]="pieChartData"
               [options]="pieChartOptions"
               [type]="pieChartType">
       </canvas>
-      <div class="chart-center-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
-        <span style="display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Flujo Libre</span>
-        <strong style="font-size: 22px; color: var(--text);">RD${{ simulatedFreeCashFlow | number:'1.0-0' }}</strong>
+      <div class="chart-center-text">
+        <span>Flujo Libre</span>
+        <strong>RD${{ simulatedFreeCashFlow | number:'1.0-0' }}</strong>
       </div>
     </div>
 
     <!-- Controles del Simulador -->
-    <div class="simulator-controls" style="background: #f8fafc; padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--line);">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+    <div class="simulator-controls">
+      <div class="simulator-top">
         <label>Plazo a simular: <strong>{{ sliderMonths() }} meses</strong></label>
-        <strong style="color: var(--primary);">Cuota: RD${{ simulatedInstallment | number:'1.0-0' }}/mes</strong>
+        <strong class="simulator-price">Cuota: RD${{ simulatedInstallment | number:'1.0-0' }}/mes</strong>
       </div>
-      <input type="range" [min]="1" [max]="60" [step]="1" [ngModel]="sliderMonths()" (ngModelChange)="sliderMonths.set($event)" style="width: 100%; accent-color: var(--primary); cursor: pointer; padding: 0; background: transparent; border: none; box-shadow: none;">
-      <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted);">
+      <input type="range" [min]="1" [max]="60" [step]="1" [ngModel]="sliderMonths()" (ngModelChange)="sliderMonths.set($event)" class="modern-range">
+      <div class="simulator-bottom">
         <span>1 mes (Contado)</span>
         <span>60 meses</span>
       </div>
@@ -56,49 +57,73 @@
   </article>
 
   <!-- Panel Lateral Inteligente -->
-  <div style="display: flex; flex-direction: column; gap: 24px;">
+  <div class="side-panels">
+
+    <!-- Plan de Acción -->
+    <article class="results-panel action-plan-panel" *ngIf="actionPlan.length > 0">
+      <div class="results-head">
+        <div>
+          <span class="mini-label accent">Sugerencias Clave</span>
+          <h3>Plan de Acción Personalizado</h3>
+        </div>
+      </div>
+      <ul class="action-plan-list">
+        <li *ngFor="let step of actionPlan; let i = index" class="action-plan-item animate-fade-in-up" [style.animation-delay]="i * 0.1 + 's'">
+          <div class="step-number">{{ i + 1 }}</div>
+          <p>{{ step }}</p>
+        </li>
+      </ul>
+    </article>
+    
     
     <!-- Escenarios -->
     <article class="results-panel">
       <div class="results-head">
         <div>
-          <span class="mini-label" style="color: var(--muted);">Opciones Técnicas</span>
+          <span class="mini-label">Opciones Técnicas</span>
           <h3>Escenarios Calculados</h3>
         </div>
       </div>
       
-      <div class="scenario-grid" style="display: grid; gap: 12px; margin-top: 16px;">
-        <article class="scenario-card" *ngFor="let scenario of scenarios" 
-                 [class.highlight]="scenario.highlight">
-          <div style="display: flex; justify-content: space-between;">
-            <strong style="font-size: 15px;">{{ scenario.title }}</strong>
-            <span *ngIf="scenario.highlight" class="badge-success" style="font-size: 10px; padding: 2px 8px;">Recomendado</span>
+      <div class="scenario-grid">
+        <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
+          <div class="scenario-header">
+            <strong>{{ scenario.title }}</strong>
+            <span *ngIf="scenario.highlight" class="badge-success mini-badge">Recomendado</span>
+            <span *ngIf="!scenario.highlight" class="badge-neutral mini-badge">{{ scenario.score }}%</span>
           </div>
-          <p style="margin: 6px 0 0; font-size: 13px; color: var(--muted);">{{ scenario.description }}</p>
+          <p>{{ scenario.description }}</p>
+          <div class="scenario-metrics" *ngIf="scenario.installment > 0 || scenario.dtiPost">
+            <span *ngIf="scenario.installment > 0" class="metric-chip">💳 RD${{ scenario.installment | number:'1.0-0' }}/mes</span>
+            <span *ngIf="scenario.dtiPost" class="metric-chip">📊 DTI {{ scenario.dtiPost }}%</span>
+            <span *ngIf="scenario.fcfPost" class="metric-chip" [class.metric-danger]="scenario.fcfPost < 0">
+              {{ scenario.fcfPost < 0 ? '🔴' : '🟢' }} Flujo: RD${{ scenario.fcfPost | number:'1.0-0' }}
+            </span>
+          </div>
         </article>
       </div>
     </article>
 
     <!-- Alternativas Gemini -->
-    <article class="results-panel" style="flex: 1;">
+    <article class="results-panel flex-1">
       <div class="results-head">
         <div>
-          <span class="mini-label" style="color: var(--primary);">Inteligencia de Mercado</span>
+          <span class="mini-label accent">Inteligencia de Mercado</span>
           <h3>Alternativas Sugeridas</h3>
         </div>
       </div>
     
-      <div style="margin-top: 16px; display: grid; gap: 16px;">
-        <article class="recommendation-card" *ngFor="let item of similarProducts" style="border-left: 3px solid var(--primary);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-            <div>
-              <strong style="font-size: 15px; color: var(--text);">{{ item.name }}</strong>
-              <p style="font-size: 13px; color: var(--muted); margin: 4px 0 0;">{{ item.desc }}</p>
+      <div class="recommendation-grid">
+        <article class="recommendation-card" *ngFor="let item of similarProducts">
+          <div class="recommendation-top">
+            <div class="recommendation-info">
+              <strong>{{ item.name }}</strong>
+              <p>{{ item.desc }}</p>
             </div>
-            <span class="badge-neutral" style="font-size: 12px;">{{ item.price }}</span>
+            <span class="badge-neutral price-badge">{{ item.price }}</span>
           </div>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 13px; color: var(--muted);">
-             Sugerencia: <strong style="color: var(--text);">{{ item.payment }}</strong>
+          <div class="recommendation-bottom">
+             Sugerencia: <strong>{{ item.payment }}</strong>
           </div>
         </article>
       </div>

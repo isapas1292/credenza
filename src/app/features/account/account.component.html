@@ -1,75 +1,80 @@
-<section class="account-grid">
-    <article class="account-hero">
-      <span class="eyebrow inverse">Cuenta</span>
-      <h2>Todo lo relacionado con el usuario vive aquí.</h2>
+<section class="account-grid animate-fade-in">
+  <article class="account-hero">
+    <div class="hero-content">
+      <span class="eyebrow inverse">Hub de Usuario</span>
+      <h2>Gestiona tu cuenta y preferencias</h2>
       <p>
-        Para que el menú principal se vea más limpio y profesional, el acceso,
-        registro y perfil se concentran en una sola pantalla de cuenta.
+        Accede rápidamente a tu perfil, configuraciones y ajustes de seguridad desde este panel unificado.
       </p>
-  
-      <div class="account-actions" *ngIf="!authService.currentUser()">
+
+      <div class="account-actions delay-100 animate-fade-in-up" *ngIf="!authService.currentUser()">
         <a class="btn btn-primary" routerLink="/login">Iniciar sesión</a>
-        <a class="btn btn-secondary" routerLink="/registro">Crear cuenta</a>
+        <a class="btn btn-secondary" style="color: white; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" routerLink="/registro">Crear cuenta</a>
       </div>
 
-      <div class="account-actions" *ngIf="authService.currentUser()">
+      <div class="account-actions delay-100 animate-fade-in-up" *ngIf="authService.currentUser()">
         <a class="btn btn-primary" routerLink="/perfil">Ir a mi perfil</a>
-        <button class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
+        <button class="btn btn-secondary" style="color: white; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" (click)="logout()">Cerrar sesión</button>
       </div>
-  
-      <div class="account-note">
-        <strong>Menú simplificado</strong>
-        <p>
-          Los resultados aparecen dentro del flujo de análisis y el perfil se consulta
-          desde esta sección, evitando sobrecargar la navegación superior.
-        </p>
-      </div>
-    </article>
-  
-    <article class="account-panel">
-      <div class="page-title">
-        <span class="eyebrow">Accesos rápidos</span>
-        <h2>Gestiona tu cuenta</h2>
-        <p>
-          Desde aquí el usuario puede iniciar sesión, registrarse o entrar a su perfil
-          sin llenar el menú principal de opciones secundarias.
-        </p>
-      </div>
-  
-      <div class="account-card-grid">
-        <ng-container *ngIf="authService.currentUser()">
-          <article class="account-option">
-            <h3>Cerrar sesión</h3>
-            <p>Sal de tu cuenta para probar con otro contexto.</p>
-            <button class="btn btn-dark option-btn" (click)="logout()">Cerrar sesión</button>
-          </article>
-        </ng-container>
+    </div>
+    <div class="shape shape-account"></div>
+  </article>
 
-        <ng-container *ngIf="!authService.currentUser()">
-          <article class="account-option">
-            <h3>Iniciar sesión</h3>
+  <article class="account-panel delay-200 animate-fade-in-up">
+    <div class="page-title">
+      <span class="eyebrow">Accesos rápidos</span>
+      <h3>Opciones de cuenta</h3>
+    </div>
+
+    <div class="account-card-grid">
+      <ng-container *ngIf="authService.currentUser()">
+        <article class="account-option">
+          <div class="option-icon">👤</div>
+          <div class="option-text">
+            <h4>Mi perfil financiero</h4>
+            <p>Revisa tu situación y los análisis que has realizado.</p>
+          </div>
+          <a class="btn btn-primary option-btn" routerLink="/perfil">Ver Perfil</a>
+        </article>
+
+        <article class="account-option">
+          <div class="option-icon">⚙️</div>
+          <div class="option-text">
+            <h4>Configurar datos</h4>
+            <p>Actualiza tus variables financieras para mayor precisión.</p>
+          </div>
+          <a class="btn btn-secondary option-btn" routerLink="/perfil-configuracion">Actualizar</a>
+        </article>
+
+        <article class="account-option danger-zone">
+          <div class="option-icon">🔒</div>
+          <div class="option-text">
+            <h4>Cerrar sesión</h4>
+            <p>Sal de forma segura de la plataforma.</p>
+          </div>
+          <button class="btn btn-secondary option-btn" (click)="logout()">Salir</button>
+        </article>
+      </ng-container>
+
+      <ng-container *ngIf="!authService.currentUser()">
+        <article class="account-option">
+          <div class="option-icon">🔑</div>
+          <div class="option-text">
+            <h4>Iniciar sesión</h4>
             <p>Entra a tu historial, resultados guardados y preferencias.</p>
-            <a class="btn btn-dark option-btn" routerLink="/login">Ir a inicio de sesión</a>
-          </article>
-    
-          <article class="account-option">
-            <h3>Crear cuenta</h3>
-            <p>Regístrate para guardar análisis, configurar tu perfil y seguir tus avances.</p>
-            <a class="btn btn-dark option-btn" routerLink="/registro">Ir a registro</a>
-          </article>
-        </ng-container>
-  
-        <article class="account-option">
-          <h3>Mi perfil</h3>
-          <p>Revisa tu situación financiera, datos del usuario y análisis recientes.</p>
-          <a class="btn btn-dark option-btn" routerLink="/perfil">Ir a mi perfil</a>
+          </div>
+          <a class="btn btn-primary option-btn" routerLink="/login">Entrar</a>
         </article>
 
         <article class="account-option">
-          <h3>Configurar perfil</h3>
-          <p>Completa las preguntas necesarias para construir el perfil de recomendaciones del usuario.</p>
-          <a class="btn btn-dark option-btn" routerLink="/perfil-configuracion">Configurar perfil</a>
+          <div class="option-icon">✨</div>
+          <div class="option-text">
+            <h4>Crear cuenta</h4>
+            <p>Regístrate para guardar análisis y configurar tu perfil.</p>
+          </div>
+          <a class="btn btn-secondary option-btn" routerLink="/registro">Registrarse</a>
         </article>
-      </div>
-    </article>
-  </section>
+      </ng-container>
+    </div>
+  </article>
+</section>

@@ -1,30 +1,41 @@
-<section class="login-wrap">
-    <article class="login-card">
-      <span class="eyebrow">Bienvenido de nuevo</span>
-      <h2>Inicia sesión para continuar con tus análisis.</h2>
-      <p>
-        Esta pantalla transmite seguridad, sobriedad y acceso rápido al historial del usuario,
-        su perfil y sus recomendaciones guardadas.
-      </p>
-  
-      <div class="login-fields">
+<section class="auth-layout animate-fade-in">
+  <article class="auth-visual">
+    <div class="visual-content">
+      <div class="brand-mark">C</div>
+      <h2>Bienvenido de nuevo</h2>
+      <p>Retoma tus análisis, explora nuevas oportunidades y mantén el control de tu futuro financiero con decisiones claras e informadas.</p>
+    </div>
+    <!-- Abstract shapes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+  </article>
+
+  <article class="auth-form-container">
+    <div class="auth-form-inner">
+      <div class="page-title">
+        <span class="eyebrow">Acceso Seguro</span>
+        <h2>Iniciar Sesión</h2>
+      </div>
+
+      <div class="login-fields delay-100 animate-fade-in-up">
         <div class="field">
           <label>Correo electrónico</label>
-          <input [(ngModel)]="credentials.email" name="email" type="email" placeholder="correo@ejemplo.com">
+          <input [(ngModel)]="credentials.email" name="email" type="email" placeholder="tucorreo@ejemplo.com">
         </div>
         <div class="field">
           <label>Contraseña</label>
           <input [(ngModel)]="credentials.password" name="password" type="password" placeholder="••••••••">
         </div>
       </div>
-  
-      <div class="button-wrap">
-        <button class="btn btn-dark" type="button" (click)="login()">Entrar</button>
+
+      <div class="button-wrap delay-200 animate-fade-in-up">
+        <button class="btn btn-primary" style="width: 100%;" type="button" (click)="login()">Continuar</button>
       </div>
 
-      <div class="auth-switch">
+      <div class="auth-switch delay-300 animate-fade-in-up">
         <span>¿No tienes cuenta?</span>
         <a routerLink="/registro">Crea una cuenta aquí</a>
       </div>
-    </article>
-  </section>
+    </div>
+  </article>
+</section>

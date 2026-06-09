@@ -1,21 +1,14 @@
-<section class="page-title spacing-bottom">
-  <span class="eyebrow">Analizar productos</span>
-  <h2 *ngIf="currentStep === 1">Primero elige una categoría</h2>
-  <h2 *ngIf="currentStep === 2">Detalles del producto</h2>
-  <h2 *ngIf="currentStep === 3">Contexto y prioridades</h2>
-  <p *ngIf="currentStep === 1">
-    Para empezar, indícanos qué tipo de producto o servicio estás considerando.
-    Esto nos ayudará a adaptar las siguientes preguntas.
-  </p>
-  <p *ngIf="currentStep === 2">
-    Ingresa los datos básicos de lo que estás planeando comprar.
-  </p>
-  <p *ngIf="currentStep === 3">
-    Ayúdanos a entender por qué necesitas esto y qué es lo más importante para ti.
-  </p>
+<section class="page-title spacing-bottom animate-fade-in">
+  <span class="eyebrow">Analizar Productos</span>
+  <h2 *ngIf="currentStep === 1">Selecciona una Categoría</h2>
+  <h2 *ngIf="currentStep === 2">Detalles del Producto</h2>
+  <h2 *ngIf="currentStep === 3">Contexto y Prioridades</h2>
+  <p *ngIf="currentStep === 1">Para empezar, indícanos qué tipo de producto o servicio estás considerando. Esto nos ayuda a adaptar las preguntas.</p>
+  <p *ngIf="currentStep === 2">Ingresa los datos básicos y el costo estimado de lo que planeas adquirir.</p>
+  <p *ngIf="currentStep === 3">Ayúdanos a entender por qué necesitas esto y qué es lo más importante para ti.</p>
 </section>
 
-<section class="analyze-wizard">
+<section class="analyze-wizard animate-fade-in-up">
   <!-- Progress Indicator -->
   <div class="wizard-progress">
     <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
@@ -37,7 +30,7 @@
   <article class="wizard-panel">
 
     <!-- STEP 1: CATEGORY -->
-    <div class="step-content" *ngIf="currentStep === 1">
+    <div class="step-content animate-fade-in" *ngIf="currentStep === 1">
       <div class="category-grid">
         <article class="category-card" *ngFor="let category of categories"
           [class.active]="selectedCategory === category.title" (click)="selectCategory(category.title)">
@@ -49,15 +42,14 @@
 
       <div class="wizard-actions">
         <span></span> <!-- empty spacer -->
-        <button class="btn btn-dark btn-inline" type="button" (click)="nextStep()">
+        <button class="btn btn-primary" type="button" (click)="nextStep()">
           Siguiente: Detalles <i class="icon-arrow-right"></i>
         </button>
       </div>
     </div>
 
     <!-- STEP 2: PRODUCT DETAILS -->
-    <div class="step-content animate-in" *ngIf="currentStep === 2">
-
+    <div class="step-content animate-fade-in-up" *ngIf="currentStep === 2">
       <div class="field-grid">
         <div class="field field-full">
           <label>Nombre o referencia</label>
@@ -101,37 +93,34 @@
           </div>
         </div>
 
-        <div class="field field-full animate-in" *ngIf="product.paymentType !== 'Contado'">
+        <div class="field field-full" *ngIf="product.paymentType !== 'Contado'">
           <label>¿A cuántos meses planeas pagarlo?</label>
           <div class="input-with-suffix">
             <input [(ngModel)]="product.paymentDuration" name="paymentDuration" type="number" placeholder="Ej. 12" />
             <span class="suffix">Meses</span>
           </div>
-          <p class="field-hint">Esto nos ayuda a calcular el impacto en tu flujo de caja mensual.</p>
+          <p class="field-hint">Calcularemos el impacto mensual en tu flujo de caja.</p>
         </div>
       </div>
 
       <div class="wizard-actions">
-        <button class="btn btn-back" type="button" (click)="prevStep()">Volver</button>
-        <button class="btn btn-dark btn-inline" type="button" (click)="nextStep()">
-          Siguiente: Contexto <i class="icon-arrow-right"></i>
+        <button class="btn btn-secondary" type="button" (click)="prevStep()">Volver</button>
+        <button class="btn btn-primary" type="button" (click)="nextStep()">
+          Siguiente: Contexto
         </button>
       </div>
     </div>
 
     <!-- STEP 3: CONTEXT & PREFERENCES -->
-    <div class="step-content animate-in" *ngIf="currentStep === 3">
-
+    <div class="step-content animate-fade-in-up" *ngIf="currentStep === 3">
       <div class="field field-full selection-group spacing-large">
         <label>¿Cuál es el propósito principal de esta compra?</label>
         <div class="grid-options">
-          <article class="option-card" [class.active]="product.purpose === 'Trabajo'"
-            (click)="selectPurpose('Trabajo')">
+          <article class="option-card" [class.active]="product.purpose === 'Trabajo'" (click)="selectPurpose('Trabajo')">
             <strong>💼 Trabajo / Estudio</strong>
             <span>Esencial para generar ingresos o formarme.</span>
           </article>
-          <article class="option-card" [class.active]="product.purpose === 'Reemplazo'"
-            (click)="selectPurpose('Reemplazo')">
+          <article class="option-card" [class.active]="product.purpose === 'Reemplazo'" (click)="selectPurpose('Reemplazo')">
             <strong>🔄 Reemplazo por daño</strong>
             <span>Mi equipo actual falló y necesito uno nuevo urgente.</span>
           </article>
@@ -139,8 +128,7 @@
             <strong>🚀 Mejora (Upgrade)</strong>
             <span>Quiero algo mejor, aunque el actual aún funciona.</span>
           </article>
-          <article class="option-card" [class.active]="product.purpose === 'Entretenimiento'"
-            (click)="selectPurpose('Entretenimiento')">
+          <article class="option-card" [class.active]="product.purpose === 'Entretenimiento'" (click)="selectPurpose('Entretenimiento')">
             <strong>🎮 Entretenimiento</strong>
             <span>Para disfrutar en mi tiempo libre.</span>
           </article>
@@ -150,34 +138,27 @@
       <div class="field field-full selection-group spacing-large">
         <label>¿Qué tiempo de vida esperas sacarle a este producto?</label>
         <div class="options-row">
-          <button class="option-btn" [class.active]="product.lifespan === '1-2'" (click)="selectLifespan('1-2')">Corto
-            plazo (1-2 años)</button>
-          <button class="option-btn" [class.active]="product.lifespan === '3-5'" (click)="selectLifespan('3-5')">Medio
-            plazo (3-5 años)</button>
-          <button class="option-btn" [class.active]="product.lifespan === '5+'" (click)="selectLifespan('5+')">Largo
-            plazo (5+ años)</button>
+          <button class="option-btn" [class.active]="product.lifespan === '1-2'" (click)="selectLifespan('1-2')">1-2 años</button>
+          <button class="option-btn" [class.active]="product.lifespan === '3-5'" (click)="selectLifespan('3-5')">3-5 años</button>
+          <button class="option-btn" [class.active]="product.lifespan === '5+'" (click)="selectLifespan('5+')">Más de 5 años</button>
         </div>
       </div>
 
       <div class="field field-full selection-group spacing-large">
         <label>Al evaluar opciones, ¿qué es lo más importante para ti?</label>
         <div class="options-row">
-          <button class="option-btn" [class.active]="product.mainConstraint === 'Presupuesto'"
-            (click)="selectConstraint('Presupuesto')">💰 Ajustarse al Presupuesto</button>
-          <button class="option-btn" [class.active]="product.mainConstraint === 'Calidad'"
-            (click)="selectConstraint('Calidad')">⭐ Calidad y Durabilidad</button>
-          <button class="option-btn" [class.active]="product.mainConstraint === 'Urgencia'"
-            (click)="selectConstraint('Urgencia')">⏳ Urgencia y Disponibilidad</button>
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Presupuesto'" (click)="selectConstraint('Presupuesto')">💰 Presupuesto</button>
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Calidad'" (click)="selectConstraint('Calidad')">⭐ Calidad</button>
+          <button class="option-btn" [class.active]="product.mainConstraint === 'Urgencia'" (click)="selectConstraint('Urgencia')">⏳ Urgencia</button>
         </div>
       </div>
 
       <div class="wizard-actions final-action">
-        <button class="btn btn-back" type="button" (click)="prevStep()">Volver</button>
-        <button class="btn btn-primary btn-glow" type="button" (click)="goToResults()">
+        <button class="btn btn-secondary" type="button" (click)="prevStep()">Volver</button>
+        <button class="btn btn-dark" type="button" (click)="goToResults()">
           Finalizar y Analizar ✨
         </button>
       </div>
-
     </div>
   </article>
 </section>

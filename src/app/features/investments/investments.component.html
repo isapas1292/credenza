@@ -34,7 +34,7 @@
     <span class="mini-label muted">Perfil actual</span>
     <h3>{{ riskProfile }}</h3>
     <p style="margin-bottom: 24px;">
-      Basado en tu perfil actual de inversionista, las mejores áreas para empezar a colocar tu dinero son las siguientes:
+      Basado en tu tolerancia al riesgo y <strong>tus hábitos de compra</strong>, las mejores áreas para empezar a colocar tu dinero son las siguientes:
     </p>
 
     <div style="display: grid; gap: 12px;">
@@ -44,17 +44,19 @@
       </div>
     </div>
 
-    <div class="allocation-preview">
+    <div class="allocation-preview" *ngIf="allocation.length > 0">
       <div class="allocation-bar">
-        <span class="fixed-income"></span>
-        <span class="index-funds"></span>
-        <span class="stocks"></span>
+        <span *ngFor="let item of allocation; let i = index" 
+              [style.width]="item.value" 
+              [style.background]="['#8b5cf6', '#22c55e', '#06b6d4', '#f59e0b', '#ec4899'][i % 5]">
+        </span>
       </div>
 
       <div class="allocation-legend">
-        <div><i class="dot fixed"></i> Renta fija</div>
-        <div><i class="dot index"></i> Fondos indexados</div>
-        <div><i class="dot stock"></i> Acciones</div>
+        <div *ngFor="let item of allocation; let i = index">
+          <i class="dot" [style.background]="['#8b5cf6', '#22c55e', '#06b6d4', '#f59e0b', '#ec4899'][i % 5]"></i> 
+          {{ item.title }}
+        </div>
       </div>
     </div>
   </article>

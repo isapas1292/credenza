@@ -46,6 +46,7 @@ class Alternative(typing.TypedDict):
 
 class GeminiResponse(typing.TypedDict):
     suggestion_text: str
+    action_steps: List[str]
     alternatives: List[Alternative]
 
 # Configuración de Gemini
@@ -72,15 +73,14 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         CONTEXTO:
         - El usuario quiere: {product_name} ({category})
         - Precio original: RD${price:,.2f}
+        - Método de pago sugerido o elegido: {json.dumps(analysis_result['chosen_analysis']['scenario_details'])}
         - Perfil Financiero: {json.dumps(perfil)}
         - Análisis Técnico de Viabilidad: {json.dumps(analysis_result['chosen_analysis'])}
 
         TAREA:
-        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra ahoga su presupuesto o es segura, sugiriendo un plan de acción real (ej. "Ahorra 2 meses más antes de comprarlo").
-        2. Provee 3 `alternativas` REALES de productos con nombres de modelos reales en el mercado actual:
-           - Opción Ahorro (más barato)
-           - Opción Smart (mejor relación calidad-precio)
-           - Opción Premium (más duradero)
+        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra es viable o no. DEBES leer la manera en que el usuario quiere hacer la compra (el método de pago, contado o cuotas) y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Por ejemplo: "Lo mejor es comprar de esta manera porque tus gastos fijos ya son altos" o "Ese método está perfecto ya que tienes flujo libre suficiente".
+        2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra.
+        3. Provee 3 `alternativas` REALES de productos similares con nombres de modelos reales en el mercado actual (Opción Ahorro, Opción Smart, Opción Premium), ajustadas a su perfil.
         """
         
         response = model.generate_content(
@@ -95,6 +95,8 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         
         if "suggestion_text" in gemini_data:
             analysis_result["suggestion_text"] = gemini_data["suggestion_text"]
+        if "action_steps" in gemini_data:
+            analysis_result["gemini_action_plan"] = gemini_data["action_steps"]
         if "alternatives" in gemini_data:
             analysis_result["alternatives"] = gemini_data["alternatives"]
             

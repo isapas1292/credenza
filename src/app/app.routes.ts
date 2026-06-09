@@ -26,7 +26,7 @@ export const routes: Routes = [
       { path: 'inversiones', component: InvestmentsComponent, title: 'Credenza | Inversiones', canActivate: [authGuard] },
       { path: 'cuenta', component: AccountComponent, title: 'Credenza | Cuenta', canActivate: [authGuard] },
       { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil', canActivate: [authGuard] },
-      { path: 'perfil-configuracion', component: ProfileSetupComponent, title: 'Credenza | Configurar perfil', canActivate: [authGuard] },
+      { path: 'perfil-configuracion', component: ProfileSetupComponent, title: 'Credenza | Configurar perfil' },
       { path: 'base-analisis', component: AnalysisBasisComponent, title: 'Credenza | Base del Análisis', canActivate: [authGuard] },
       { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados', canActivate: [authGuard] }
     ]

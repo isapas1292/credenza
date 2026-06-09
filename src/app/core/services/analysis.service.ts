@@ -27,12 +27,19 @@ export class AnalysisService {
   }
 
   getRecommendation(userId: number, draft: AnalysisDraft, profile: UserProfile): Observable<any> {
-    // Map frontend draft to backend expected structure
+    // Pass ALL product data to backend — the Python engine needs it for genuine analysis
     const productData = {
+      name: draft.product.name || 'Producto',
       product_category: draft.category.toLowerCase(),
       price: draft.product.price,
-      term_months: draft.product.paymentDuration || 12,
-      payment_method: draft.product.paymentType === 'Contado' ? 'contado' : 'cuotas'
+      condition: draft.product.condition,
+      payment_type: draft.product.paymentType,                    // "Contado" | "Financiado" | "Tarjeta / Cuotas"
+      term_months: draft.product.paymentDuration || 1,            // 1 = contado
+      payment_method: draft.product.paymentType === 'Contado' ? 'contado' : 'cuotas',
+      purpose: draft.product.purpose,
+      lifespan: draft.product.lifespan,
+      main_constraint: draft.product.mainConstraint,
+      notes: draft.product.notes
     };
 
     const payload = {

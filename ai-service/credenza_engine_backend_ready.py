@@ -233,10 +233,36 @@ def label_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 # ============================================================
 
 def _sample_user_values(rng):
-    income = rng.uniform(25000, 200000)
-    fixed = income * rng.uniform(0.2, 0.45)
+    # Generar diversos perfiles de ingreso
+    profile_type = rng.choice(["low_income", "middle_class", "high_income", "over_indebted", "high_liquidity_low_income"])
+    
+    if profile_type == "low_income":
+        income = rng.uniform(15000, 35000)
+        fixed = income * rng.uniform(0.4, 0.6)
+        debt = income * rng.uniform(0.1, 0.5)
+        liquid = income * rng.uniform(0.0, 1.0)
+    elif profile_type == "high_income":
+        income = rng.uniform(120000, 350000)
+        fixed = income * rng.uniform(0.15, 0.3)
+        debt = income * rng.uniform(0.0, 0.2)
+        liquid = income * rng.uniform(2.0, 10.0)
+    elif profile_type == "over_indebted":
+        income = rng.uniform(30000, 150000)
+        fixed = income * rng.uniform(0.3, 0.5)
+        debt = income * rng.uniform(0.45, 0.8) # Alta deuda
+        liquid = income * rng.uniform(0.0, 0.5)
+    elif profile_type == "high_liquidity_low_income":
+        income = rng.uniform(20000, 40000)
+        fixed = income * rng.uniform(0.3, 0.4)
+        debt = 0.0
+        liquid = rng.uniform(150000, 500000) # Ahorros altos por herencia, etc.
+    else: # middle_class
+        income = rng.uniform(35000, 120000)
+        fixed = income * rng.uniform(0.25, 0.4)
+        debt = income * rng.uniform(0.1, 0.4)
+        liquid = income * rng.uniform(0.5, 3.0)
+
     variable = income * rng.uniform(0.1, 0.25)
-    debt = income * rng.uniform(0.0, 0.4)
     essential = fixed * 0.85
     
     return {
@@ -245,8 +271,8 @@ def _sample_user_values(rng):
         "variable_expenses_monthly_avg": variable,
         "current_debt_payment_monthly": debt,
         "essential_expenses_monthly": essential,
-        "liquid_savings": income * rng.uniform(0.5, 4.0),
-        "emergency_fund_amount": income * rng.uniform(0.2, 3.0),
+        "liquid_savings": liquid,
+        "emergency_fund_amount": liquid * rng.uniform(0.2, 0.8), # Parte de la liquidez es emergencia
         "job_stability_score": rng.uniform(0.3, 0.98),
         "budget_adherence_score": rng.uniform(0.3, 0.95),
         "income_volatility_score": rng.uniform(0.05, 0.6),
@@ -281,7 +307,7 @@ def _sample_product_values(rng, category):
         "insurance_cost_monthly": price * 0.0005,
     }
 
-def generate_synthetic_dataset(rows: int = 6000, options_per_user: int = 3) -> pd.DataFrame:
+def generate_synthetic_dataset(rows: int = 50000, options_per_user: int = 3) -> pd.DataFrame:
     rng = np.random.default_rng(RANDOM_STATE)
     total_users = max(rows // max(options_per_user, 1), 1)
 
@@ -394,7 +420,7 @@ def train_viability_classifier(df: pd.DataFrame):
     metrics = {"accuracy": float(accuracy_score(y_test, y_pred))}
     return {"model": pipeline, "metrics": metrics}
 
-def train_full_pipeline(rows=6000):
+def train_full_pipeline(rows=50000):
     dataset = generate_synthetic_dataset(rows=rows)
     segmentation_artifacts = train_segmentation(dataset)
     classifier_artifacts = train_viability_classifier(dataset)
@@ -420,35 +446,144 @@ def predict_viability(df: pd.DataFrame, class_arts: dict) -> Tuple[List[int], Li
     return preds.tolist(), probs.tolist()
 
 def compute_recommendation_score(viability_prob, engineered_record, preference_match=0.8):
+    """
+    Score governed by financial reality. The ML probability adjusts within
+    bands set by hard financial fundamentals — it can never override them.
+    """
     income = max(float(engineered_record["monthly_income_avg"]), 1.0)
     free_post = float(engineered_record["free_cash_flow_post"])
     dti_post = float(engineered_record["dti_post"])
     months = float(engineered_record["emergency_months"])
-    liq_after = float(engineered_record["liquidity_after_down_payment"])
-    essential = max(float(engineered_record["essential_expenses_monthly"]), 1.0)
+    stress = float(engineered_record["stress_ratio"])
+    upfront = float(engineered_record.get("upfront_burden", 0))
 
-    budget_fit = clamp(0.6 * clamp(free_post / (0.25 * income)) + 0.4 * clamp(1 - (dti_post / 0.55)))
-    emergency_pres = clamp(0.5 * clamp(months / 6.0) + 0.5 * clamp(liq_after / (3 * essential)))
+    # ── Hard reality caps ──────────────────────────────────────
+    # These are non-negotiable ceilings based on financial fundamentals.
+    if free_post < 0:
+        hard_cap = 0.15  # Negative cash flow = not viable
+    elif dti_post > 0.60:
+        hard_cap = 0.25  # Severe over-indebtedness
+    elif dti_post > 0.50:
+        hard_cap = 0.40  # Dangerous debt level
+    elif dti_post > 0.40:
+        hard_cap = 0.60  # Tight but manageable
+    elif stress > 0.80:
+        hard_cap = 0.55  # New payment eats most free cash
+    elif months < 1 and free_post < income * 0.15:
+        hard_cap = 0.50  # No safety net and tight
+    else:
+        hard_cap = 1.0   # No hard cap — user is in good shape
+
+    # ── Component scores (0-1 each) ───────────────────────────
+    # Budget fit: how comfortably the new payment fits in the budget
+    budget_fit = clamp(free_post / max(income * 0.30, 1.0))
     
-    score = (0.45 * clamp(viability_prob) + 0.25 * budget_fit + 0.15 * emergency_pres + 0.15 * clamp(preference_match))
-    return round(score, 4)
+    # DTI health: how far the user is from the danger zone
+    dti_health = clamp(1.0 - (dti_post / 0.55))
+    
+    # Emergency preservation: how much safety net remains
+    emergency_score = clamp(months / 6.0)
+    
+    # Stress ratio: what % of free cash the new payment consumes
+    stress_score = clamp(1.0 - stress)
 
-def build_explanation_details(feat: Dict[str, Any]) -> List[str]:
+    # ── Weighted composite ─────────────────────────────────────
+    raw_score = (
+        0.30 * budget_fit +
+        0.25 * dti_health +
+        0.20 * stress_score +
+        0.15 * emergency_score +
+        0.10 * clamp(viability_prob)  # ML is just a small signal, not the driver
+    )
+
+    # Apply the hard cap
+    final_score = min(raw_score, hard_cap)
+    return round(final_score, 4)
+
+def build_explanation_details(feat: Dict[str, Any], segment_name: str = "", product_data: dict = None) -> Tuple[List[str], List[str]]:
+    """Generate explanation details and action plan using the user's REAL numbers and segment."""
     details = []
-    if feat["free_cash_flow_post"] < 0: details.append("La compra deja flujo mensual negativo.")
-    if feat["dti_post"] > 0.55: details.append("El endeudamiento supera el umbral de seguridad.")
-    elif feat["dti_post"] > 0.45: details.append("Presión alta sobre el ingreso.")
-    if feat["emergency_months"] < 1: details.append("Fondo de emergencia crítico.")
-    elif feat["emergency_months"] < 3: details.append("Reserva de emergencia limitada.")
-    if feat["upfront_burden"] > 0.90: details.append("Consume casi toda la liquidez.")
-    if feat["income_volatility_score"] > 0.60: details.append("Ingreso muy inestable.")
-    if not details: details.append("La operación es financieramente sostenible.")
-    return details
+    action_plan = []
+    
+    income = feat.get("monthly_income_avg", 0)
+    fcf_current = feat.get("free_cash_flow_current", 0)
+    fcf_post = feat.get("free_cash_flow_post", 0)
+    dti_post = feat.get("dti_post", 0)
+    dti_current = feat.get("dti_current", 0)
+    em_months = feat.get("emergency_months", 0)
+    stress = feat.get("stress_ratio", 0)
+    installment = feat.get("estimated_installment_monthly", 0)
+    upfront = feat.get("upfront_burden", 0)
+    
+    payment_type = ""
+    product_name = ""
+    if product_data:
+        payment_type = product_data.get("payment_type", product_data.get("payment_method", ""))
+        product_name = product_data.get("name", "el producto")
 
-def build_explanation(risk_band, reason, feat):
-    details = build_explanation_details(feat)
+    # ── Core financial diagnosis with real numbers ──────────────
+    if fcf_post < 0:
+        deficit = abs(fcf_post)
+        details.append(f"Con esta compra, tu flujo mensual quedaría en RD${fcf_post:,.0f}, es decir, un déficit de RD${deficit:,.0f} cada mes. No podrías cubrir tus gastos.")
+        action_plan.append(f"Para que esta compra sea viable necesitas generar al menos RD${deficit:,.0f} más de ingreso mensual, o reducir tus gastos fijos en esa cantidad.")
+    elif stress > 0.70:
+        pct = stress * 100
+        details.append(f"La cuota de RD${installment:,.0f}/mes consumiría el {pct:.0f}% de tu flujo libre actual (RD${fcf_current:,.0f}). Eso te deja muy poco margen para imprevistos.")
+        action_plan.append(f"Considera un plazo más largo para bajar la cuota mensual, o busca un producto más económico que no supere el 35% de tu flujo libre (máximo RD${fcf_current * 0.35:,.0f}/mes).")
+    elif fcf_post < income * 0.10:
+        details.append(f"Después de la compra te quedarían solo RD${fcf_post:,.0f}/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.")
+    
+    if dti_post > 0.55:
+        pct = dti_post * 100
+        details.append(f"Tu nivel de endeudamiento llegaría al {pct:.0f}% de tus ingresos. El máximo recomendado es 40%.")
+        action_plan.append(f"Antes de asumir esta deuda, trabaja en reducir tus compromisos actuales. Tu DTI actual ya es {dti_current*100:.0f}%.")
+    elif dti_post > 0.40:
+        pct = dti_post * 100
+        details.append(f"Tu endeudamiento post-compra sería {pct:.0f}%, por encima del ideal de 35% pero aún manejable con disciplina.")
+    
+    if em_months < 1:
+        details.append(f"Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo.")
+        action_plan.append(f"Construye un fondo de emergencia de al menos 3 meses antes de comprometerte con pagos nuevos. Necesitas ahorrar aproximadamente RD${feat.get('essential_expenses_monthly', 0) * 3:,.0f}.")
+    elif em_months < 3:
+        details.append(f"Tu fondo de emergencia cubre {em_months:.1f} meses. Es limitado pero funcional.")
+        action_plan.append("Después de la compra, prioriza llevar tu fondo de emergencia a 3-6 meses de gastos esenciales.")
+    
+    if upfront > 0.85:
+        details.append("El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.")
+        action_plan.append("Busca opciones con un pago inicial menor (10-20%) para conservar tu liquidez como colchón de seguridad.")
+
+    # ── Segment-specific advice ────────────────────────────────
+    seg = segment_name.lower()
+    if "sobreendeudado" in seg:
+        action_plan.insert(0, "Tu perfil indica sobreendeudamiento. Lo más inteligente es saldar deudas existentes antes de asumir una nueva obligación financiera.")
+    elif "ajustado" in seg:
+        if not any("fondo de emergencia" in a for a in action_plan):
+            action_plan.append("Tu perfil es ajustado pero recuperable. Enfoca los próximos 3 meses en fortalecer tus ahorros antes de comprometerte con esta compra.")
+    elif "variable" in seg or "incertidumbre" in seg:
+        action_plan.append("Como tus ingresos son variables, asegúrate de tener reservas para cubrir las cuotas en meses de bajos ingresos.")
+
+    # ── Payment method specific feedback ───────────────────────
+    if payment_type.lower() in ["contado", ""]:
+        price = product_data.get("price", 0) if product_data else 0
+        liquid = feat.get("liquid_savings", 0)
+        if price > liquid * 0.8:
+            details.append(f"Pagar al contado (RD${price:,.0f}) consumiría más del 80% de tu liquidez (RD${liquid:,.0f}). Es riesgoso descapitalizarte así.")
+            action_plan.append(f"En tu caso, financiar a cuotas sería más prudente para conservar liquidez. Una cuota de 12 meses sería aproximadamente RD${price/12:,.0f}/mes.")
+        elif price <= liquid * 0.5:
+            details.append("Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses.")
+
+    # ── Good scenario ──────────────────────────────────────────
+    if not details:
+        details.append(f"La compra es financieramente sostenible. Te quedarían RD${fcf_post:,.0f}/mes de flujo libre y tu endeudamiento se mantendría en {dti_post*100:.0f}%.")
+        if not action_plan:
+            action_plan.append("Estás en buena posición. Procede con la compra manteniendo tu disciplina de ahorro.")
+    
+    return details, action_plan
+
+def build_explanation(risk_band, reason, feat, segment_name="", product_data=None):
+    details, _ = build_explanation_details(feat, segment_name, product_data)
     base = {0: "No recomendable", 1: "Riesgo alto", 2: "Viable con ajustes", 3: "Viable saludable"}.get(risk_band, "")
-    return f"{base}: {reason}. {details[0]}"
+    return f"{base}: {details[0]}"
 
 # ============================================================
 # INTERFAZ PARA main.py
@@ -522,62 +657,89 @@ def find_optimal_term(user_dict: dict, product_price: float, down_payment: float
     return best_term
 
 def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> List[dict]:
-    """Genera 3 escenarios: Contado, Crédito Sugerido y Crédito Largo Plazo."""
+    """
+    Genera escenarios genuinos basados en el segmento y la realidad financiera del usuario.
+    Cada escenario calcula su propio score y métricas reales.
+    """
     price = _num(product_data.get("price", 0))
     down_payment = _num(product_data.get("down_payment", 0))
     rate = _num(product_data.get("interest_rate", 0.18))
     
+    income = user_dict.get("monthly_income_avg", 1)
+    fcf = user_dict.get("monthly_income_avg", 0) - user_dict.get("fixed_expenses_monthly", 0) - user_dict.get("variable_expenses_monthly_avg", 0) - user_dict.get("current_debt_payment_monthly", 0)
+    liquid = user_dict.get("liquid_savings", 0)
+    
     scenarios = []
     
-    # 1. Escenario Contado
+    # 1. Escenario Contado — only if user has enough liquid savings
+    contado_viable = liquid >= price * 0.5
+    contado_desc = (
+        f"Tienes RD${liquid:,.0f} en ahorros. Pagar al contado te ahorra intereses y te quedaría RD${liquid - price:,.0f} de reserva."
+        if contado_viable else
+        f"Pagar al contado (RD${price:,.0f}) consumiría toda tu liquidez (RD${liquid:,.0f}). No es recomendable descapitalizarte."
+    )
     scenarios.append({
         "type": "contado",
         "name": "Pago al contado",
         "term": 0,
         "installment": 0,
         "down_payment": price,
-        "description": "La opción financieramente más inteligente, pagando 0 intereses."
+        "description": contado_desc
     })
     
-    # 2. Escenario Sugerido (Óptimo)
+    # 2. Escenario Óptimo — the shortest term where installment < 30% of FCF
     opt_term = find_optimal_term(user_dict, price, down_payment, rate)
+    opt_installment = monthly_payment(price - down_payment, rate, opt_term)
+    opt_pct = (opt_installment / max(fcf, 1)) * 100
+    
+    if opt_installment > 0:
+        opt_desc = f"Cuota de RD${opt_installment:,.0f}/mes ({opt_pct:.0f}% de tu flujo libre). Plazo calculado para no comprometer más del 35% de tu capacidad mensual."
+    else:
+        opt_desc = "No se encontró un plazo viable con tus condiciones actuales."
+    
     scenarios.append({
         "type": "sugerido",
         "name": f"Financiamiento a {opt_term} meses",
         "term": opt_term,
-        "installment": monthly_payment(price - down_payment, rate, opt_term),
+        "installment": opt_installment,
         "down_payment": down_payment,
-        "description": "Impacto mensual manejable, optimizando el pago de intereses."
+        "description": opt_desc
     })
     
-    # 3. Escenario Largo Plazo
-    long_term = 48 if opt_term < 36 else 72
+    # 3. Escenario Cuota Mínima — longest reasonable term
+    long_term = 48 if opt_term < 36 else 60
+    long_installment = monthly_payment(price - down_payment, rate, long_term)
+    long_pct = (long_installment / max(fcf, 1)) * 100
+    total_paid = long_installment * long_term + down_payment
+    total_interest = total_paid - price
+    
+    long_desc = f"Cuota de RD${long_installment:,.0f}/mes ({long_pct:.0f}% de tu flujo libre). Pero pagarías RD${total_interest:,.0f} en intereses totales."
+    
     scenarios.append({
         "type": "largo_plazo",
         "name": f"Financiamiento a {long_term} meses",
         "term": long_term,
-        "installment": monthly_payment(price - down_payment, rate, long_term),
+        "installment": long_installment,
         "down_payment": down_payment,
-        "description": "Cuota mínima, pero con mayor carga de intereses a largo plazo."
+        "description": long_desc
     })
     
+    # ── Evaluate each scenario through the prediction engine ────
     results = []
     for sc in scenarios:
-        # Clonamos datos del producto con los valores del escenario
         temp_prod = product_data.copy()
         temp_prod["estimated_installment_monthly"] = sc["installment"]
         temp_prod["down_payment"] = sc["down_payment"]
         temp_prod["term_months"] = sc["term"]
         
-        # Predecimos recomendación para este escenario específico
-        res = predict_recommendation_base(user_dict, temp_prod, artifacts)
+        res = predict_recommendation_base(user_dict, temp_prod, artifacts, product_data)
         res["scenario_details"] = sc
         results.append(res)
         
     return results
 
-def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: dict) -> dict:
-    """Función base de predicción para un solo escenario."""
+def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: dict, original_product: dict = None) -> dict:
+    """Función base de predicción para un solo escenario. Now passes segment and product data through."""
     # 1. Normalizar categoría
     option_dict["product_category"] = normalize_category(option_dict.get("product_category"))
     
@@ -592,7 +754,12 @@ def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: d
     
     risk_band = risk_band_from_row(engineered_record)
     reason = primary_reason_from_row(engineered_record)
-    score = compute_recommendation_score(viab_probs[0], engineered_record, option_dict.get("preference_match_score", 0.8))
+    score = compute_recommendation_score(viab_probs[0], engineered_record)
+    
+    segment_name = seg_names[0] if seg_names else ""
+    prod_for_explanation = original_product or option_dict
+    
+    details, action_plan = build_explanation_details(engineered_record, segment_name, prod_for_explanation)
     
     return {
         "viability_probability": round(viab_probs[0], 4),
@@ -601,40 +768,116 @@ def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: d
         "risk_band_name": RISK_BAND_NAMES[risk_band],
         "primary_reason": reason,
         "recommendation_score": score,
-        "explanation": build_explanation(risk_band, reason, engineered_record),
-        "explanation_details": build_explanation_details(engineered_record),
+        "segment_name": segment_name,
+        "explanation": build_explanation(risk_band, reason, engineered_record, segment_name, prod_for_explanation),
+        "explanation_details": details,
+        "action_plan": action_plan,
         "metrics": {
+            "dti_current": round(engineered_record.get("dti_current", 0), 4),
             "dti_post": round(engineered_record["dti_post"], 4),
             "stress_ratio": round(engineered_record["stress_ratio"], 4),
-            "fcf_post": round(engineered_record["free_cash_flow_post"], 2)
+            "fcf_current": round(engineered_record.get("free_cash_flow_current", 0), 2),
+            "fcf_post": round(engineered_record["free_cash_flow_post"], 2),
+            "installment": round(engineered_record.get("estimated_installment_monthly", 0), 2),
+            "emergency_months": round(engineered_record.get("emergency_months", 0), 1)
         }
     }
 
 def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) -> dict:
-    """Predicción principal que incluye el análisis de escenarios."""
-    # Determinamos el escenario elegido por el usuario
+    """
+    Predicción principal. Genuinely analyzes the user's chosen payment method 
+    against their real financial situation and segment.
+    """
     chosen_method = option_dict.get("payment_method", "cuotas")
+    payment_type = option_dict.get("payment_type", "Financiado")
+    user_term = _int(option_dict.get("term_months", 12), 12)
+    price = _num(option_dict.get("price", 0))
     
-    # Generamos todos los escenarios posibles
+    # ── Calculate user's real free cash flow BEFORE the purchase ────
+    fcf_current = (
+        user_dict.get("monthly_income_avg", 0)
+        - user_dict.get("fixed_expenses_monthly", 0)
+        - user_dict.get("variable_expenses_monthly_avg", 0)
+        - user_dict.get("current_debt_payment_monthly", 0)
+    )
+    user_dict["free_cash_flow_current"] = fcf_current
+    income = user_dict.get("monthly_income_avg", 1)
+    liquid = user_dict.get("liquid_savings", 0)
+    
+    # ── Generate all possible scenarios ────────────────────────
     all_scenarios = generate_scenarios(user_dict, option_dict, artifacts)
     
-    # Buscamos cuál es el "mejor" según el score
+    # ── Find the best scenario by score ────────────────────────
     best_overall = max(all_scenarios, key=lambda x: x["recommendation_score"])
     
-    # Buscamos el que el usuario eligió originalmente (o el más parecido)
-    user_choice = None
+    # ── Analyze what the USER specifically chose ───────────────
     if chosen_method == "contado":
         user_choice = next((s for s in all_scenarios if s["scenario_details"]["type"] == "contado"), all_scenarios[0])
     else:
-        user_choice = predict_recommendation_base(user_dict, option_dict, artifacts)
+        # Build the user's specific scenario
+        user_installment = price / max(user_term, 1)
+        temp_prod = option_dict.copy()
+        temp_prod["estimated_installment_monthly"] = user_installment
+        temp_prod["down_payment"] = 0
+        temp_prod["term_months"] = user_term
+        
+        user_choice = predict_recommendation_base(user_dict, temp_prod, artifacts, option_dict)
+        user_pct = (user_installment / max(fcf_current, 1)) * 100
         user_choice["scenario_details"] = {
             "type": "usuario",
-            "name": f"Tu elección ({option_dict.get('term_months', 12)} meses)",
-            "installment": option_dict.get("estimated_installment_monthly", 0),
-            "description": "Basado en los términos que seleccionaste manualmente."
+            "name": f"Tu elección: {payment_type} a {user_term} meses",
+            "term": user_term,
+            "installment": round(user_installment, 2),
+            "down_payment": 0,
+            "description": f"Tu plan: cuota de RD${user_installment:,.0f}/mes, que representaría el {user_pct:.0f}% de tu flujo libre actual."
         }
 
-    # Generamos alternativas inteligentes (productos similares)
+    segment_name = user_choice.get("segment_name", "")
+    user_score = user_choice["recommendation_score"]
+    best_score = best_overall["recommendation_score"]
+    
+    # ── Build a GENUINE suggestion_text ────────────────────────
+    suggestion_parts = []
+    
+    # 1. Evaluate the user's chosen method
+    if chosen_method == "contado":
+        if liquid >= price * 1.5:
+            suggestion_parts.append(f"Pagar al contado es excelente en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}. Te quedaría suficiente reserva.")
+        elif liquid >= price:
+            suggestion_parts.append(f"Puedes pagar al contado, pero te quedarían solo RD${liquid - price:,.0f} de reserva. Considera financiar una parte para no descapitalizarte.")
+        else:
+            suggestion_parts.append(f"No cuentas con liquidez suficiente para pagar al contado. Tus ahorros son RD${liquid:,.0f} y el producto cuesta RD${price:,.0f}. Financiar sería más prudente.")
+    else:
+        user_installment = user_choice["scenario_details"].get("installment", 0)
+        user_pct = (user_installment / max(fcf_current, 1)) * 100
+        
+        if user_pct > 60:
+            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
+        elif user_pct > 35:
+            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+        else:
+            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
+    
+    # 2. Compare with the best option if different
+    if user_score < best_score - 0.08:
+        best_sc = best_overall["scenario_details"]
+        if best_sc["type"] == "contado":
+            suggestion_parts.append(f"Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.")
+        else:
+            best_inst = best_sc.get("installment", 0)
+            suggestion_parts.append(f"Te recomendamos considerar {best_sc['name']} (cuota de RD${best_inst:,.0f}/mes) que se adapta mejor a tu perfil financiero.")
+    elif user_score >= 0.65:
+        suggestion_parts.append("Tu elección se alinea bien con tu capacidad financiera.")
+    
+    # 3. Segment context
+    if "sobreendeudado" in segment_name.lower():
+        suggestion_parts.append("Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.")
+    elif "ajustado" in segment_name.lower():
+        suggestion_parts.append("Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.")
+    
+    suggestion_text = " ".join(suggestion_parts)
+
+    # ── Alternatives ───────────────────────────────────────────
     alternatives = generate_alternatives(user_dict, option_dict)
 
     return {
@@ -642,45 +885,55 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         "best_option": best_overall,
         "all_scenarios": all_scenarios,
         "alternatives": alternatives,
-        "is_optimal": user_choice["recommendation_score"] >= best_overall["recommendation_score"] - 0.05,
-        "suggestion_text": f"Nuestra recomendación ideal es {best_overall['scenario_details']['name']}." if user_choice["recommendation_score"] < best_overall["recommendation_score"] - 0.1 else "Tu elección es financieramente sólida."
+        "is_optimal": user_score >= best_score - 0.05,
+        "suggestion_text": suggestion_text,
+        "segment_name": segment_name
     }
 
 def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
-    """Genera alternativas inteligentes basadas en el perfil del usuario."""
+    """Genera alternativas basadas en lo que el usuario realmente puede pagar."""
     price = _num(product_data.get("price", 50000))
-    category = normalize_category(product_data.get("product_category", "technology"))
+    product_name = product_data.get("name", "Producto")
     
-    # 1. Alternativa Económica (Ahorro inmediato)
-    # Si el usuario tiene un DTI alto, sugerimos algo mucho más barato
-    eco_price = price * 0.65
+    fcf = (
+        user_dict.get("monthly_income_avg", 0)
+        - user_dict.get("fixed_expenses_monthly", 0)
+        - user_dict.get("variable_expenses_monthly_avg", 0)
+        - user_dict.get("current_debt_payment_monthly", 0)
+    )
+    
+    # Calculate what the user can actually afford at 30% of FCF over 12 months
+    max_affordable_monthly = fcf * 0.30
+    max_affordable_price = max_affordable_monthly * 12
+
+    eco_price = min(price * 0.60, max_affordable_price)
+    smart_price = price * 0.80
+    premium_price = price * 1.20
+    
+    eco_installment = eco_price / 12
+    smart_installment = smart_price / 18
+    prem_term = find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18)
+    
     alternatives = [
         {
-            "name": f"{product_data.get('name', 'Producto')} (Versión Económica / Usada)",
-            "price": f"RD${_num(eco_price):,.0f}",
-            "desc": "Excelente forma de liberar margen reteniendo el valor base y funcionalidad principal.",
-            "payment": "Pago al contado recomendado"
+            "name": f"{product_name} (Versión Económica)",
+            "price": f"RD${eco_price:,.0f}",
+            "desc": f"Cuota de RD${eco_installment:,.0f}/mes a 12 meses. Cabe cómodamente en tu flujo libre mensual.",
+            "payment": "Financiamiento a 12 meses"
+        },
+        {
+            "name": f"{product_name} (Mejor Relación Precio-Calidad)",
+            "price": f"RD${smart_price:,.0f}",
+            "desc": f"Cuota de RD${smart_installment:,.0f}/mes a 18 meses. Balance entre calidad y asequibilidad.",
+            "payment": "Financiamiento a 18 meses"
+        },
+        {
+            "name": f"{product_name} Premium",
+            "price": f"RD${premium_price:,.0f}",
+            "desc": f"Mayor durabilidad, pero la cuota mensual será más alta. Plazo sugerido: {prem_term} meses.",
+            "payment": f"Financiamiento a {prem_term} meses"
         }
     ]
-    
-    # 2. Alternativa Premium / Duradera
-    # Si el usuario tiene buen flujo libre, sugerimos invertir más para mayor durabilidad
-    premium_price = price * 1.25
-    alternatives.append({
-        "name": f"{product_data.get('name', 'Producto')} Premium (Alta Durabilidad)",
-        "price": f"RD${_num(premium_price):,.0f}",
-        "desc": "Un poco más cara, pero duplica la vida útil esperada, reduciendo el costo por año.",
-        "payment": f"Financiamiento a {find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18)} meses"
-    })
-    
-    # 3. Alternativa de Ahorro Inteligente (Refurbished o Generación anterior)
-    smart_price = price * 0.80
-    alternatives.append({
-        "name": f"{product_data.get('name', 'Producto')} (Refurbished Certificado)",
-        "price": f"RD${_num(smart_price):,.0f}",
-        "desc": "Mismo rendimiento que el modelo actual con un ahorro del 20% garantizado.",
-        "payment": "Diferido a 3 cuotas sin interés"
-    })
     
     return alternatives
 
@@ -690,7 +943,8 @@ def load_or_train_artifacts(path: str) -> dict:
             return joblib.load(path)
         except:
             pass
-    print("Entrenando pipeline completo...")
-    arts = train_full_pipeline(6000)
+    print("Entrenando pipeline completo con más registros...")
+    arts = train_full_pipeline(50000)
     joblib.dump(arts, path)
     return arts
+

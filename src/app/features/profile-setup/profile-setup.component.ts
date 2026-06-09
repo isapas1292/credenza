@@ -129,6 +129,11 @@ export class ProfileSetupComponent implements OnInit {
     const tempReg = this.authService.tempRegisterData();
     const currentUser = this.authService.currentUser();
 
+    if (!currentUser && !tempReg) {
+      this.router.navigate(['/registro']);
+      return;
+    }
+
     if (currentUser && currentUser.perfil) {
       // Estamos en modo edición
       this.isEditMode = true;
@@ -209,8 +214,16 @@ export class ProfileSetupComponent implements OnInit {
         }
       });
     } else {
+      const tempReg = this.authService.tempRegisterData();
+      const payload = {
+        nombre: tempReg ? `${tempReg.firstName} ${tempReg.lastName}`.trim() : 'Usuario',
+        email: tempReg?.email,
+        password: tempReg?.password,
+        perfil: this.model
+      };
+
       // Llamar al backend usando AuthService
-      this.authService.register(this.model).subscribe({
+      this.authService.register(payload).subscribe({
         next: (response) => {
           console.log('Registro exitoso', response);
           this.router.navigate(['/perfil']);

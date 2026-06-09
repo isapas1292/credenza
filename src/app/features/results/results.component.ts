@@ -60,7 +60,8 @@ export class ResultsComponent implements OnInit {
   }
 
   get aiResult() {
-    return this.analysisService.latestResult()?.data;
+    const result = this.analysisService.latestResult();
+    return result?.data || result?.fallback;
   }
 
   get financialData() {
@@ -113,7 +114,7 @@ export class ResultsComponent implements OnInit {
     return {
       score: `${score}%`,
       class: score >= 70 ? 'badge-success' : score >= 40 ? 'badge-warn' : 'badge-danger',
-      message: res.suggestion_text || 'Revisión técnica de la compra.'
+      message: res.suggestion_text || res.chosen_analysis?.explanation || 'Revisión técnica de la compra.'
     };
   }
 
@@ -123,7 +124,11 @@ export class ResultsComponent implements OnInit {
     return res.all_scenarios.map((s: any) => ({
       title: s.scenario_details?.name || 'Escenario',
       description: s.scenario_details?.description || '',
-      highlight: s.scenario_details?.type === res.best_option?.scenario_details?.type
+      highlight: s.scenario_details?.type === res.best_option?.scenario_details?.type,
+      score: Math.round((s.recommendation_score || 0) * 100),
+      installment: s.metrics?.installment || s.scenario_details?.installment || 0,
+      dtiPost: s.metrics?.dti_post ? Math.round(s.metrics.dti_post * 100) : null,
+      fcfPost: s.metrics?.fcf_post || null
     }));
   }
 
@@ -132,6 +137,23 @@ export class ResultsComponent implements OnInit {
     if (res && res.alternatives) {
       return res.alternatives;
     }
+    return [];
+  }
+
+  get actionPlan() {
+    const res = this.aiResult;
+    if (!res) return [];
+    
+    // Prefer Gemini's refined action plan if available
+    if (res.gemini_action_plan && res.gemini_action_plan.length > 0) {
+      return res.gemini_action_plan;
+    }
+    
+    // Fallback to the backend's raw action plan
+    if (res.chosen_analysis && res.chosen_analysis.action_plan) {
+      return res.chosen_analysis.action_plan;
+    }
+    
     return [];
   }
 }

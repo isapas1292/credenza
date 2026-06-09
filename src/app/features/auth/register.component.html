@@ -1,27 +1,30 @@
-<section class="auth-grid">
-    <article class="auth-panel">
-      <span class="eyebrow inverse">Registro seguro</span>
-      <h2>Crea tu cuenta para guardar tus análisis y recomendaciones.</h2>
-      <p>
-        El registro se ve limpio, rápido y sin fricción. La idea es que el usuario entre con confianza,
-        se registre sin complicaciones y luego complete su perfil financiero dentro del sistema.
-      </p>
-    </article>
-  
-    <article class="auth-form">
+<section class="auth-layout animate-fade-in">
+  <article class="auth-visual register-visual">
+    <div class="visual-content">
+      <div class="brand-mark">C</div>
+      <h2>Empieza tu camino</h2>
+      <p>Crea tu cuenta en minutos y comienza a evaluar productos, servicios y préstamos con el respaldo de tus propios datos financieros.</p>
+    </div>
+    <!-- Abstract shapes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+  </article>
+
+  <article class="auth-form-container">
+    <div class="auth-form-inner">
       <div class="page-title">
-        <span class="eyebrow">Registro</span>
-        <h2>Empieza en pocos pasos</h2>
+        <span class="eyebrow">Registro Seguro</span>
+        <h2>Crear Cuenta</h2>
       </div>
-  
-      <div class="field-grid">
+
+      <div class="login-fields field-grid delay-100 animate-fade-in-up">
         <div class="field">
           <label>Nombre</label>
-          <input [(ngModel)]="model.firstName" name="firstName" type="text" placeholder="Ramon">
+          <input [(ngModel)]="model.firstName" name="firstName" type="text" placeholder="Ej. Ramón">
         </div>
         <div class="field">
           <label>Apellido</label>
-          <input [(ngModel)]="model.lastName" name="lastName" type="text" placeholder="Gómez">
+          <input [(ngModel)]="model.lastName" name="lastName" type="text" placeholder="Ej. Gómez">
         </div>
         <div class="field field-full">
           <label>Correo electrónico</label>
@@ -37,21 +40,22 @@
         </div>
         <div class="field field-full">
           <label>Ciudad</label>
-          <input [(ngModel)]="model.city" name="city" type="text" placeholder="Santo Domingo">
+          <input [(ngModel)]="model.city" name="city" type="text" placeholder="Ej. Santo Domingo">
         </div>
         <div class="field field-full">
-          <label>Objetivo principal</label>
-          <textarea [(ngModel)]="model.goal" name="goal" placeholder="Quiero evaluar productos y compromisos sin afectar mi estabilidad financiera."></textarea>
+          <label>Objetivo principal (Opcional)</label>
+          <textarea [(ngModel)]="model.goal" name="goal" placeholder="¿Qué buscas analizar o lograr en la plataforma?" rows="3"></textarea>
         </div>
       </div>
-  
-      <div class="button-wrap">
-        <button class="btn btn-dark" type="button" (click)="register()">Crear cuenta</button>
+
+      <div class="button-wrap delay-200 animate-fade-in-up">
+        <button class="btn btn-primary" style="width: 100%;" type="button" (click)="register()">Completar Registro</button>
       </div>
 
-      <div class="auth-switch" style="margin-top: 24px; text-align: center; font-size: 14px; color: var(--muted);">
+      <div class="auth-switch delay-300 animate-fade-in-up">
         <span>¿Ya tienes cuenta?</span>
-        <a routerLink="/login" style="color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 6px;">Inicia sesión aquí</a>
+        <a routerLink="/login">Inicia sesión aquí</a>
       </div>
-    </article>
-  </section>
+    </div>
+  </article>
+</section>
