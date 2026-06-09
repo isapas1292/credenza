@@ -1,44 +1,32 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, computed, OnInit, signal } from '@angular/core';
+import { Component, inject, computed, OnInit, signal, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../core/services/analysis.service';
 import { AuthService } from '../../core/services/auth.service';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartData, ChartType, ChartOptions } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-results',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule],
   templateUrl: './results.component.html',
   styleUrl: './results.component.css'
 })
-export class ResultsComponent implements OnInit {
+export class ResultsComponent implements OnInit, AfterViewInit {
+  @ViewChild('pieCanvas') pieCanvas!: ElementRef<HTMLCanvasElement>;
+  private chart: Chart | null = null;
+
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
-  
+
   draft = this.analysisService.analysisDraft;
   user = computed(() => this.authService.currentUser()?.perfil);
-  
+
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
-
-  // Simulador interactivo
-  sliderMonths = signal<number>(24); // Meses por defecto
-
-  // Gráfico Doughnut
-  public pieChartType: 'doughnut' = 'doughnut';
-  public pieChartOptions: ChartOptions<'doughnut'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { color: '#000000', font: { family: 'Inter', size: 13 } }
-      }
-    },
-    cutout: '70%'
-  };
+  sliderMonths = signal<number>(24);
 
   ngOnInit(): void {
     const draft = this.draft();
@@ -59,8 +47,49 @@ export class ResultsComponent implements OnInit {
     }
   }
 
-  get aiResult() {
-    return this.analysisService.latestResult()?.data;
+  ngAfterViewInit(): void {
+    this.initChart();
+  }
+
+  private initChart(): void {
+    const { income, fixed, debts } = this.financialData;
+    const newInstallment = this.simulatedInstallment;
+    const currentExpenses = fixed + debts;
+    const free = Math.max(0, income - currentExpenses - newInstallment);
+
+    this.chart = new Chart(this.pieCanvas.nativeElement, {
+      type: 'doughnut',
+      data: {
+        labels: ['Gastos + Deudas', 'Nueva Cuota', 'Flujo Libre'],
+        datasets: [{
+          data: [currentExpenses, newInstallment, free],
+          backgroundColor: ['#3f3f46', '#8b5cf6', '#10b981'],
+          hoverBackgroundColor: ['#52525b', '#7c3aed', '#059669'],
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#000000', font: { family: 'Inter', size: 13 } }
+          }
+        }
+      }
+    });
+  }
+
+  updateChart(): void {
+    if (!this.chart) return;
+    const { income, fixed, debts } = this.financialData;
+    const newInstallment = this.simulatedInstallment;
+    const currentExpenses = fixed + debts;
+    const free = Math.max(0, income - currentExpenses - newInstallment);
+
+    this.chart.data.datasets[0].data = [currentExpenses, newInstallment, free];
+    this.chart.update();
   }
 
   get financialData() {
@@ -83,38 +112,19 @@ export class ResultsComponent implements OnInit {
     return income - fixed - debts - this.simulatedInstallment;
   }
 
-  get pieChartData(): ChartData<'doughnut'> {
-    const { income, fixed, debts } = this.financialData;
-    const newInstallment = this.simulatedInstallment;
-    const currentExpenses = fixed + debts;
-    const free = Math.max(0, income - currentExpenses - newInstallment);
-
-    return {
-      labels: ['Gastos + Deudas', 'Nueva Cuota', 'Flujo Libre'],
-      datasets: [{
-        data: [currentExpenses, newInstallment, free],
-        backgroundColor: [
-          '#3f3f46', // Gris oscuro para gastos fijos
-          '#8b5cf6', // Púrpura (primary) para la nueva cuota
-          '#10b981'  // Verde esmeralda para el flujo libre
-        ],
-        hoverBackgroundColor: ['#52525b', '#7c3aed', '#059669'],
-        hoverBorderColor: 'transparent'
-      }]
-    };
-  }
-
   get overallCompatibility() {
     const res = this.aiResult;
-    if (!res) {
-      return { score: '0%', class: 'badge-neutral', message: 'Cargando datos...' };
-    }
+    if (!res) return { score: '0%', class: 'badge-neutral', message: 'Cargando datos...' };
     const score = Math.round((res.chosen_analysis?.recommendation_score || 0) * 100);
     return {
       score: `${score}%`,
       class: score >= 70 ? 'badge-success' : score >= 40 ? 'badge-warn' : 'badge-danger',
       message: res.suggestion_text || 'Revisión técnica de la compra.'
     };
+  }
+
+  get aiResult() {
+    return this.analysisService.latestResult()?.data;
   }
 
   get scenarios() {
@@ -128,10 +138,6 @@ export class ResultsComponent implements OnInit {
   }
 
   get similarProducts() {
-    const res = this.aiResult;
-    if (res && res.alternatives) {
-      return res.alternatives;
-    }
-    return [];
+    return this.aiResult?.alternatives || [];
   }
 }
