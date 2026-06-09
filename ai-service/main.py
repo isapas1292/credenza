@@ -65,22 +65,44 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
     product_name = product.get('name', 'el producto')
     category = product.get('product_category', 'tecnología')
     price = product.get('price', 0)
+    purpose = product.get('purpose', 'No especificado')
+    main_constraint = product.get('main_constraint', 'No especificado')
+    notes = product.get('notes', '')
+    lifespan = product.get('lifespan', 'No especificado')
+    payment_type = product.get('payment_type', 'No especificado')
 
     try:
         prompt = f"""
         Como experto financiero dominicano y asesor de compras, analiza este caso:
         
-        CONTEXTO:
-        - El usuario quiere: {product_name} ({category})
+        CONTEXTO DEL USUARIO:
+        - El usuario quiere comprar: {product_name} ({category})
         - Precio original: RD${price:,.2f}
+        - Propósito / Para qué lo quiere: {purpose}
+        - Su prioridad o restricción principal: {main_constraint}
+        - Tiempo esperado de uso: {lifespan}
+        - Método de pago elegido: {payment_type}
+        - Notas adicionales del usuario: {notes if notes else 'Ninguna'}
         - Método de pago sugerido o elegido: {json.dumps(analysis_result['chosen_analysis']['scenario_details'])}
-        - Perfil Financiero: {json.dumps(perfil)}
+        - Perfil Financiero completo: {json.dumps(perfil)}
         - Análisis Técnico de Viabilidad: {json.dumps(analysis_result['chosen_analysis'])}
 
         TAREA:
-        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra es viable o no. DEBES leer la manera en que el usuario quiere hacer la compra (el método de pago, contado o cuotas) y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Por ejemplo: "Lo mejor es comprar de esta manera porque tus gastos fijos ya son altos" o "Ese método está perfecto ya que tienes flujo libre suficiente".
+        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra es viable o no. DEBES leer la manera en que el usuario quiere hacer la compra (el método de pago, contado o cuotas) y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Menciona su propósito ("{purpose}") y cómo la compra se alinea o no con eso.
         2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra.
-        3. Provee 3 `alternativas` REALES de productos similares con nombres de modelos reales en el mercado actual (Opción Ahorro, Opción Smart, Opción Premium), ajustadas a su perfil.
+        3. Provee EXACTAMENTE 3 `alternatives` (alternativas) que son productos REALES del mercado actual, similares a "{product_name}" en la categoría "{category}". Las alternativas deben considerar:
+           - El propósito del usuario: "{purpose}"
+           - Su restricción principal: "{main_constraint}"
+           - Su presupuesto basado en el precio original de RD${price:,.2f}
+           Estructura las 3 alternativas así:
+           a) Opción Económica: Un producto más barato que cumpla lo básico de su propósito. El `name` debe incluir "(Versión Económica)" al final del nombre del producto.
+           b) Opción Mejor Relación Precio-Calidad: Un producto con el mejor balance para su necesidad. El `name` debe incluir "(Mejor Relación Precio-Calidad)" al final.
+           c) Opción Premium: Un producto de gama superior si puede estirarse. El `name` debe incluir "Premium" al final.
+           Para cada alternativa incluye:
+           - `name`: Nombre REAL del producto con la etiqueta correspondiente
+           - `price`: Precio en formato "RD$XX,XXX" 
+           - `desc`: Una oración describiendo por qué esa alternativa encaja con su propósito y restricción
+           - `payment`: Sugerencia de financiamiento basada en su perfil (ej: "Financiamiento a 12 meses", "Compra de contado")
         """
         
         response = model.generate_content(

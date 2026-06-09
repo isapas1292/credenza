@@ -397,6 +397,115 @@
   padding-top: 4px;
 }
 
+/* AI Alternatives Panel Styles */
+.ai-alternatives-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-alternatives-panel::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, var(--primary), #6366f1);
+  opacity: 0.06;
+  border-radius: 50%;
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(99, 102, 241, 0.12));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.ai-sparkle {
+  display: inline-block;
+  animation: sparkle-pulse 2s ease-in-out infinite;
+  font-size: 14px;
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2) rotate(15deg); }
+}
+
+/* Skeleton Loading */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--line-light) 25%, rgba(139, 92, 246, 0.06) 50%, var(--line-light) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 65%;
+  height: 18px;
+  margin-bottom: 12px;
+}
+
+.skeleton-desc {
+  width: 90%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-desc.short {
+  width: 55%;
+}
+
+.skeleton-badge {
+  width: 40%;
+  height: 14px;
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: 1px dashed var(--line-light);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.ai-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 16px;
+  gap: 12px;
+}
+
+.ai-empty-icon {
+  font-size: 32px;
+  opacity: 0.6;
+}
+
+.ai-empty-state p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 320px;
+}
+
 @media (max-width: 1100px) {
   .results-grid {
     grid-template-columns: 1fr;

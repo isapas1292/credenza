@@ -104,17 +104,31 @@
       </div>
     </article>
 
-    <!-- Alternativas Gemini -->
-    <article class="results-panel flex-1">
+    <!-- Alternativas IA -->
+    <article class="results-panel flex-1 ai-alternatives-panel">
       <div class="results-head">
         <div>
           <span class="mini-label accent">Inteligencia de Mercado</span>
           <h3>Alternativas Sugeridas</h3>
         </div>
+        <span class="ai-badge">
+          <span class="ai-sparkle">✦</span> Powered by AI
+        </span>
       </div>
-    
-      <div class="recommendation-grid">
-        <article class="recommendation-card" *ngFor="let item of similarProducts">
+
+      <!-- Loading skeleton para alternativas -->
+      <div class="recommendation-grid" *ngIf="loading() && similarProducts.length === 0">
+        <div class="recommendation-card skeleton-card" *ngFor="let i of [1, 2, 3]">
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-desc"></div>
+          <div class="skeleton-line skeleton-desc short"></div>
+          <div class="skeleton-line skeleton-badge"></div>
+        </div>
+      </div>
+
+      <!-- Contenido real -->
+      <div class="recommendation-grid" *ngIf="similarProducts.length > 0">
+        <article class="recommendation-card animate-fade-in-up" *ngFor="let item of similarProducts; let i = index" [style.animation-delay]="i * 0.12 + 's'">
           <div class="recommendation-top">
             <div class="recommendation-info">
               <strong>{{ item.name }}</strong>
@@ -126,6 +140,12 @@
              Sugerencia: <strong>{{ item.payment }}</strong>
           </div>
         </article>
+      </div>
+
+      <!-- Empty state -->
+      <div class="ai-empty-state" *ngIf="!loading() && similarProducts.length === 0">
+        <span class="ai-empty-icon">🔍</span>
+        <p>No se encontraron alternativas para este producto. La IA no pudo generar sugerencias en este momento.</p>
       </div>
     </article>
     
