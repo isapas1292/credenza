@@ -156,4 +156,27 @@ export class ResultsComponent implements OnInit {
     
     return [];
   }
+
+  get isIncompatible(): boolean {
+    const res = this.aiResult;
+    if (!res) return false;
+    const score = res.chosen_analysis?.recommendation_score || 0;
+    return score < 0.50;
+  }
+
+  get aiSimilarProducts() {
+    const res = this.aiResult;
+    if (res && res.similar_products && res.similar_products.length > 0) {
+      return res.similar_products;
+    }
+    return [];
+  }
+
+  get viableAlternatives() {
+    const res = this.aiResult;
+    if (res && res.viable_alternatives && res.viable_alternatives.length > 0) {
+      return res.viable_alternatives;
+    }
+    return [];
+  }
 }

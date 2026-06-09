@@ -148,6 +148,69 @@
         <p>No se encontraron alternativas para este producto. La IA no pudo generar sugerencias en este momento.</p>
       </div>
     </article>
+
+    <!-- Productos Similares Accesibles (solo si la compra no es viable) -->
+    <article class="results-panel flex-1 similar-products-panel" *ngIf="isIncompatible && aiSimilarProducts.length > 0">
+      <div class="results-head">
+        <div>
+          <span class="mini-label similar-label">Dentro de tu Alcance</span>
+          <h3>Productos Similares Accesibles</h3>
+        </div>
+        <span class="ai-badge similar-badge">
+          <span class="ai-sparkle">🔄</span> IA · Mismo tipo
+        </span>
+      </div>
+
+      <p class="panel-subtitle">Productos del mismo tipo que sí se ajustan a tu presupuesto actual.</p>
+
+      <div class="similar-grid">
+        <article class="similar-card animate-fade-in-up" *ngFor="let item of aiSimilarProducts; let i = index" [style.animation-delay]="i * 0.12 + 's'">
+          <div class="similar-top">
+            <div class="similar-info">
+              <strong>{{ item.name }}</strong>
+              <p class="similar-desc">{{ item.desc }}</p>
+            </div>
+            <span class="badge-neutral price-badge similar-price">{{ item.price }}</span>
+          </div>
+          <div class="similar-bottom">
+            <span class="why-fits-icon">✅</span>
+            <span>{{ item.why_fits }}</span>
+          </div>
+        </article>
+      </div>
+    </article>
+
+    <!-- Alternativas Más Viables (solo si la compra no es viable) -->
+    <article class="results-panel flex-1 viable-alternatives-panel" *ngIf="isIncompatible && viableAlternatives.length > 0">
+      <div class="results-head">
+        <div>
+          <span class="mini-label viable-label">Opciones Inteligentes</span>
+          <h3>Alternativas Más Viables</h3>
+        </div>
+        <span class="ai-badge viable-badge">
+          <span class="ai-sparkle">💡</span> IA · Otra categoría
+        </span>
+      </div>
+
+      <p class="panel-subtitle">Productos de otra categoría que cumplen tu propósito de forma más accesible.</p>
+
+      <div class="viable-grid">
+        <article class="viable-card animate-fade-in-up" *ngFor="let item of viableAlternatives; let i = index" [style.animation-delay]="i * 0.15 + 's'">
+          <div class="viable-top">
+            <div class="viable-info">
+              <strong>{{ item.name }}</strong>
+              <span class="category-chip">{{ item.category }}</span>
+              <p class="viable-desc">{{ item.desc }}</p>
+            </div>
+            <span class="badge-neutral price-badge viable-price">{{ item.price }}</span>
+          </div>
+          <div class="viable-bottom">
+            <span class="why-better-icon">💡</span>
+            <span>{{ item.why_better }}</span>
+          </div>
+        </article>
+      </div>
+    </article>
     
   </div>
 </section>

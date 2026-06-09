@@ -880,7 +880,7 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     # ── Alternatives ───────────────────────────────────────────
     alternatives = generate_alternatives(user_dict, option_dict)
 
-    return {
+    result = {
         "chosen_analysis": user_choice,
         "best_option": best_overall,
         "all_scenarios": all_scenarios,
@@ -889,6 +889,13 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         "suggestion_text": suggestion_text,
         "segment_name": segment_name
     }
+
+    if user_score < 0.50:
+        result["similar_products"] = generate_similar_products_fallback(user_dict, option_dict)
+        result["viable_alternatives"] = generate_viable_alternatives_fallback(option_dict, user_dict)
+
+    return result
+
 
 def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
     """Genera alternativas basadas en lo que el usuario realmente puede pagar."""
@@ -936,6 +943,168 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
     ]
     
     return alternatives
+
+def generate_similar_products_fallback(user_dict: dict, product_data: dict) -> List[dict]:
+    """
+    Genera productos similares accesibles cuando la compra no es viable.
+    Usa ejemplos genéricos por categoría como base para que Gemini los enriquezca.
+    """
+    price = _num(product_data.get("price", 50000))
+    category = normalize_category(product_data.get("product_category", "technology"))
+    purpose = product_data.get("purpose", "uso general")
+
+    fcf = (
+        user_dict.get("monthly_income_avg", 0)
+        - user_dict.get("fixed_expenses_monthly", 0)
+        - user_dict.get("variable_expenses_monthly_avg", 0)
+        - user_dict.get("current_debt_payment_monthly", 0)
+    )
+
+    max_monthly = max(fcf * 0.30, 1)
+    p1 = max(max_monthly * 12, 1000)
+    p2 = max(max_monthly * 18, 1500)
+    p3 = max(max_monthly * 24, 2000)
+
+    CATEGORY_EXAMPLES = {
+        "laptop": [
+            ("Lenovo IdeaPad 3", p1, "Intel i3, 8GB RAM, 256GB SSD. Ideal para tareas básicas de oficina y estudio."),
+            ("Acer Aspire 5", p2, "Intel i5, 8GB RAM, 512GB SSD. Buen rendimiento para productividad diaria."),
+            ("HP 15s", p3, f"AMD Ryzen 5, 8GB RAM, 256GB SSD. Ligero y eficiente para {purpose}."),
+        ],
+        "technology": [
+            ("Samsung Galaxy A35", p1, "6.6\", 6GB RAM, 128GB. Pantalla AMOLED y batería de 5000mAh."),
+            ("Motorola Moto G85", p2, "6.67\" pOLED, 8GB RAM, 256GB. Excelente cámara y rendimiento."),
+            ("Xiaomi Redmi Note 13 Pro", p3, "6.67\" AMOLED, 8GB RAM, 256GB. Cámara de 200MP y carga rápida."),
+        ],
+        "vehicle": [
+            ("Moto Honda Wave 110", p1, "Moto 110cc, bajo consumo de combustible, ideal para ciudad."),
+            ("Moto Yamaha Crypton", p2, "125cc, económica en combustible, perfecta para movilidad urbana."),
+            ("Kia Picanto Usado 2018", p3, f"Compacto, bajo consumo, ideal para uso urbano y {purpose}."),
+        ],
+        "home": [
+            ("Nevera LG 9 pies reacondicionada", p1, "Refrigerador de 9 pies, eficiente en energía, buen estado."),
+            ("Lavadora Samsung 14kg", p2, "Carga superior, 14kg, bajo consumo energético."),
+            ("Aire Carrier 12,000 BTU", p3, "Split frío/calor, eficiente, ideal para habitación."),
+        ],
+        "insurance": [
+            ("Seguro de vida básico ARS", p1, "Cobertura básica de vida con prima mensual accesible."),
+            ("Plan de salud básico", p2, "Cobertura médica para consultas y emergencias."),
+            ("Seguro de accidentes personales", p3, "Cobertura por accidentes con prima mensual moderada."),
+        ],
+        "loan": [
+            ("Préstamo personal monto menor", p1, "Monto reducido ajustado a tu capacidad de pago actual."),
+            ("Préstamo cooperativa", p2, "Tasa de interés más baja que el banco comercial."),
+            ("Línea de crédito revolvente", p3, "Flexibilidad de uso y pago según necesidad."),
+        ],
+        "travel": [
+            ("Paquete turístico nacional", p1, "Destino local en RD. Descanso accesible sin endeudarte."),
+            ("Paquete Punta Cana todo incluido (temporada baja)", p2, "Tarifa reducida en temporada baja."),
+            ("Crucero 3 días Caribe", p3, "Experiencia premium a precio moderado en temporada baja."),
+        ],
+    }
+
+    examples = CATEGORY_EXAMPLES.get(category, CATEGORY_EXAMPLES["technology"])
+    result = []
+    for (name, ex_price, desc) in examples:
+        installment = ex_price / 12
+        result.append({
+            "name": name,
+            "price": f"RD${ex_price:,.0f}",
+            "desc": desc,
+            "why_fits": f"Cuota estimada de RD${installment:,.0f}/mes a 12 meses, dentro de tu flujo libre disponible."
+        })
+    return result
+
+
+def generate_viable_alternatives_fallback(product_data: dict, user_dict: dict) -> List[dict]:
+    """
+    Genera alternativas de OTRA categoría que cumplen el mismo propósito.
+    Usado cuando la compra no es viable para dar opciones más accesibles.
+    """
+    category = normalize_category(product_data.get("product_category", "technology"))
+    purpose = product_data.get("purpose", "uso general")
+
+    fcf = (
+        user_dict.get("monthly_income_avg", 0)
+        - user_dict.get("fixed_expenses_monthly", 0)
+        - user_dict.get("variable_expenses_monthly_avg", 0)
+        - user_dict.get("current_debt_payment_monthly", 0)
+    )
+
+    max_monthly = max(fcf * 0.30, 1)
+    p1 = max(max_monthly * 12, 1000)
+    p2 = max(max_monthly * 18, 1500)
+
+    CROSS_CATEGORY = {
+        "laptop": [
+            ("Tablet Samsung Galaxy Tab A9+ con Teclado", "Tablet", p1,
+             "Pantalla 11\", 4GB RAM, 64GB. Con teclado Bluetooth cubre productividad básica.",
+             f"Si tu propósito es {purpose}, una tablet con teclado cubre el 80% de las necesidades a un costo mucho menor."),
+            ("Chromebook Lenovo IdeaPad Duet", "Chromebook", p2,
+             "Pantalla táctil 10.1\", 4GB RAM, 64GB. Google Workspace completo sin instalaciones.",
+             f"Perfecta para {purpose} con acceso a internet. Hasta 60% más barata que una laptop convencional."),
+        ],
+        "vehicle": [
+            ("Moto Scooter Honda PCX 150", "Motocicleta", p1,
+             "Scooter 150cc, bajo consumo, baúl trasero grande. Ideal para movilidad urbana.",
+             f"Para {purpose} en ciudad, una moto cuesta 5-10x menos que un carro con gastos similares."),
+            ("Bicicleta eléctrica plegable", "Transporte eléctrico", p2,
+             "Autonomía 40km, motor 250W. Sin combustible, seguro ni placa obligatoria.",
+             f"Si {purpose} es en área urbana, la bicicleta eléctrica elimina el gasto en gasolina y seguro."),
+        ],
+        "technology": [
+            ("Tablet con Teclado Bluetooth", "Tablet", p1,
+             "Samsung Tab A8 + teclado. Cubre navegación, redes y ofimática básica.",
+             f"Para {purpose}, una tablet cumple la función a un costo significativamente menor."),
+            ("Laptop reacondicionada certificada", "Laptop", p2,
+             "Laptop empresarial reacondicionada con garantía. Mismo rendimiento, precio 40% menor.",
+             f"Una laptop reacondicionada tiene el mismo rendimiento para {purpose} a precio de entrada."),
+        ],
+        "home": [
+            ("Electrodoméstico reacondicionado certificado", "Hogar", p1,
+             "Mismo modelo en excelente estado, revisado y con garantía de 6 meses.",
+             f"Para {purpose}, un electrodoméstico reacondicionado certificado cumple igual función."),
+            ("Renta mensual del equipo", "Renta", p2,
+             "Alquiler del equipo sin comprometer tu liquidez ni asumir deuda.",
+             f"Si {purpose} es temporal o incierto, rentar puede ser más inteligente financieramente."),
+        ],
+        "loan": [
+            ("Cooperativa de ahorro y crédito", "Cooperativa", p1,
+             "Tasas de interés 2-4% más bajas que el banco comercial. Requiere membresía.",
+             f"Una cooperativa ofrece mejores condiciones para {purpose} con menos requisitos."),
+            ("Plan de ahorro previo", "Ahorro", p2,
+             "Ahorrar primero el monto necesario antes de endeudarse.",
+             f"Para {purpose}, ahorrar 6-12 meses antes evita el costo de intereses totalmente."),
+        ],
+        "travel": [
+            ("Turismo local República Dominicana", "Turismo nacional", p1,
+             "Playa, montaña o ecoturismo local. Precios accesibles sin salir del país.",
+             f"Para {purpose}, el turismo local ofrece experiencias similares a una fracción del costo internacional."),
+            ("Paquete diferido en temporada baja", "Paquete planificado", p2,
+             "Separar el viaje con cuotas pequeñas y viajar en temporada baja (mayo-octubre).",
+             f"Diferir el viaje 3-6 meses te permite {purpose} sin comprometer tu presupuesto actual."),
+        ],
+        "insurance": [
+            ("Seguro de accidentes personales básico", "Seguro básico", p1,
+             "Cobertura de accidentes personales con prima mínima mensual.",
+             f"Si tu prioridad es protección básica para {purpose}, empieza con accidentes personales."),
+            ("ARS Plan básico del empleador", "Seguro laboral", p2,
+             "Verifica si tu empleador ofrece cobertura médica básica incluida en tu contrato.",
+             f"Muchos empleadores en RD incluyen ARS. Revisa tu cobertura laboral antes de comprar un seguro privado."),
+        ],
+    }
+
+    examples = CROSS_CATEGORY.get(category, CROSS_CATEGORY["technology"])
+    result = []
+    for item in examples:
+        result.append({
+            "name": item[0],
+            "category": item[1],
+            "price": f"RD${item[2]:,.0f}",
+            "desc": item[3],
+            "why_better": item[4],
+        })
+    return result
 
 def load_or_train_artifacts(path: str) -> dict:
     if os.path.exists(path):

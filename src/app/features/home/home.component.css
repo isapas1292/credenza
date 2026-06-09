@@ -1,4 +1,7 @@
-.hero, .feature-grid, .summary-grid, .hero-stats {
+.hero,
+.feature-grid,
+.summary-grid,
+.hero-stats {
   display: grid;
   gap: 24px;
 }
@@ -19,7 +22,6 @@
   letter-spacing: -0.03em;
   margin: 16px 0;
   background: linear-gradient(135deg, var(--secondary), var(--primary));
-  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -60,7 +62,7 @@
   padding: 32px;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass);
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .head-row {
@@ -209,18 +211,23 @@
     grid-template-columns: 1fr;
     text-align: center;
   }
+
   .hero-copy {
     padding-right: 0;
   }
+
   .hero-copy p {
     margin: 16px auto;
   }
+
   .actions {
     justify-content: center;
   }
+
   .feature-grid {
     grid-template-columns: 1fr;
   }
+
   .closing-banner {
     flex-direction: column;
     text-align: center;

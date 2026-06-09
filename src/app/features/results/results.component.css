@@ -514,3 +514,220 @@
     position: static;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Similar Products Panel (green accent — same category)
+   ═══════════════════════════════════════════════════════════ */
+
+.similar-products-panel {
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid #10b981;
+}
+
+.similar-products-panel::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  opacity: 0.06;
+  border-radius: 50%;
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.similar-label {
+  color: #059669 !important;
+}
+
+.similar-badge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12)) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+  color: #059669 !important;
+}
+
+.panel-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: -12px 0 20px;
+  line-height: 1.5;
+}
+
+.similar-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.similar-card {
+  background: var(--bg);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border-left: 4px solid #10b981;
+  transition: all 0.3s ease;
+}
+
+.similar-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface-solid);
+  border-left-color: #059669;
+}
+
+.similar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.similar-info strong {
+  font-size: 16px;
+  color: var(--text-main);
+  display: block;
+}
+
+.similar-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.similar-price {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+  color: #059669 !important;
+}
+
+.similar-bottom {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(16, 185, 129, 0.25);
+  font-size: 14px;
+  color: #047857;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.why-fits-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Viable Alternatives Panel (amber accent — different category)
+   ═══════════════════════════════════════════════════════════ */
+
+.viable-alternatives-panel {
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid #f59e0b;
+}
+
+.viable-alternatives-panel::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  opacity: 0.06;
+  border-radius: 50%;
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.viable-label {
+  color: #d97706 !important;
+}
+
+.viable-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.12)) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #d97706 !important;
+}
+
+.viable-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.viable-card {
+  background: var(--bg);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border-left: 4px solid #f59e0b;
+  transition: all 0.3s ease;
+}
+
+.viable-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface-solid);
+  border-left-color: #d97706;
+}
+
+.viable-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.viable-info strong {
+  font-size: 16px;
+  color: var(--text-main);
+  display: block;
+}
+
+.category-chip {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.viable-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.viable-price {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+  color: #b45309 !important;
+}
+
+.viable-bottom {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(245, 158, 11, 0.25);
+  font-size: 14px;
+  color: #92400e;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.why-better-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}

@@ -44,10 +44,25 @@ class Alternative(typing.TypedDict):
     desc: str
     payment: str
 
+class SimilarProduct(typing.TypedDict):
+    name: str
+    price: str
+    desc: str
+    why_fits: str
+
+class ViableAlternative(typing.TypedDict):
+    name: str
+    category: str
+    price: str
+    desc: str
+    why_better: str
+
 class GeminiResponse(typing.TypedDict):
     suggestion_text: str
     action_steps: List[str]
     alternatives: List[Alternative]
+    similar_products: List[SimilarProduct]
+    viable_alternatives: List[ViableAlternative]
 
 # Configuración de Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -71,7 +86,52 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
     lifespan = product.get('lifespan', 'No especificado')
     payment_type = product.get('payment_type', 'No especificado')
 
+    # Determine if the purchase is incompatible
+    chosen = analysis_result.get('chosen_analysis', {})
+    rec_score = chosen.get('recommendation_score', 1.0)
+    is_incompatible = rec_score < 0.50
+
     try:
+        # Build the incompatible-only section of the prompt
+        incompatible_prompt = ""
+        if is_incompatible:
+            finances = perfil.get('finances', perfil)
+            monthly_income = float(finances.get('monthlyIncome', finances.get('monthly_income_avg', 0)) or 0)
+            fixed_exp = float(finances.get('fixedExpenses', finances.get('fixed_expenses_monthly', 0)) or 0)
+            debts = float(finances.get('activeDebts', finances.get('current_debt_payment_monthly', 0)) or 0)
+            free_cash = monthly_income - fixed_exp - debts
+            max_affordable_monthly = max(free_cash * 0.30, 0)
+            max_affordable_12m = max_affordable_monthly * 12
+
+            incompatible_prompt = f"""
+        
+        IMPORTANTE — LA COMPRA NO ES VIABLE PARA ESTE USUARIO (score: {rec_score:.0%}).
+        Su flujo libre mensual es aproximadamente RD${free_cash:,.0f} y puede pagar máximo RD${max_affordable_monthly:,.0f}/mes en cuotas.
+        El precio máximo que puede costear a 12 meses es aproximadamente RD${max_affordable_12m:,.0f}.
+
+        4. Provee EXACTAMENTE 3 `similar_products`: Productos REALES del mercado dominicano actual que son del MISMO tipo que "{product_name}" (categoría "{category}") pero que el usuario SÍ puede costear (precio menor a RD${max_affordable_12m:,.0f}).
+           Para cada uno incluye:
+           - `name`: Nombre REAL del producto (marca y modelo específico)
+           - `price`: Precio en formato "RD$XX,XXX"
+           - `desc`: Una oración describiendo las especificaciones clave del producto
+           - `why_fits`: Por qué este producto se ajusta al presupuesto y propósito del usuario
+
+        5. Provee EXACTAMENTE 2 `viable_alternatives`: Productos REALES de una CATEGORÍA DIFERENTE a "{category}" que podrían cumplir el mismo propósito ("{purpose}") de manera más accesible.
+           Por ejemplo, si quiere una laptop para trabajar pero no puede pagarla, sugerir una tablet con teclado o un Chromebook. Si quiere un carro, sugerir una moto o transporte alternativo.
+           Para cada uno incluye:
+           - `name`: Nombre REAL del producto
+           - `category`: La categoría del producto alternativo
+           - `price`: Precio en formato "RD$XX,XXX"
+           - `desc`: Qué es y sus especificaciones clave
+           - `why_better`: Por qué esta alternativa es más viable y cómo cumple su propósito
+            """
+        else:
+            incompatible_prompt = """
+        
+        4. Para `similar_products`: Devuelve una lista VACÍA [] porque la compra sí es viable.
+        5. Para `viable_alternatives`: Devuelve una lista VACÍA [] porque la compra sí es viable.
+            """
+
         prompt = f"""
         Como experto financiero dominicano y asesor de compras, analiza este caso:
         
@@ -83,14 +143,14 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         - Tiempo esperado de uso: {lifespan}
         - Método de pago elegido: {payment_type}
         - Notas adicionales del usuario: {notes if notes else 'Ninguna'}
-        - Método de pago sugerido o elegido: {json.dumps(analysis_result['chosen_analysis']['scenario_details'])}
+        - Método de pago sugerido o elegido: {json.dumps(chosen.get('scenario_details', {}))}
         - Perfil Financiero completo: {json.dumps(perfil)}
-        - Análisis Técnico de Viabilidad: {json.dumps(analysis_result['chosen_analysis'])}
+        - Análisis Técnico de Viabilidad: {json.dumps(chosen)}
 
         TAREA:
         1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra es viable o no. DEBES leer la manera en que el usuario quiere hacer la compra (el método de pago, contado o cuotas) y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Menciona su propósito ("{purpose}") y cómo la compra se alinea o no con eso.
         2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra.
-        3. Provee EXACTAMENTE 3 `alternatives` (alternativas) que son productos REALES del mercado actual, similares a "{product_name}" en la categoría "{category}". Las alternativas deben considerar:
+        3. Provee EXACTAMENTE 3 `alternatives` que son productos REALES del mercado actual, similares a "{product_name}" en la categoría "{category}". Las alternativas deben considerar:
            - El propósito del usuario: "{purpose}"
            - Su restricción principal: "{main_constraint}"
            - Su presupuesto basado en el precio original de RD${price:,.2f}
@@ -103,6 +163,7 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
            - `price`: Precio en formato "RD$XX,XXX" 
            - `desc`: Una oración describiendo por qué esa alternativa encaja con su propósito y restricción
            - `payment`: Sugerencia de financiamiento basada en su perfil (ej: "Financiamiento a 12 meses", "Compra de contado")
+        {incompatible_prompt}
         """
         
         response = model.generate_content(
@@ -121,10 +182,19 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
             analysis_result["gemini_action_plan"] = gemini_data["action_steps"]
         if "alternatives" in gemini_data:
             analysis_result["alternatives"] = gemini_data["alternatives"]
+        # Only override fallback data if Gemini returns non-empty lists
+        if "similar_products" in gemini_data and len(gemini_data["similar_products"]) > 0:
+            analysis_result["similar_products"] = gemini_data["similar_products"]
+        if "viable_alternatives" in gemini_data and len(gemini_data["viable_alternatives"]) > 0:
+            analysis_result["viable_alternatives"] = gemini_data["viable_alternatives"]
+
+        print(f"[Gemini OK] similar_products={len(gemini_data.get('similar_products', []))}, viable_alternatives={len(gemini_data.get('viable_alternatives', []))}")
             
     except Exception as e:
-        print(f"Error enriqueciendo con Gemini: {e}")
-        # Si falla, mantenemos el resultado original sin colapsar el backend
+        import traceback
+        print(f"[Gemini ERROR] enrich_with_gemini falló: {e}")
+        print(traceback.format_exc())
+        # Si falla, mantenemos el resultado original (incluyendo fallbacks del motor)
         
     return analysis_result
 
