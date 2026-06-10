@@ -68,7 +68,7 @@ class GeminiResponse(typing.TypedDict):
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash') # Usando el modelo optimizado
+    model = genai.GenerativeModel('gemini-2.5-flash') # Usando el modelo con 20 peticiones diarias gratuitas
 else:
     model = None
 
@@ -85,6 +85,15 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
     notes = product.get('notes', '')
     lifespan = product.get('lifespan', 'No especificado')
     payment_type = product.get('payment_type', 'No especificado')
+    
+    # Hogar specific fields
+    square_meters = product.get('square_meters')
+    bedrooms = product.get('bedrooms')
+    zone = product.get('zone', 'No especificada')
+    
+    # Dependents from perfil
+    personal = perfil.get('personal', perfil)
+    dependents = personal.get('dependents', 0)
 
     # Determine if the purchase is incompatible
     chosen = analysis_result.get('chosen_analysis', {})
@@ -107,23 +116,23 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         
         IMPORTANTE — LA COMPRA NO ES VIABLE PARA ESTE USUARIO (score: {rec_score:.0%}).
         Su flujo libre mensual es aproximadamente RD${free_cash:,.0f} y puede pagar máximo RD${max_affordable_monthly:,.0f}/mes en cuotas.
-        El precio máximo que puede costear a 12 meses es aproximadamente RD${max_affordable_12m:,.0f}.
+        El precio máximo que puede costear a 12 meses es aproximadamente RD${max_affordable_12m:,.0f} (o aprox. ${max_affordable_12m/60:,.0f} USD).
 
-        4. Provee EXACTAMENTE 3 `similar_products`: Productos REALES del mercado dominicano actual que son del MISMO tipo que "{product_name}" (categoría "{category}") pero que el usuario SÍ puede costear (precio menor a RD${max_affordable_12m:,.0f}).
+        4. Provee EXACTAMENTE 3 `similar_products`: Productos REALES del mercado actual que son del MISMO tipo que "{product_name}" (categoría "{category}") pero que el usuario SÍ puede costear (precio menor a ${max_affordable_12m/60:,.0f} USD).
            Para cada uno incluye:
            - `name`: Nombre REAL del producto (marca y modelo específico)
-           - `price`: Precio en formato "RD$XX,XXX"
+           - `price`: Precio fijo REAL en formato "$XXX USD" (tomado de Amazon, Best Buy, tienda oficial, etc.)
            - `desc`: Una oración describiendo las especificaciones clave del producto
-           - `why_fits`: Por qué este producto se ajusta al presupuesto y propósito del usuario
+           - `why_fits`: Por qué este producto se ajusta al presupuesto. DEBES incluir la fuente del precio (ej. "Precio Amazon: $XXX USD").
 
         5. Provee EXACTAMENTE 2 `viable_alternatives`: Productos REALES de una CATEGORÍA DIFERENTE a "{category}" que podrían cumplir el mismo propósito ("{purpose}") de manera más accesible.
            Por ejemplo, si quiere una laptop para trabajar pero no puede pagarla, sugerir una tablet con teclado o un Chromebook. Si quiere un carro, sugerir una moto o transporte alternativo.
            Para cada uno incluye:
            - `name`: Nombre REAL del producto
            - `category`: La categoría del producto alternativo
-           - `price`: Precio en formato "RD$XX,XXX"
+           - `price`: Precio fijo REAL en formato "$XXX USD"
            - `desc`: Qué es y sus especificaciones clave
-           - `why_better`: Por qué esta alternativa es más viable y cómo cumple su propósito
+           - `why_better`: Por qué esta alternativa es más viable y cómo cumple su propósito. Incluye la fuente (ej. "Precio Best Buy: $XXX USD").
             """
         else:
             incompatible_prompt = """
@@ -132,46 +141,92 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         5. Para `viable_alternatives`: Devuelve una lista VACÍA [] porque la compra sí es viable.
             """
 
+        if category.lower() == "préstamo":
+            alternatives_prompt = f"""
+        3. Provee EXACTAMENTE 3 `alternatives` que son opciones de entidades financieras o bancos REALES en el país del usuario (ej. República Dominicana: Banco Popular, Banreservas, BHD, Asociación Popular, etc.) que ofrezcan préstamos personales.
+           - Evalúa si la tasa que el usuario ingresó (o la tasa estándar calculada de {product_data.get('interest_rate', 0.18)*100:.1f}%) es competitiva con el mercado actual.
+           Para cada alternativa incluye:
+           - `name`: Nombre del Banco o Entidad + "(Mejor Tasa)" o "(Más Flexible)" según corresponda. (ej. "Banco Popular - Préstamo Personal (Mejor Tasa)")
+           - `price`: "Tasa estimada: X% a Y%"
+           - `desc`: Una oración describiendo los beneficios de este préstamo (ej. tasa fija a 1 año, sin penalidad de abono, desembolso rápido, etc.) y por qué le conviene según su propósito ("{purpose}").
+           - `payment`: Plazo sugerido basado en su perfil (ej: "Financiamiento a 24 meses")
+            """
+        elif category.lower() == "seguro":
+            alternatives_prompt = f"""
+        3. Provee EXACTAMENTE 3 `alternatives` que son planes de Aseguradoras REALES en el país del usuario (ej. República Dominicana: ARS Humano, Mapfre, Universal, Monumental, etc.) para el tipo de seguro buscado.
+           - Compara la prima mensual ingresada de RD${price:,.2f} con el promedio del mercado para coberturas similares.
+           Para cada alternativa incluye:
+           - `name`: Nombre de la Aseguradora y Plan (ej. "Mapfre - Seguro de Vehículo Full")
+           - `price`: Prima estimada mensual en formato "RD$XXX/mes" o "$XXX USD/mes"
+           - `desc`: Una oración describiendo la cobertura clave, deducibles o beneficios (ej. asistencia vial 24/7, cobertura catastrófica) y por qué le conviene según su propósito ("{purpose}").
+           - `payment`: "Pago mensual continuo"
+            """
+        elif category.lower() == "vehículo":
+            alternatives_prompt = f"""
+        3. Provee EXACTAMENTE 3 `alternatives` que son Vehículos REALES del mercado actual en el mismo segmento.
+           - Considera su presupuesto original de RD${price:,.2f}.
+           - Busca OTRAS marcas/modelos que retengan mejor su valor de reventa, consuman menos combustible o tengan repuestos más baratos en su país.
+           Para cada alternativa incluye:
+           - `name`: Marca, Modelo y Año (ej. "Toyota RAV4 2018" o "Honda CR-V 2017")
+           - `price`: Precio realista de dealer en formato "$XXX USD" o "RD$XXX"
+           - `desc`: Por qué es una mejor opción a largo plazo (ej. "Piezas económicas en el país y excelente valor de reventa"). Incluye fuente o referencia de dealer local.
+           - `payment`: Sugerencia de financiamiento automotriz basada en su perfil (ej: "Financiamiento de Vehículo a 48 meses")
+            """
+        elif category.lower() == "hogar":
+            alternatives_prompt = f"""
+        3. Provee EXACTAMENTE 3 `alternatives` que son opciones Inmobiliarias (Bienes Raíces) REALES en el mercado.
+           - Evalúa si {bedrooms} habitaciones y {square_meters} mt2 tiene sentido lógico sabiendo que el usuario tiene {dependents} dependientes (hijos/familiares). Si busca comprar para "Vivir" pero la casa es muy pequeña para sus dependientes, házselo saber en el suggestion_text.
+           - Basado en su presupuesto de RD${price:,.2f} y su interés en la zona "{zone}", sugiere 3 tipos de propiedades o sectores alternativos.
+           Para cada alternativa incluye:
+           - `name`: Tipo de Propiedad y Sector (ej. "Apartamento 3 Hab - Santo Domingo Este" o "Casa - Autopista San Isidro")
+           - `price`: Precio estimado realista en formato "$XXX USD" o "RD$XXX"
+           - `desc`: Por qué esta opción tiene sentido para su tamaño de familia ({dependents} dependientes) y su presupuesto. (Ej. "Menor costo por metro cuadrado sin sacrificar habitaciones").
+           - `payment`: Sugerencia de financiamiento hipotecario basada en su perfil (ej: "Préstamo Hipotecario a 20 años")
+            """
+        else:
+            alternatives_prompt = f"""
+        3. Provee EXACTAMENTE 3 `alternatives` que son productos REALES del mercado actual en la categoría "{category}". Las alternativas deben considerar:
+           - El propósito del usuario: "{purpose}"
+           - Su restricción principal: "{main_constraint}"
+           - Su presupuesto original de RD${price:,.2f}
+           ¡IMPORTANTE! NO repitas el mismo nombre del producto original ("{product_name}"). Busca OTROS productos reales y específicos que representen estas 3 opciones:
+           a) Opción Económica: Un producto REAL diferente y más barato (ej. si busca "MacBook Pro M4", sugiere "MacBook Air M2"). El `name` debe incluir "(Versión Económica)" al final.
+           b) Opción Mejor Relación Precio-Calidad: Un producto REAL con el mejor balance. El `name` debe incluir "(Mejor Relación Precio-Calidad)" al final.
+           c) Opción Premium: Un producto REAL de gama superior. El `name` debe incluir "Premium" al final.
+           Para cada alternativa incluye:
+           - `name`: Nombre REAL del producto diferente al original + la etiqueta correspondiente.
+           - `price`: Precio fijo REAL en formato "$XXX USD"
+           - `desc`: Una oración describiendo las especificaciones clave y por qué encaja con su propósito. Incluye la fuente del precio (ej. "Precio en Amazon: $XXX USD").
+           - `payment`: Sugerencia de financiamiento basada en su perfil (ej: "Financiamiento a 12 meses", "Compra de contado")
+            """
+
         prompt = f"""
         Como experto financiero dominicano y asesor de compras, analiza este caso:
         
         CONTEXTO DEL USUARIO:
-        - El usuario quiere comprar: {product_name} ({category})
-        - Precio original: RD${price:,.2f}
+        - El usuario quiere: {product_name} ({category})
+        - Precio o Monto: RD${price:,.2f}
         - Propósito / Para qué lo quiere: {purpose}
         - Su prioridad o restricción principal: {main_constraint}
-        - Tiempo esperado de uso: {lifespan}
         - Método de pago elegido: {payment_type}
         - Notas adicionales del usuario: {notes if notes else 'Ninguna'}
-        - Método de pago sugerido o elegido: {json.dumps(chosen.get('scenario_details', {}))}
+        - Método de pago sugerido o elegido por el sistema: {json.dumps(chosen.get('scenario_details', {}))}
         - Perfil Financiero completo: {json.dumps(perfil)}
         - Análisis Técnico de Viabilidad: {json.dumps(chosen)}
 
         TAREA:
-        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra es viable o no. DEBES leer la manera en que el usuario quiere hacer la compra (el método de pago, contado o cuotas) y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Menciona su propósito ("{purpose}") y cómo la compra se alinea o no con eso.
-        2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra.
-        3. Provee EXACTAMENTE 3 `alternatives` que son productos REALES del mercado actual, similares a "{product_name}" en la categoría "{category}". Las alternativas deben considerar:
-           - El propósito del usuario: "{purpose}"
-           - Su restricción principal: "{main_constraint}"
-           - Su presupuesto basado en el precio original de RD${price:,.2f}
-           Estructura las 3 alternativas así:
-           a) Opción Económica: Un producto más barato que cumpla lo básico de su propósito. El `name` debe incluir "(Versión Económica)" al final del nombre del producto.
-           b) Opción Mejor Relación Precio-Calidad: Un producto con el mejor balance para su necesidad. El `name` debe incluir "(Mejor Relación Precio-Calidad)" al final.
-           c) Opción Premium: Un producto de gama superior si puede estirarse. El `name` debe incluir "Premium" al final.
-           Para cada alternativa incluye:
-           - `name`: Nombre REAL del producto con la etiqueta correspondiente
-           - `price`: Precio en formato "RD$XX,XXX" 
-           - `desc`: Una oración describiendo por qué esa alternativa encaja con su propósito y restricción
-           - `payment`: Sugerencia de financiamiento basada en su perfil (ej: "Financiamiento a 12 meses", "Compra de contado")
+        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra o préstamo es viable o no. DEBES leer la manera en que el usuario quiere hacer la transacción y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Menciona su propósito ("{purpose}") y cómo se alinea o no con eso. Si es un préstamo, enfócate en la carga de la cuota mensual.
+        2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra/préstamo.
+        {alternatives_prompt}
         {incompatible_prompt}
         """
-        
         response = model.generate_content(
             prompt,
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json",
                 response_schema=GeminiResponse
-            )
+            ),
+            request_options={"timeout": 15}
         )
         
         gemini_data = json.loads(response.text)
@@ -246,3 +301,5 @@ def recommend_product(body: RecommendationRequest) -> Dict[str, Any]:
     except Exception as ex:
         print(f"Error en recommend_product: {ex}")
         raise HTTPException(status_code=500, detail=str(ex))
+
+

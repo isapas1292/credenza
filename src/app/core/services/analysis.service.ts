@@ -32,6 +32,7 @@ export class AnalysisService {
       name: draft.product.name || 'Producto',
       product_category: draft.category.toLowerCase(),
       price: draft.product.price,
+      interest_rate: draft.product.interestRate ? draft.product.interestRate / 100 : undefined,
       condition: draft.product.condition,
       payment_type: draft.product.paymentType,                    // "Contado" | "Financiado" | "Tarjeta / Cuotas"
       term_months: draft.product.paymentDuration || 1,            // 1 = contado
@@ -39,7 +40,10 @@ export class AnalysisService {
       purpose: draft.product.purpose,
       lifespan: draft.product.lifespan,
       main_constraint: draft.product.mainConstraint,
-      notes: draft.product.notes
+      notes: draft.product.notes,
+      square_meters: draft.product.squareMeters,
+      bedrooms: draft.product.bedrooms,
+      zone: draft.product.zone
     };
 
     const payload = {

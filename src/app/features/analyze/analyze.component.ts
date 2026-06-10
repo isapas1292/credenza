@@ -28,10 +28,16 @@ export class AnalyzeComponent {
   product = {
     name: '',
     price: null as number | null,
+    interestRate: null as number | null,
     condition: 'Nuevo',
     paymentType: 'Contado',
     paymentDuration: null as number | null,
     provider: '',
+    
+    // Hogar specifics
+    squareMeters: null as number | null,
+    bedrooms: null as number | null,
+    zone: '',
     
     // Context and Preferences
     purpose: '',
@@ -46,6 +52,20 @@ export class AnalyzeComponent {
   // ... (select methods remain the same)
   selectCategory(title: string): void {
     this.selectedCategory = title;
+    if (this.selectedCategory === 'Préstamo') {
+      this.product.paymentType = 'Financiado';
+      this.product.name = 'Préstamo Personal'; // Default name since we hide the field
+    } else if (this.selectedCategory === 'Seguro') {
+      this.product.paymentType = 'Contado'; // We'll treat it as monthly cash flow
+      this.product.paymentDuration = 1;
+    } else if (this.selectedCategory === 'Vehículo' || this.selectedCategory === 'Hogar') {
+      if (this.product.paymentType === 'Tarjeta / Cuotas') {
+        this.product.paymentType = 'Financiado';
+      }
+      if (this.selectedCategory === 'Vehículo' && this.product.condition === 'Refurbished') {
+        this.product.condition = 'Usado';
+      }
+    }
   }
 
   nextStep(): void {
@@ -82,10 +102,14 @@ export class AnalyzeComponent {
       product: {
         name: this.product.name,
         price: this.product.price,
+        interestRate: this.product.interestRate,
         condition: this.product.condition,
         paymentType: this.product.paymentType,
         paymentDuration: this.product.paymentDuration,
         provider: this.product.provider,
+        squareMeters: this.product.squareMeters,
+        bedrooms: this.product.bedrooms,
+        zone: this.product.zone,
         purpose: this.product.purpose,
         lifespan: this.product.lifespan,
         mainConstraint: this.product.mainConstraint,

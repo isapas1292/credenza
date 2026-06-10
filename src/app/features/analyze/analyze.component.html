@@ -51,23 +51,54 @@
     <!-- STEP 2: PRODUCT DETAILS -->
     <div class="step-content animate-fade-in-up" *ngIf="currentStep === 2">
       <div class="field-grid">
-        <div class="field field-full">
-          <label>Nombre o referencia</label>
-          <input [(ngModel)]="product.name" name="name" type="text" placeholder="Ej. MacBook Air M3 13 pulgadas" />
+        <div class="field field-full" *ngIf="selectedCategory !== 'Préstamo'">
+          <label *ngIf="selectedCategory !== 'Seguro' && selectedCategory !== 'Hogar'">Nombre o referencia</label>
+          <label *ngIf="selectedCategory === 'Seguro'">Tipo de Seguro</label>
+          <label *ngIf="selectedCategory === 'Hogar'">Tipo de propiedad</label>
+          <input [(ngModel)]="product.name" name="name" type="text" 
+                 [placeholder]="selectedCategory === 'Seguro' ? 'Ej. Seguro de Vehículo Full, Seguro Médico' : (selectedCategory === 'Hogar' ? 'Ej. Apartamento, Casa, Solar' : 'Ej. MacBook Air M3 13 pulgadas')" />
         </div>
 
         <div class="field">
-          <label>Precio estimado</label>
+          <label *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Seguro'">Precio estimado</label>
+          <label *ngIf="selectedCategory === 'Préstamo'">Monto del préstamo</label>
+          <label *ngIf="selectedCategory === 'Seguro'">Prima estimada (Costo Mensual)</label>
           <div class="input-with-prefix">
             <span class="prefix">RD$</span>
             <input [(ngModel)]="product.price" name="price" type="number" placeholder="0.00" />
           </div>
         </div>
 
-        <div class="field">
-          <label>Marca o proveedor</label>
-          <input [(ngModel)]="product.provider" name="provider" type="text" placeholder="Ej. Apple Store" />
+        <div class="field" *ngIf="selectedCategory === 'Préstamo'">
+          <label>Tasa de interés anual</label>
+          <div class="input-with-suffix">
+            <input [(ngModel)]="product.interestRate" name="interestRate" type="number" placeholder="Ej. 18.5" />
+            <span class="suffix">%</span>
+          </div>
         </div>
+
+        <div class="field" *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Hogar'">
+          <label *ngIf="selectedCategory !== 'Seguro'">Marca o proveedor</label>
+          <label *ngIf="selectedCategory === 'Seguro'">Aseguradora</label>
+          <input [(ngModel)]="product.provider" name="provider" type="text" 
+                 [placeholder]="selectedCategory === 'Seguro' ? 'Ej. Humano, Mapfre' : 'Ej. Apple Store'" />
+        </div>
+
+        <!-- Hogar Fields -->
+        <ng-container *ngIf="selectedCategory === 'Hogar'">
+          <div class="field">
+            <label>Metros Cuadrados (mt2)</label>
+            <input [(ngModel)]="product.squareMeters" name="squareMeters" type="number" placeholder="Ej. 120" />
+          </div>
+          <div class="field">
+            <label>Habitaciones</label>
+            <input [(ngModel)]="product.bedrooms" name="bedrooms" type="number" placeholder="Ej. 3" />
+          </div>
+          <div class="field field-full">
+            <label>Zona o Sector</label>
+            <input [(ngModel)]="product.zone" name="zone" type="text" placeholder="Ej. Piantini, Ensanche Ozama, Santiago" />
+          </div>
+        </ng-container>
 
         <div class="field field-full selection-group" *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Seguro'">
           <label>Condición del producto</label>
@@ -76,24 +107,24 @@
               (click)="selectCondition('Nuevo')">✨ Nuevo</button>
             <button class="option-btn" [class.active]="product.condition === 'Usado'"
               (click)="selectCondition('Usado')">♻️ Usado</button>
-            <button *ngIf="selectedCategory !== 'Hogar'" class="option-btn" [class.active]="product.condition === 'Refurbished'"
+            <button *ngIf="selectedCategory !== 'Hogar' && selectedCategory !== 'Vehículo'" class="option-btn" [class.active]="product.condition === 'Refurbished'"
               (click)="selectCondition('Refurbished')">🛠️ Refurbished</button>
           </div>
         </div>
 
-        <div class="field field-full selection-group">
+        <div class="field field-full selection-group" *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Seguro'">
           <label>Método de pago principal</label>
           <div class="options-row">
             <button class="option-btn" [class.active]="product.paymentType === 'Contado'"
               (click)="product.paymentType = 'Contado'">💵 Contado</button>
             <button class="option-btn" [class.active]="product.paymentType === 'Financiado'"
               (click)="product.paymentType = 'Financiado'">🏦 Financiado</button>
-            <button class="option-btn" [class.active]="product.paymentType === 'Tarjeta / Cuotas'"
+            <button *ngIf="selectedCategory !== 'Vehículo' && selectedCategory !== 'Hogar'" class="option-btn" [class.active]="product.paymentType === 'Tarjeta / Cuotas'"
               (click)="product.paymentType = 'Tarjeta / Cuotas'">💳 Tarjeta / Cuotas</button>
           </div>
         </div>
 
-        <div class="field field-full" *ngIf="product.paymentType !== 'Contado'">
+        <div class="field field-full" *ngIf="product.paymentType !== 'Contado' && selectedCategory !== 'Seguro'">
           <label>¿A cuántos meses planeas pagarlo?</label>
           <div class="input-with-suffix">
             <input [(ngModel)]="product.paymentDuration" name="paymentDuration" type="number" placeholder="Ej. 12" />
@@ -113,7 +144,7 @@
 
     <!-- STEP 3: CONTEXT & PREFERENCES -->
     <div class="step-content animate-fade-in-up" *ngIf="currentStep === 3">
-      <div class="field field-full selection-group spacing-large">
+      <div class="field field-full selection-group spacing-large" *ngIf="selectedCategory !== 'Hogar'">
         <label>¿Cuál es el propósito principal de esta compra?</label>
         <div class="grid-options">
           <article class="option-card" [class.active]="product.purpose === 'Trabajo'" (click)="selectPurpose('Trabajo')">
@@ -135,7 +166,21 @@
         </div>
       </div>
 
-      <div class="field field-full selection-group spacing-large">
+      <div class="field field-full selection-group spacing-large" *ngIf="selectedCategory === 'Hogar'">
+        <label>¿Para qué comprarás esta propiedad?</label>
+        <div class="grid-options" style="grid-template-columns: 1fr 1fr;">
+          <article class="option-card" [class.active]="product.purpose === 'Vivir'" (click)="selectPurpose('Vivir')">
+            <strong>🏠 Vivir allí</strong>
+            <span>Para mí o para mi familia.</span>
+          </article>
+          <article class="option-card" [class.active]="product.purpose === 'Inversión'" (click)="selectPurpose('Inversión')">
+            <strong>📈 Inversión / Alquiler</strong>
+            <span>Para generar ingresos o proteger capital.</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="field field-full selection-group spacing-large" *ngIf="selectedCategory !== 'Préstamo' && selectedCategory !== 'Seguro' && selectedCategory !== 'Hogar'">
         <label>¿Qué tiempo de vida esperas sacarle a este producto?</label>
         <div class="options-row">
           <button class="option-btn" [class.active]="product.lifespan === '1-2'" (click)="selectLifespan('1-2')">1-2 años</button>

@@ -601,25 +601,63 @@ def monthly_payment(financed_amount: float, annual_rate: float, term_months: int
     payment = financed_amount * (monthly_rate / (1 - (1 + monthly_rate) ** (-term_months)))
     return round(payment, 2)
 
+def _derive_budget_adherence(payload: Dict[str, Any]) -> float:
+    """Derive budget_adherence_score from frontend behavioral questions.
+    Uses expenseTracking and bigPurchaseHabit from preferences."""
+    preferences = payload.get("preferences", {})
+    
+    # expenseTracking: how disciplined the user is with tracking expenses
+    tracking = _normalize_text(preferences.get("expenseTracking", ""))
+    tracking_scores = {
+        "estricto": 0.95,    # Lleva registro puntual
+        "mental": 0.75,      # Presupuesto mental
+        "laxo": 0.50,        # Intenta pero falla
+        "ninguno": 0.30,     # No lleva registro
+    }
+    tracking_score = tracking_scores.get(tracking, 0.65)
+    
+    # bigPurchaseHabit: how the user handles big purchases
+    habit = _normalize_text(preferences.get("bigPurchaseHabit", ""))
+    habit_scores = {
+        "ahorrar el 100%": 0.95,              # Very disciplined saver
+        "financiamiento inteligente": 0.80,    # Smart about financing
+        "buscar ofertas": 0.70,                # Patient, waits for deals
+        "crédito inmediato": 0.40,             # Impulsive buyer
+    }
+    habit_score = habit_scores.get(habit, 0.65)
+    
+    # Weighted average: expense tracking matters more for day-to-day discipline
+    return round(tracking_score * 0.6 + habit_score * 0.4, 2)
+
 def build_user_dict_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     # Mapeo de campos del wizard de Angular / BD a los nombres de features internos
     finances = payload.get("finances", payload)
     personal = payload.get("personal", payload)
+    goals = payload.get("goals", {})
     
-    income = _num(_first(finances, ["monthlyIncome", "ingresoMensualPrincipal", "monthly_income_avg"]), 0)
-    fixed = _num(_first(finances, ["fixedExpenses", "gastosFijosMensuales", "fixed_expenses_monthly"]), 0)
-    variable = _num(_first(finances, ["variableExpenses", "gastosVariablesMensuales", "variable_expenses_monthly_avg"]), 0)
-    debt = _num(_first(finances, ["activeDebts", "compromisosDeudasActivas", "current_debt_payment_monthly"]), 0)
-    essential = max(fixed * 0.85, 5000)
+    income = round(_num(_first(finances, ["monthlyIncome", "ingresoMensualPrincipal", "monthly_income_avg"]), 0), 2)
+    fixed = round(_num(_first(finances, ["fixedExpenses", "gastosFijosMensuales", "fixed_expenses_monthly"]), 0), 2)
+    variable = round(_num(_first(finances, ["variableExpenses", "gastosVariablesMensuales", "variable_expenses_monthly_avg"]), 0), 2)
+    debt = round(_num(_first(finances, ["activeDebts", "compromisosDeudasActivas", "current_debt_payment_monthly"]), 0), 2)
+    essential = round(max(fixed * 0.85, 5000), 2)
     
-    em_months = _num(_first(finances, ["emergencyFundMonths", "mesesFondoEmergencia", "emergency_months"]), 0)
-    liquid = _num(_first(finances, ["liquidSavings", "ahorroLiquido", "liquid_savings"]), em_months * essential)
+    em_months = round(_num(_first(finances, ["emergencyFundMonths", "mesesFondoEmergencia", "emergency_months"]), 0), 2)
+    liquid = round(_num(_first(finances, ["liquidSavings", "ahorroLiquido", "liquid_savings"]), em_months * essential), 2)
+    
+    savings_capacity = round(_num(_first(finances, ["monthlySavingsCapacity", "capacidadAhorroMensual"]), 0), 2)
     
     situacion = _first(personal, ["employmentType", "situacionLaboral", "income_type"], "mixed")
     income_type = normalize_income_type(situacion)
     
     stability = 0.85 if income_type == "fixed" else 0.55 if income_type == "variable" else 0.70
     volatility = 0.12 if income_type == "fixed" else 0.35 if income_type == "variable" else 0.22
+
+    # Derive budget_adherence_score from frontend behavioral data
+    budget_adherence = _derive_budget_adherence(payload)
+    
+    # Derive financial_goal_priority from frontend goal
+    main_goal = _normalize_text(_first(goals, ["mainGoal", "objetivoPrincipal"], "balanced"))
+    financial_goal = normalize_financial_goal(main_goal)
 
     return {
         "monthly_income_avg": income,
@@ -628,13 +666,14 @@ def build_user_dict_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         "current_debt_payment_monthly": debt,
         "essential_expenses_monthly": essential,
         "liquid_savings": liquid,
-        "emergency_fund_amount": em_months * essential,
+        "emergency_fund_amount": round(em_months * essential, 2),
         "job_stability_score": stability,
-        "budget_adherence_score": 0.8,
+        "budget_adherence_score": budget_adherence,
         "income_volatility_score": volatility,
         "income_type": income_type,
-        "financial_goal_priority": "balanced",
-        "dependents_count": _int(_first(personal, ["dependents", "dependientes"], 0))
+        "financial_goal_priority": financial_goal,
+        "dependents_count": _int(_first(personal, ["dependents", "dependientes"], 0)),
+        "monthly_savings_capacity": savings_capacity
     }
 
 def find_optimal_term(user_dict: dict, product_price: float, down_payment: float, annual_rate: float) -> int:
@@ -670,21 +709,70 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
     liquid = user_dict.get("liquid_savings", 0)
     
     scenarios = []
+    budget_adherence = user_dict.get("budget_adherence_score", 0.65)
+    savings_capacity = user_dict.get("monthly_savings_capacity", 0)
+    essential = user_dict.get("essential_expenses_monthly", 5000)
     
-    # 1. Escenario Contado — only if user has enough liquid savings
-    contado_viable = liquid >= price * 0.5
-    contado_desc = (
-        f"Tienes RD${liquid:,.0f} en ahorros. Pagar al contado te ahorra intereses y te quedaría RD${liquid - price:,.0f} de reserva."
-        if contado_viable else
-        f"Pagar al contado (RD${price:,.0f}) consumiría toda tu liquidez (RD${liquid:,.0f}). No es recomendable descapitalizarte."
-    )
+    # 1. Escenario Contado — realistically evaluated
+    # Calculate how many months user needs to save to afford it
+    # Use declared savings capacity if available, otherwise estimate from FCF
+    effective_savings_rate = savings_capacity if savings_capacity > 0 else max(fcf * 0.30, 0)
+    months_to_save = price / max(effective_savings_rate, 1)
+    
+    # How much of their savings does this consume?
+    liquidity_impact = price / max(liquid, 1)  # >1 means they can't afford it from savings
+    
+    # Emergency fund remaining after purchase
+    emergency_after_purchase = (liquid - price) / max(essential, 1)
+    
+    # Build a realistic "virtual installment" for contado:
+    # This represents the monthly saving effort needed. The ML model uses
+    # installment to compute stress_ratio and dti_post — with 0 it thinks 
+    # contado is free. Instead, we simulate the saving burden.
+    if liquid >= price:
+        # User has the cash — but still loses liquidity
+        virtual_installment = 0  # No monthly burden since they already have the money
+        
+        if liquidity_impact > 0.85:
+            contado_desc = (f"Puedes pagar al contado (RD${price:,.0f}), pero consumirías el {liquidity_impact*100:.0f}% "
+                          f"de tus ahorros (RD${liquid:,.0f}). Te quedarían solo RD${liquid - price:,.0f} de reserva, "
+                          f"equivalente a {emergency_after_purchase:.1f} meses de gastos esenciales. Es riesgoso descapitalizarte así.")
+        elif liquidity_impact > 0.60:
+            contado_desc = (f"Puedes pagar al contado. Te quedarían RD${liquid - price:,.0f} de reserva "
+                          f"({emergency_after_purchase:.1f} meses de gastos esenciales). Viable, pero ajustado.")
+        else:
+            contado_desc = (f"Tienes liquidez suficiente (RD${liquid:,.0f}). Pagar al contado te ahorra intereses "
+                          f"y te quedarían RD${liquid - price:,.0f} de reserva ({emergency_after_purchase:.1f} meses).")
+    else:
+        # User does NOT have the cash — needs to save
+        virtual_installment = effective_savings_rate  # The saving effort per month
+        
+        # Adjust months_to_save by discipline: undisciplined people take longer
+        discipline_factor = 1.0 / max(budget_adherence, 0.3)  # Lower adherence = longer time
+        adjusted_months = months_to_save * discipline_factor
+        
+        if adjusted_months > 24:
+            contado_desc = (f"No es realista pagar al contado. Necesitarías ahorrar RD${effective_savings_rate:,.0f}/mes "
+                          f"durante {adjusted_months:.0f} meses ({adjusted_months/12:.1f} años). "
+                          f"Con tu nivel de disciplina financiera, el financiamiento es una mejor opción.")
+        elif adjusted_months > 6:
+            contado_desc = (f"Pagar al contado requeriría ahorrar RD${effective_savings_rate:,.0f}/mes "
+                          f"durante ~{adjusted_months:.0f} meses. Es un compromiso largo que requiere disciplina constante.")
+        else:
+            contado_desc = (f"Podrías juntar el monto en ~{adjusted_months:.0f} meses ahorrando RD${effective_savings_rate:,.0f}/mes. "
+                          f"Es factible si mantienes la disciplina.")
+    
     scenarios.append({
         "type": "contado",
         "name": "Pago al contado",
         "term": 0,
-        "installment": 0,
+        "installment": round(virtual_installment, 2),
         "down_payment": price,
-        "description": contado_desc
+        "description": contado_desc,
+        "months_to_save": round(months_to_save, 1),
+        "liquidity_impact": round(liquidity_impact, 2),
+        "emergency_after": round(emergency_after_purchase, 1),
+        "budget_adherence": budget_adherence
     })
     
     # 2. Escenario Óptimo — the shortest term where installment < 30% of FCF
@@ -800,9 +888,11 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         - user_dict.get("variable_expenses_monthly_avg", 0)
         - user_dict.get("current_debt_payment_monthly", 0)
     )
-    user_dict["free_cash_flow_current"] = fcf_current
+    user_dict["free_cash_flow_current"] = round(fcf_current, 2)
     income = user_dict.get("monthly_income_avg", 1)
     liquid = user_dict.get("liquid_savings", 0)
+    budget_adherence = user_dict.get("budget_adherence_score", 0.65)
+    savings_capacity = user_dict.get("monthly_savings_capacity", 0)
     
     # ── Generate all possible scenarios ────────────────────────
     all_scenarios = generate_scenarios(user_dict, option_dict, artifacts)
@@ -813,6 +903,64 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     # ── Analyze what the USER specifically chose ───────────────
     if chosen_method == "contado":
         user_choice = next((s for s in all_scenarios if s["scenario_details"]["type"] == "contado"), all_scenarios[0])
+        
+        # ── Apply contado-specific score adjustments ──────────
+        # The ML model already evaluated with virtual_installment, but we need
+        # additional behavioral penalties that the ML can't capture
+        contado_details = user_choice.get("scenario_details", {})
+        raw_score = user_choice["recommendation_score"]
+        
+        liquidity_impact = contado_details.get("liquidity_impact", price / max(liquid, 1))
+        emergency_after = contado_details.get("emergency_after", 0)
+        months_needed = contado_details.get("months_to_save", 0)
+        
+        contado_penalty = 0.0
+        
+        if liquid < price:
+            # User doesn't have the money — penalize based on save time and discipline
+            effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
+            actual_months = price / max(effective_savings, 1)
+            discipline_factor = 1.0 / max(budget_adherence, 0.3)
+            adjusted_months = actual_months * discipline_factor
+            
+            if adjusted_months > 24:
+                contado_penalty = 0.40  # Essentially not viable as contado
+            elif adjusted_months > 12:
+                contado_penalty = 0.25
+            elif adjusted_months > 6:
+                contado_penalty = 0.15
+            
+            # Extra penalty for low discipline
+            if budget_adherence < 0.5:
+                contado_penalty += 0.10  # People who don't track expenses will fail at saving
+        else:
+            # User HAS the money, but evaluate descapitalization risk
+            if liquidity_impact > 0.85:
+                contado_penalty = 0.20  # Nearly all savings gone
+            elif liquidity_impact > 0.70:
+                contado_penalty = 0.10
+            
+            if emergency_after < 1:
+                contado_penalty += 0.10  # Less than 1 month emergency after
+        
+        adjusted_score = max(raw_score - contado_penalty, 0.05)
+        user_choice["recommendation_score"] = round(adjusted_score, 4)
+        
+        # Recalculate risk band based on adjusted score
+        if adjusted_score < 0.25:
+            user_choice["risk_band"] = 0
+            user_choice["risk_band_name"] = RISK_BAND_NAMES[0]
+            user_choice["viable"] = False
+        elif adjusted_score < 0.45:
+            user_choice["risk_band"] = 1
+            user_choice["risk_band_name"] = RISK_BAND_NAMES[1]
+            user_choice["viable"] = False
+        elif adjusted_score < 0.65:
+            user_choice["risk_band"] = 2
+            user_choice["risk_band_name"] = RISK_BAND_NAMES[2]
+            user_choice["viable"] = True
+        # else: keep original band (viable saludable)
+        
     else:
         # Build the user's specific scenario
         user_installment = price / max(user_term, 1)
@@ -841,12 +989,30 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     
     # 1. Evaluate the user's chosen method
     if chosen_method == "contado":
+        effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
+        
         if liquid >= price * 1.5:
             suggestion_parts.append(f"Pagar al contado es excelente en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}. Te quedaría suficiente reserva.")
         elif liquid >= price:
-            suggestion_parts.append(f"Puedes pagar al contado, pero te quedarían solo RD${liquid - price:,.0f} de reserva. Considera financiar una parte para no descapitalizarte.")
+            remaining = liquid - price
+            essential_exp = user_dict.get("essential_expenses_monthly", 5000)
+            months_covered = remaining / max(essential_exp, 1)
+            
+            if months_covered < 2:
+                suggestion_parts.append(f"Puedes pagar al contado, pero te quedarían solo RD${remaining:,.0f} de reserva ({months_covered:.1f} meses de gastos esenciales). Esto es arriesgado — cualquier imprevisto te dejaría sin respaldo. Considera financiar al menos una parte.")
+            else:
+                suggestion_parts.append(f"Puedes pagar al contado. Te quedarían RD${remaining:,.0f} de reserva ({months_covered:.1f} meses de gastos esenciales). Viable si no esperas imprevistos grandes.")
         else:
-            suggestion_parts.append(f"No cuentas con liquidez suficiente para pagar al contado. Tus ahorros son RD${liquid:,.0f} y el producto cuesta RD${price:,.0f}. Financiar sería más prudente.")
+            # User doesn't have enough savings
+            discipline_factor = 1.0 / max(budget_adherence, 0.3)
+            months_needed = (price / max(effective_savings, 1)) * discipline_factor
+            
+            if budget_adherence < 0.5:
+                suggestion_parts.append(f"No es recomendable pagar al contado. Tus ahorros (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}), y basándonos en tu perfil de control de gastos, necesitarías {months_needed:.0f} meses ahorrando RD${effective_savings:,.0f}/mes. El financiamiento en cuotas fijas te da más estructura y disciplina.")
+            elif months_needed > 12:
+                suggestion_parts.append(f"No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~{months_needed:.0f} meses ({months_needed/12:.1f} años) ahorrando RD${effective_savings:,.0f}/mes. Financiar sería mucho más práctico.")
+            else:
+                suggestion_parts.append(f"Tus ahorros actuales (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}). Necesitarías ~{months_needed:.0f} meses ahorrando. Es factible si mantienes disciplina, pero financiar podría ser más cómodo.")
     else:
         user_installment = user_choice["scenario_details"].get("installment", 0)
         user_pct = (user_installment / max(fcf_current, 1)) * 100
@@ -862,7 +1028,11 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     if user_score < best_score - 0.08:
         best_sc = best_overall["scenario_details"]
         if best_sc["type"] == "contado":
-            suggestion_parts.append(f"Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.")
+            # Only recommend contado if it's genuinely good
+            contado_sc = best_sc
+            if contado_sc.get("liquidity_impact", 1) < 0.6:
+                suggestion_parts.append(f"Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.")
+            # Don't recommend contado if liquidity impact is high
         else:
             best_inst = best_sc.get("installment", 0)
             suggestion_parts.append(f"Te recomendamos considerar {best_sc['name']} (cuota de RD${best_inst:,.0f}/mes) que se adapta mejor a tu perfil financiero.")
@@ -874,6 +1044,10 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         suggestion_parts.append("Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.")
     elif "ajustado" in segment_name.lower():
         suggestion_parts.append("Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.")
+    
+    # 4. Discipline warning for users with low budget adherence
+    if budget_adherence < 0.5 and chosen_method != "contado":
+        suggestion_parts.append("Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.")
     
     suggestion_text = " ".join(suggestion_parts)
 
@@ -920,24 +1094,44 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
     eco_installment = eco_price / 12
     smart_installment = smart_price / 18
     prem_term = find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18)
+
+    category = normalize_category(product_data.get("product_category", "technology"))
+    
+    # Use generic distinct names for alternatives rather than just suffixing
+    eco_name = "Opción de Entrada / Económica"
+    smart_name = "Opción Intermedia (Mejor Valor)"
+    prem_name = "Opción Premium / Profesional"
+    
+    if category == "laptop":
+        eco_name = "Laptop Básica (ej. HP Stream, Acer Aspire 3)"
+        smart_name = "Laptop Intermedia (ej. MacBook Air, Dell XPS 13)"
+        prem_name = "Estación de Trabajo (ej. MacBook Pro M-Max, ThinkPad P)"
+    elif category == "vehicle":
+        eco_name = "Vehículo Usado Compacto"
+        smart_name = "Vehículo Seminuevo Eficiente"
+        prem_name = "Vehículo Nuevo SUV / Sedán"
+    elif category == "smartphone" or category == "technology":
+        eco_name = "Dispositivo de Gama de Entrada"
+        smart_name = "Dispositivo de Gama Media-Alta"
+        prem_name = "Dispositivo de Gama Premium (Pro/Ultra)"
     
     alternatives = [
         {
-            "name": f"{product_name} (Versión Económica)",
-            "price": f"RD${eco_price:,.0f}",
-            "desc": f"Cuota de RD${eco_installment:,.0f}/mes a 12 meses. Cabe cómodamente en tu flujo libre mensual.",
+            "name": f"{eco_name} vs {product_name}",
+            "price": f"RD${eco_price:,.0f} aprox",
+            "desc": f"Cuota de RD${eco_installment:,.0f}/mes a 12 meses. Cabe cómodamente en tu flujo libre mensual. Cumple lo básico.",
             "payment": "Financiamiento a 12 meses"
         },
         {
-            "name": f"{product_name} (Mejor Relación Precio-Calidad)",
-            "price": f"RD${smart_price:,.0f}",
-            "desc": f"Cuota de RD${smart_installment:,.0f}/mes a 18 meses. Balance entre calidad y asequibilidad.",
+            "name": f"{smart_name}",
+            "price": f"RD${smart_price:,.0f} aprox",
+            "desc": f"Cuota de RD${smart_installment:,.0f}/mes a 18 meses. Mejor balance entre calidad y asequibilidad.",
             "payment": "Financiamiento a 18 meses"
         },
         {
-            "name": f"{product_name} Premium",
-            "price": f"RD${premium_price:,.0f}",
-            "desc": f"Mayor durabilidad, pero la cuota mensual será más alta. Plazo sugerido: {prem_term} meses.",
+            "name": f"{prem_name} superior a {product_name}",
+            "price": f"RD${premium_price:,.0f} aprox",
+            "desc": f"Mayor durabilidad y rendimiento, pero la cuota mensual será más alta. Plazo sugerido: {prem_term} meses.",
             "payment": f"Financiamiento a {prem_term} meses"
         }
     ]
@@ -947,71 +1141,124 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
 def generate_similar_products_fallback(user_dict: dict, product_data: dict) -> List[dict]:
     """
     Genera productos similares accesibles cuando la compra no es viable.
-    Usa ejemplos genéricos por categoría como base para que Gemini los enriquezca.
+    Precios reales en USD de fuentes oficiales (Amazon, Best Buy, fabricantes).
     """
-    price = _num(product_data.get("price", 50000))
     category = normalize_category(product_data.get("product_category", "technology"))
     purpose = product_data.get("purpose", "uso general")
 
-    fcf = (
+    fcf = max(
         user_dict.get("monthly_income_avg", 0)
         - user_dict.get("fixed_expenses_monthly", 0)
         - user_dict.get("variable_expenses_monthly_avg", 0)
-        - user_dict.get("current_debt_payment_monthly", 0)
+        - user_dict.get("current_debt_payment_monthly", 0),
+        1
     )
+    max_monthly_usd = (fcf * 0.30) / 60  # approx DOP to USD at ~60 DOP/USD
 
-    max_monthly = max(fcf * 0.30, 1)
-    p1 = max(max_monthly * 12, 1000)
-    p2 = max(max_monthly * 18, 1500)
-    p3 = max(max_monthly * 24, 2000)
-
+    # Real prices (USD) from official sources — Amazon, Best Buy, brand sites
+    # Sources: amazon.com, bestbuy.com, samsung.com, lenovo.com, hp.com, motorola.com, xiaomi.com
     CATEGORY_EXAMPLES = {
         "laptop": [
-            ("Lenovo IdeaPad 3", p1, "Intel i3, 8GB RAM, 256GB SSD. Ideal para tareas básicas de oficina y estudio."),
-            ("Acer Aspire 5", p2, "Intel i5, 8GB RAM, 512GB SSD. Buen rendimiento para productividad diaria."),
-            ("HP 15s", p3, f"AMD Ryzen 5, 8GB RAM, 256GB SSD. Ligero y eficiente para {purpose}."),
+            # lenovo.com / amazon.com — Lenovo IdeaPad 1i ~$249
+            ("Lenovo IdeaPad 1i (15.6\")", 249,
+             "Intel N100, 8GB RAM, 256GB SSD. Perfecta para navegar, documentos y videollamadas.",
+             "lenovo.com / amazon.com"),
+            # hp.com / bestbuy.com — HP 15-fd0083wm ~$329
+            ("HP Laptop 15 (15.6\")", 329,
+             "Intel Core i3-1315U, 8GB RAM, 256GB SSD. Ligera y eficiente para productividad diaria.",
+             "hp.com / bestbuy.com"),
+            # amazon.com — Acer Aspire 3 ~$399
+            ("Acer Aspire 3 (15.6\")", 399,
+             "AMD Ryzen 5 7520U, 8GB RAM, 512GB SSD. Excelente balance rendimiento-precio.",
+             "amazon.com / acer.com"),
         ],
         "technology": [
-            ("Samsung Galaxy A35", p1, "6.6\", 6GB RAM, 128GB. Pantalla AMOLED y batería de 5000mAh."),
-            ("Motorola Moto G85", p2, "6.67\" pOLED, 8GB RAM, 256GB. Excelente cámara y rendimiento."),
-            ("Xiaomi Redmi Note 13 Pro", p3, "6.67\" AMOLED, 8GB RAM, 256GB. Cámara de 200MP y carga rápida."),
+            # samsung.com / bestbuy.com — Galaxy A16 ~$199
+            ("Samsung Galaxy A16 5G", 199,
+             "6.7\" Super AMOLED, 4GB RAM, 128GB, batería 5000mAh. Sólido para uso diario.",
+             "samsung.com / bestbuy.com"),
+            # motorola.com — Moto G Power 5G (2024) ~$249
+            ("Motorola Moto G Power 5G (2024)", 249,
+             "6.7\" FHD+, 8GB RAM, 256GB, batería 6000mAh con carga rápida.",
+             "motorola.com / amazon.com"),
+            # amazon.com — Xiaomi Redmi Note 13 ~$299
+            ("Xiaomi Redmi Note 13 Pro 4G", 299,
+             "6.67\" AMOLED 120Hz, 8GB RAM, 256GB, cámara 200MP. Excelente relación calidad-precio.",
+             "amazon.com / mi.com"),
         ],
         "vehicle": [
-            ("Moto Honda Wave 110", p1, "Moto 110cc, bajo consumo de combustible, ideal para ciudad."),
-            ("Moto Yamaha Crypton", p2, "125cc, económica en combustible, perfecta para movilidad urbana."),
-            ("Kia Picanto Usado 2018", p3, f"Compacto, bajo consumo, ideal para uso urbano y {purpose}."),
+            # Precios de mercado RD/Latam — motocicletas nuevas en dealers
+            ("Honda CB125F 2024", 1_890,
+             "Motor 125cc, consumo ~2.2L/100km, ideal para ciudad. Garantía oficial Honda.",
+             "hondamotors.com / dealer Honda RD"),
+            ("Yamaha YBR 125 2024", 2_100,
+             "Motor 125cc SOHC, frenos de disco, cómoda para trayectos urbanos y carretera.",
+             "yamaha-motor.com / dealer Yamaha RD"),
+            ("Kia Picanto Usado 2019", 8_500,
+             "1.0L, 5 puertas, A/C, bajo consumo de combustible. Ideal para uso urbano diario.",
+             "carroya.com / clasificados RD"),
         ],
         "home": [
-            ("Nevera LG 9 pies reacondicionada", p1, "Refrigerador de 9 pies, eficiente en energía, buen estado."),
-            ("Lavadora Samsung 14kg", p2, "Carga superior, 14kg, bajo consumo energético."),
-            ("Aire Carrier 12,000 BTU", p3, "Split frío/calor, eficiente, ideal para habitación."),
+            # bestbuy.com / homedepot.com
+            ("LG Refrigerator 20 cu ft (LRFCS2503S)", 798,
+             "French door, 20 pies cúbicos, No Frost, eficiencia energética A+.",
+             "lg.com / bestbuy.com"),
+            ("Samsung Washing Machine WA40A3005AW", 499,
+             "Lavadora 4.0 cu ft, carga superior, 700 RPM. Bajo consumo de agua y energía.",
+             "samsung.com / bestbuy.com"),
+            ("LG Dual Inverter A/C 12,000 BTU", 499,
+             "Split aire acondicionado 12,000 BTU, Inverter, eficiencia Energy Star.",
+             "lg.com / homedepot.com"),
         ],
         "insurance": [
-            ("Seguro de vida básico ARS", p1, "Cobertura básica de vida con prima mensual accesible."),
-            ("Plan de salud básico", p2, "Cobertura médica para consultas y emergencias."),
-            ("Seguro de accidentes personales", p3, "Cobertura por accidentes con prima mensual moderada."),
+            ("Seguro de Vida Término 20 años", 25,  # per month USD
+             "Cobertura $100,000 USD. Prima fija mensual para adulto saludable de 30 años.",
+             "policygenius.com / ARS local"),
+            ("Seguro Médico Plan Básico ARS", 45,
+             "Cobertura ambulatoria y hospitalaria básica. Consultas, emergencias y laboratorios.",
+             "ARS locales República Dominicana"),
+            ("Seguro de Accidentes Personales", 15,
+             "Cobertura por invalidez y accidentes. Prima mensual muy accesible.",
+             "seguros locales RD"),
         ],
         "loan": [
-            ("Préstamo personal monto menor", p1, "Monto reducido ajustado a tu capacidad de pago actual."),
-            ("Préstamo cooperativa", p2, "Tasa de interés más baja que el banco comercial."),
-            ("Línea de crédito revolvente", p3, "Flexibilidad de uso y pago según necesidad."),
+            ("Préstamo Cooperativa (monto moderado)", 2_000,
+             "Tasa ~18% anual vs ~28% banco. Cuotas flexibles, menos requisitos documentales.",
+             "cooperativas RD"),
+            ("Préstamo Personal Banco (monto reducido)", 1_500,
+             "Monto ajustado a tu capacidad. Plazo 12-24 meses para mantener cuota manejable.",
+             "banco local RD"),
+            ("Línea de Crédito Revolvente", 1_000,
+             "Acceso a fondos cuando necesites. Pagas solo lo que usas.",
+             "entidad financiera local"),
         ],
         "travel": [
-            ("Paquete turístico nacional", p1, "Destino local en RD. Descanso accesible sin endeudarte."),
-            ("Paquete Punta Cana todo incluido (temporada baja)", p2, "Tarifa reducida en temporada baja."),
-            ("Crucero 3 días Caribe", p3, "Experiencia premium a precio moderado en temporada baja."),
+            ("Paquete Playa Bávaro todo incluido (3 noches)", 180,
+             "Hotel 4★, comidas incluidas, traslado desde Santo Domingo. Temporada baja.",
+             "trivago.com / despegar.com"),
+            ("Vuelo + Hotel Punta Cana (4 noches)", 350,
+             "Vuelo doméstico + hotel 3★. Mejor precio reservando con 30 días de anticipación.",
+             "despegar.com / booking.com"),
+            ("Crucero Caribe Royal Caribbean (3 noches)", 499,
+             "Desde Miami, incluye alimentos a bordo, entretenimiento y paradas en islas.",
+             "royalcaribbean.com"),
         ],
     }
 
     examples = CATEGORY_EXAMPLES.get(category, CATEGORY_EXAMPLES["technology"])
     result = []
-    for (name, ex_price, desc) in examples:
-        installment = ex_price / 12
+    for item in examples:
+        name, price_usd, desc, source = item
+        monthly_usd = price_usd / 12
         result.append({
             "name": name,
-            "price": f"RD${ex_price:,.0f}",
+            "price": f"${price_usd:,} USD",
             "desc": desc,
-            "why_fits": f"Cuota estimada de RD${installment:,.0f}/mes a 12 meses, dentro de tu flujo libre disponible."
+            "why_fits": (
+                f"Precio ~${price_usd:,} USD (aprox. ~RD${price_usd * 60:,.0f}). "
+                f"Cuota estimada ~${monthly_usd:.0f} USD/mes a 12 meses. "
+                f"Fuente de referencia: {source}."
+            )
         })
     return result
 
@@ -1019,90 +1266,94 @@ def generate_similar_products_fallback(user_dict: dict, product_data: dict) -> L
 def generate_viable_alternatives_fallback(product_data: dict, user_dict: dict) -> List[dict]:
     """
     Genera alternativas de OTRA categoría que cumplen el mismo propósito.
-    Usado cuando la compra no es viable para dar opciones más accesibles.
+    Precios reales en USD de fuentes oficiales.
     """
     category = normalize_category(product_data.get("product_category", "technology"))
     purpose = product_data.get("purpose", "uso general")
 
-    fcf = (
-        user_dict.get("monthly_income_avg", 0)
-        - user_dict.get("fixed_expenses_monthly", 0)
-        - user_dict.get("variable_expenses_monthly_avg", 0)
-        - user_dict.get("current_debt_payment_monthly", 0)
-    )
-
-    max_monthly = max(fcf * 0.30, 1)
-    p1 = max(max_monthly * 12, 1000)
-    p2 = max(max_monthly * 18, 1500)
-
+    # Real cross-category alternatives with fixed USD prices
+    # Sources: amazon.com, samsung.com, lenovo.com, bestbuy.com, royalcaribbean.com, etc.
     CROSS_CATEGORY = {
         "laptop": [
-            ("Tablet Samsung Galaxy Tab A9+ con Teclado", "Tablet", p1,
-             "Pantalla 11\", 4GB RAM, 64GB. Con teclado Bluetooth cubre productividad básica.",
-             f"Si tu propósito es {purpose}, una tablet con teclado cubre el 80% de las necesidades a un costo mucho menor."),
-            ("Chromebook Lenovo IdeaPad Duet", "Chromebook", p2,
-             "Pantalla táctil 10.1\", 4GB RAM, 64GB. Google Workspace completo sin instalaciones.",
-             f"Perfecta para {purpose} con acceso a internet. Hasta 60% más barata que una laptop convencional."),
+            # samsung.com / amazon.com — Galaxy Tab S6 Lite + keyboard ~$299 bundle
+            ("Samsung Galaxy Tab S6 Lite + Teclado S Pen", "Tablet", 299,
+             "Pantalla 10.4\" TFT, 4GB RAM, 128GB, S Pen incluido. Compatible con apps de oficina y estudio.",
+             f"Para {purpose}, esta tablet cubre el 80% de las tareas a menos de la mitad del precio. Samsung.com ~$299 USD."),
+            # bestbuy.com — Acer Chromebook Spin 314 ~$299
+            ("Acer Chromebook 314 (2024)", "Chromebook", 299,
+             "Intel N100, 4GB RAM, 64GB eMMC, 14\" pantalla. Google Workspace completo, 10h batería.",
+             f"Ideal para {purpose} con acceso a internet. Precio bestbuy.com ~$299 USD, 40% menos que una laptop Windows."),
         ],
         "vehicle": [
-            ("Moto Scooter Honda PCX 150", "Motocicleta", p1,
-             "Scooter 150cc, bajo consumo, baúl trasero grande. Ideal para movilidad urbana.",
-             f"Para {purpose} en ciudad, una moto cuesta 5-10x menos que un carro con gastos similares."),
-            ("Bicicleta eléctrica plegable", "Transporte eléctrico", p2,
-             "Autonomía 40km, motor 250W. Sin combustible, seguro ni placa obligatoria.",
-             f"Si {purpose} es en área urbana, la bicicleta eléctrica elimina el gasto en gasolina y seguro."),
+            # Honda PCX 160 — precio dealer oficial LATAM ~$3,200
+            ("Honda PCX 160 2024", "Scooter", 3_200,
+             "Motor 160cc, ABS, llanta tubeless, compartimiento bajo asiento. Consumo ~3L/100km.",
+             f"Para {purpose} en ciudad, la PCX 160 cuesta 70-80% menos que un carro y con menos gastos fijos (seguro, mantenimiento)."),
+            # amazon.com — bicicleta eléctrica Himiway ~$899
+            ("Himiway Escape Bicicleta Eléctrica", "E-Bike", 899,
+             "Motor 500W, batería 48V 14Ah, autonomía 60km. Sin placa ni seguro requerido.",
+             f"Si {purpose} es en área urbana, una e-bike elimina el gasto en gasolina y seguro. Himiway.com ~$899 USD."),
         ],
         "technology": [
-            ("Tablet con Teclado Bluetooth", "Tablet", p1,
-             "Samsung Tab A8 + teclado. Cubre navegación, redes y ofimática básica.",
-             f"Para {purpose}, una tablet cumple la función a un costo significativamente menor."),
-            ("Laptop reacondicionada certificada", "Laptop", p2,
-             "Laptop empresarial reacondicionada con garantía. Mismo rendimiento, precio 40% menor.",
-             f"Una laptop reacondicionada tiene el mismo rendimiento para {purpose} a precio de entrada."),
+            # amazon.com — Samsung Galaxy Tab A9+ ~$219
+            ("Samsung Galaxy Tab A9+ 5G", "Tablet", 219,
+             "11\" LCD, 8GB RAM, 128GB, Wi-Fi 6 + 5G opcional. Ideal para streaming, redes y ofimática.",
+             f"Para {purpose}, la Tab A9+ cumple la función a ~$219 USD (amazon.com), significativamente menos que un smartphone flagship."),
+            # lenovo.com — IdeaPad Flex 3i Chromebook ~$329
+            ("Lenovo IdeaPad Flex 3i Chromebook", "Chromebook", 329,
+             "Intel N100, 4GB RAM, 128GB eMMC, táctil plegable 2-en-1, 10h batería.",
+             f"Para {purpose} que requiere productividad, este Chromebook 2-en-1 ofrece más versatilidad. Lenovo.com ~$329 USD."),
         ],
         "home": [
-            ("Electrodoméstico reacondicionado certificado", "Hogar", p1,
-             "Mismo modelo en excelente estado, revisado y con garantía de 6 meses.",
-             f"Para {purpose}, un electrodoméstico reacondicionado certificado cumple igual función."),
-            ("Renta mensual del equipo", "Renta", p2,
-             "Alquiler del equipo sin comprometer tu liquidez ni asumir deuda.",
-             f"Si {purpose} es temporal o incierto, rentar puede ser más inteligente financieramente."),
+            # homedepot.com — Refurbished appliances
+            ("Electrodoméstico Certificado Reacondicionado", "Reacondicionado", 299,
+             "Mismo modelo en excelente estado, revisado por técnicos y con garantía de 6-12 meses.",
+             f"Para {purpose}, un electrodoméstico reacondicionado certificado funciona igual. Precio 30-50% menor. homedepot.com / bestbuy.com."),
+            # rent-to-own estimates
+            ("Renta mensual del electrodoméstico", "Renta", 45,
+             "Alquiler mensual sin enganche. Opción en empresas como Rent-A-Center (~$45/mes estimado).",
+             f"Si {purpose} es temporal o incierto, rentar evita la deuda. Rentacenter.com desde ~$45/mes."),
         ],
         "loan": [
-            ("Cooperativa de ahorro y crédito", "Cooperativa", p1,
-             "Tasas de interés 2-4% más bajas que el banco comercial. Requiere membresía.",
-             f"Una cooperativa ofrece mejores condiciones para {purpose} con menos requisitos."),
-            ("Plan de ahorro previo", "Ahorro", p2,
-             "Ahorrar primero el monto necesario antes de endeudarse.",
-             f"Para {purpose}, ahorrar 6-12 meses antes evita el costo de intereses totalmente."),
+            ("Préstamo Cooperativa (mejor tasa)", "Cooperativa", 1_500,
+             "Cooperativas en RD ofrecen tasas 18-22% anual vs 28-35% de bancos comerciales.",
+             f"Para {purpose}, una cooperativa es la opción de menor costo. Apegrd.org — directorio de cooperativas en RD."),
+            ("Ahorro previo planificado", "Ahorro", 0,
+             "Ahorrar el monto requerido en 6-12 meses antes de endeudarse. Costo de intereses: $0.",
+             f"Para {purpose}, ahorrar primero evita pagar hasta 30% más en intereses. La opción más inteligente financieramente."),
         ],
         "travel": [
-            ("Turismo local República Dominicana", "Turismo nacional", p1,
-             "Playa, montaña o ecoturismo local. Precios accesibles sin salir del país.",
-             f"Para {purpose}, el turismo local ofrece experiencias similares a una fracción del costo internacional."),
-            ("Paquete diferido en temporada baja", "Paquete planificado", p2,
-             "Separar el viaje con cuotas pequeñas y viajar en temporada baja (mayo-octubre).",
-             f"Diferir el viaje 3-6 meses te permite {purpose} sin comprometer tu presupuesto actual."),
+            # despegar.com — paquetes locales RD
+            ("Paquete Cabarete o Samaná (3 noches)", "Turismo local", 150,
+             "Hotel boutique + desayuno incluido en playa nacional. Traslado desde SD ~$30 adicional.",
+             f"Para {purpose} de descanso, los destinos locales ofrecen experiencia similar. Despegar.com desde ~$150 USD."),
+            # royalcaribbean.com — deals
+            ("Crucero Perfect Day Bahamas (2 noches)", "Crucero", 199,
+             "Royal Caribbean, salida desde Miami. Incluye alimentos y entretenimiento a bordo.",
+             f"Diferir {purpose} 3-4 meses y reservar con anticipación. Royalcaribbean.com desde ~$199 USD en temporada baja."),
         ],
         "insurance": [
-            ("Seguro de accidentes personales básico", "Seguro básico", p1,
-             "Cobertura de accidentes personales con prima mínima mensual.",
-             f"Si tu prioridad es protección básica para {purpose}, empieza con accidentes personales."),
-            ("ARS Plan básico del empleador", "Seguro laboral", p2,
-             "Verifica si tu empleador ofrece cobertura médica básica incluida en tu contrato.",
-             f"Muchos empleadores en RD incluyen ARS. Revisa tu cobertura laboral antes de comprar un seguro privado."),
+            # policygenius.com estimates
+            ("Seguro de Vida Término 10 años", "Seguro de vida", 20,
+             "Prima ~$20 USD/mes para adulto de 30 años, cobertura $100,000 USD. Cotizar en policygenius.com.",
+             f"Para protección básica de {purpose}, el seguro de vida término tiene la prima más baja. Policygenius.com desde ~$20/mes."),
+            ("ARS Plan básico SEMMA o equivalente", "Seguro médico", 35,
+             "Plan de salud básico en RD con cobertura ambulatoria y hospitalaria.",
+             f"Antes de contratar seguro privado para {purpose}, verifica si califica para planes subsidiados o el de tu empleador. Desde ~RD$2,000/mes."),
         ],
     }
 
     examples = CROSS_CATEGORY.get(category, CROSS_CATEGORY["technology"])
     result = []
     for item in examples:
+        name, alt_category, price_usd, desc, why = item
+        price_str = f"${price_usd:,} USD/mes" if alt_category in ("Seguro de vida", "Seguro médico", "Renta") else f"${price_usd:,} USD"
         result.append({
-            "name": item[0],
-            "category": item[1],
-            "price": f"RD${item[2]:,.0f}",
-            "desc": item[3],
-            "why_better": item[4],
+            "name": name,
+            "category": alt_category,
+            "price": price_str,
+            "desc": desc,
+            "why_better": why,
         })
     return result
 

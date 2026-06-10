@@ -27,6 +27,7 @@ export interface AnalysisDraft {
   product: {
     name: string;
     price: number | null;
+    interestRate?: number | null;
     condition: string;
     paymentType: string;
     paymentDuration?: number | null;
@@ -35,5 +36,8 @@ export interface AnalysisDraft {
     lifespan: string;
     mainConstraint: string;
     notes: string;
+    squareMeters?: number | null;
+    bedrooms?: number | null;
+    zone?: string;
   };
 }
