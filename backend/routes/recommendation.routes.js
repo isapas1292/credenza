@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
         }
 
         const result = await RecommendationAiService.getRecommendation(perfil, productData);
-        
+
         if (userId) {
             const segmentResult = await sql.query`SELECT * FROM SegmentosFinancierosUsuario WHERE UsuarioId = ${userId}`;
             if (segmentResult.recordset.length > 0) {
@@ -42,9 +42,9 @@ router.post('/', async (req, res) => {
 
                 histReq.input('UsuarioId', sql.Int, userId);
                 histReq.input('ProductoNombre', sql.NVarChar(255), productData.name || 'Desconocido');
-                histReq.input('ProductoPrecio', sql.Decimal(18,2), productData.price || 0);
+                histReq.input('ProductoPrecio', sql.Decimal(18, 2), productData.price || 0);
                 histReq.input('ProductoCategoria', sql.NVarChar(100), productData.product_category || 'General');
-                histReq.input('Score', sql.Decimal(5,2), score);
+                histReq.input('Score', sql.Decimal(5, 2), score);
                 histReq.input('Viable', sql.Bit, viable);
                 histReq.input('Mensaje', sql.NVarChar(1000), msg);
                 histReq.input('Json', sql.NVarChar(sql.MAX), jsonRes);
@@ -72,7 +72,7 @@ router.post('/analyze', async (req, res) => {
         if (!perfil || !product) {
             return res.status(400).json({ error: 'perfil y product son requeridos' });
         }
-        const result = await RecommendationAiService.getRecommendation(perfil, product);
+        const result = RecommendationAiService.getRecommendation(perfil, product);
         res.json(result);
     } catch (error) {
         console.error('Error en /api/recommendations/analyze:', error.message);

@@ -1,0 +1,919 @@
+{
+  "laptop": [
+    {
+      "test_id": 1,
+      "income": 174181.0,
+      "dti_current": 0.49366090446145106,
+      "price": 76119,
+      "score": 0.193,
+      "viable": false,
+      "dti_post": 0.4937,
+      "fcf_post": 10711.66,
+      "text": "Puedes pagar al contado, pero te quedarían solo RD$25,678 de reserva (0.6 meses de gastos esenciales). Esto es arriesgado — cualquier imprevisto te dejaría sin respaldo. Considera financiar al menos una parte. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Después de la compra te quedarían solo RD$10,712/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.",
+        "Tu endeudamiento post-compra sería 49%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 76273.0,
+      "dti_current": 0.31100507387935444,
+      "price": 117161,
+      "score": 0.6565,
+      "viable": true,
+      "dti_post": 0.3366,
+      "fcf_post": 14148.22,
+      "text": "La cuota de RD$1,953/mes a 60 meses es cómoda para tu presupuesto (12% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$14,148/mes de flujo libre y tu endeudamiento se mantendría en 34%."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 160386.0,
+      "dti_current": 0.27689474143628495,
+      "price": 93223,
+      "score": 0.7491,
+      "viable": true,
+      "dti_post": 0.2769,
+      "fcf_post": 54201.37,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$403,631 en ahorros y el producto cuesta RD$93,223. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 90932.0,
+      "dti_current": 0.37751077728412435,
+      "price": 33863,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 0.3775,
+      "fcf_post": -1815.06,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$405,760 en ahorros y el producto cuesta RD$33,863. Te quedaría suficiente reserva. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-1,815, es decir, un déficit de RD$1,815 cada mes. No podrías cubrir tus gastos.",
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 185919.0,
+      "dti_current": 0.460068470678091,
+      "price": 40838,
+      "score": 0.0381,
+      "viable": false,
+      "dti_post": 0.4662,
+      "fcf_post": -34123.38,
+      "text": "La cuota de RD$1,134/mes a 36 meses consume el 113439% de tu flujo libre (RD$-32,989). Es demasiado alto. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-34,123, es decir, un déficit de RD$34,123 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 47%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 58828.0,
+      "dti_current": 0.36052848983477254,
+      "price": 47403,
+      "score": 0.6,
+      "viable": true,
+      "dti_post": 0.3773,
+      "fcf_post": 9527.14,
+      "text": "La cuota de RD$988/mes a 48 meses es cómoda para tu presupuesto (9% de tu flujo libre). Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$9,527/mes de flujo libre y tu endeudamiento se mantendría en 38%."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 63103.0,
+      "dti_current": 0.0601673454510879,
+      "price": 125416,
+      "score": 0.6034,
+      "viable": true,
+      "dti_post": 0.2258,
+      "fcf_post": 13784.98,
+      "text": "La cuota de RD$10,451/mes es el 43% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 26049.0,
+      "dti_current": 0.21039310530154706,
+      "price": 41341,
+      "score": 0.1802,
+      "viable": false,
+      "dti_post": 0.2104,
+      "fcf_post": 2206.05,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~60 meses (5.0 años) ahorrando RD$1,103/mes. Financiar sería mucho más práctico. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Después de la compra te quedarían solo RD$2,206/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$41,341) consumiría más del 80% de tu liquidez (RD$36,025). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 189355.0,
+      "dti_current": 0.40760523883710487,
+      "price": 49193,
+      "score": 0.4,
+      "viable": false,
+      "dti_post": 0.4076,
+      "fcf_post": 23760.68,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$1,073,843 en ahorros y el producto cuesta RD$49,193. Te quedaría suficiente reserva. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Tu endeudamiento post-compra sería 41%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 194716.0,
+      "dti_current": 0.14473145504221532,
+      "price": 144925,
+      "score": 0.8915,
+      "viable": true,
+      "dti_post": 0.1571,
+      "fcf_post": 57631.65,
+      "text": "La cuota de RD$2,415/mes a 60 meses es cómoda para tu presupuesto (4% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$57,632/mes de flujo libre y tu endeudamiento se mantendría en 16%."
+      ]
+    }
+  ],
+  "vehicle": [
+    {
+      "test_id": 1,
+      "income": 171650.0,
+      "dti_current": 0.11198747451208856,
+      "price": 326850,
+      "score": 0.3108,
+      "viable": true,
+      "dti_post": 0.2707,
+      "fcf_post": 2064.38,
+      "text": "La cuota de RD$27,238/mes a 12 meses consume el 93% de tu flujo libre (RD$29,302). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "La cuota de RD$27,238/mes consumiría el 93% de tu flujo libre actual (RD$29,302). Eso te deja muy poco margen para imprevistos."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 117051.0,
+      "dti_current": 0.394835157324585,
+      "price": 1072303,
+      "score": 0.125,
+      "viable": false,
+      "dti_post": 0.5857,
+      "fcf_post": -34250.55,
+      "text": "La cuota de RD$22,340/mes a 48 meses consume el 2233965% de tu flujo libre (RD$-11,911). Es demasiado alto. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-34,251, es decir, un déficit de RD$34,251 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 59% de tus ingresos. El máximo recomendado es 40%."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 185343.0,
+      "dti_current": 0.021718651365306485,
+      "price": 606523,
+      "score": 0.8615,
+      "viable": true,
+      "dti_post": 0.0217,
+      "fcf_post": 45661.53,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$1,321,081 en ahorros y el producto cuesta RD$606,523. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 97367.0,
+      "dti_current": 0.24857025480912426,
+      "price": 1116863,
+      "score": 0.2036,
+      "viable": false,
+      "dti_post": 0.2486,
+      "fcf_post": 16283.84,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~245 meses (20.4 años) ahorrando RD$8,142/mes. Financiar sería mucho más práctico. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$1,116,863) consumiría más del 80% de tu liquidez (RD$321,825). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 173301.0,
+      "dti_current": 0.4246402502005182,
+      "price": 880883,
+      "score": 0.05,
+      "viable": false,
+      "dti_post": 0.4246,
+      "fcf_post": -14703.44,
+      "text": "No es recomendable pagar al contado. Tus ahorros (RD$13,120) no cubren el precio (RD$880,883), y basándonos en tu perfil de control de gastos, necesitarías 1914963 meses ahorrando RD$0/mes. El financiamiento en cuotas fijas te da más estructura y disciplina. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-14,703, es decir, un déficit de RD$14,703 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 42%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$880,883) consumiría más del 80% de tu liquidez (RD$13,120). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 91730.0,
+      "dti_current": 0.288382317671427,
+      "price": 1162438,
+      "score": 0.4689,
+      "viable": true,
+      "dti_post": 0.2884,
+      "fcf_post": 32684.3,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~86 meses (7.1 años) ahorrando RD$16,342/mes. Financiar sería mucho más práctico. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$1,162,438) consumiría más del 80% de tu liquidez (RD$18,647). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 95128.0,
+      "dti_current": 0.2521713901269868,
+      "price": 561999,
+      "score": 0.0502,
+      "viable": false,
+      "dti_post": 0.7445,
+      "fcf_post": -9430.21,
+      "text": "La cuota de RD$46,833/mes a 12 meses consume el 125% de tu flujo libre (RD$37,403). Es demasiado alto. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-9,430, es decir, un déficit de RD$9,430 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 74% de tus ingresos. El máximo recomendado es 40%.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 188422.0,
+      "dti_current": 0.1314062582925561,
+      "price": 1879275,
+      "score": 0.4653,
+      "viable": true,
+      "dti_post": 0.1314,
+      "fcf_post": 85820.07,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~64 meses (5.4 años) ahorrando RD$42,910/mes. Financiar sería mucho más práctico.",
+      "explanations": [
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$1,879,275) consumiría más del 80% de tu liquidez (RD$1,433,645). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 134740.0,
+      "dti_current": 0.29901825738459253,
+      "price": 1377904,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 1.1512,
+      "fcf_post": -101948.48,
+      "text": "La cuota de RD$114,825/mes a 12 meses consume el 892% de tu flujo libre (RD$12,877). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-101,948, es decir, un déficit de RD$101,948 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 115% de tus ingresos. El máximo recomendado es 40%."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 183561.0,
+      "dti_current": 0.4133318079548488,
+      "price": 687725,
+      "score": 0.2494,
+      "viable": false,
+      "dti_post": 0.5174,
+      "fcf_post": 3052.65,
+      "text": "La cuota de RD$19,103/mes a 36 meses consume el 86% de tu flujo libre (RD$22,156). Es demasiado alto. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "La cuota de RD$19,103/mes consumiría el 86% de tu flujo libre actual (RD$22,156). Eso te deja muy poco margen para imprevistos.",
+        "Tu endeudamiento post-compra sería 52%, por encima del ideal de 35% pero aún manejable con disciplina."
+      ]
+    }
+  ],
+  "loan": [
+    {
+      "test_id": 1,
+      "income": 165663.0,
+      "dti_current": 0.14280128936455333,
+      "price": 498911,
+      "score": 0.8351,
+      "viable": true,
+      "dti_post": 0.1428,
+      "fcf_post": 52475.74,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$1,082,557 en ahorros y el producto cuesta RD$498,911. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 184792.0,
+      "dti_current": 0.20944418589549332,
+      "price": 623524,
+      "score": 0.774,
+      "viable": true,
+      "dti_post": 0.2657,
+      "fcf_post": 58406.08,
+      "text": "La cuota de RD$10,392/mes a 60 meses es cómoda para tu presupuesto (15% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$58,406/mes de flujo libre y tu endeudamiento se mantendría en 27%."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 26605.0,
+      "dti_current": 0.47720917120841944,
+      "price": 228989,
+      "score": 0.0005,
+      "viable": false,
+      "dti_post": 0.7163,
+      "fcf_post": -6353.51,
+      "text": "La cuota de RD$6,361/mes a 36 meses consume el 87134% de tu flujo libre (RD$7). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-6,354, es decir, un déficit de RD$6,354 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 72% de tus ingresos. El máximo recomendado es 40%.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 115194.0,
+      "dti_current": 0.29277887737208536,
+      "price": 50340,
+      "score": 0.8169,
+      "viable": true,
+      "dti_post": 0.2928,
+      "fcf_post": 39916.35,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$698,949 en ahorros y el producto cuesta RD$50,340. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 137007.0,
+      "dti_current": 0.44669272372944446,
+      "price": 229601,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 0.4467,
+      "fcf_post": -10407.84,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$421,169 en ahorros y el producto cuesta RD$229,601. Te quedaría suficiente reserva. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-10,408, es decir, un déficit de RD$10,408 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 45%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 185275.0,
+      "dti_current": 0.037811415463500204,
+      "price": 110149,
+      "score": 0.8578,
+      "viable": true,
+      "dti_post": 0.0378,
+      "fcf_post": 60522.97,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$615,133 en ahorros y el producto cuesta RD$110,149. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 39136.0,
+      "dti_current": 0.00029103638593622243,
+      "price": 253881,
+      "score": 0.7249,
+      "viable": true,
+      "dti_post": 0.0003,
+      "fcf_post": 25042.18,
+      "text": "Puedes pagar al contado. Te quedarían RD$33,068 de reserva (4.7 meses de gastos esenciales). Viable si no esperas imprevistos grandes. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$253,881) consumiría más del 80% de tu liquidez (RD$286,949). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 185218.0,
+      "dti_current": 0.1494691660637735,
+      "price": 178337,
+      "score": 0.6267,
+      "viable": true,
+      "dti_post": 0.1495,
+      "fcf_post": 22167.33,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$924,532 en ahorros y el producto cuesta RD$178,337. Te quedaría suficiente reserva. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 112459.0,
+      "dti_current": 0.20086778292533278,
+      "price": 855968,
+      "score": 0.5064,
+      "viable": true,
+      "dti_post": 0.3594,
+      "fcf_post": 21045.23,
+      "text": "La cuota de RD$17,833/mes es el 46% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 50702.0,
+      "dti_current": 0.468787424559189,
+      "price": 902939,
+      "score": 0.05,
+      "viable": false,
+      "dti_post": 0.4688,
+      "fcf_post": -6841.64,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~1172648 meses (97720.7 años) ahorrando RD$0/mes. Financiar sería mucho más práctico. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-6,842, es decir, un déficit de RD$6,842 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 47%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre 3.0 meses. Es limitado pero funcional.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$902,939) consumiría más del 80% de tu liquidez (RD$317,810). Es riesgoso descapitalizarte así."
+      ]
+    }
+  ],
+  "insurance": [
+    {
+      "test_id": 1,
+      "income": 183176.0,
+      "dti_current": 0.39765460540682185,
+      "price": 6092,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 0.3977,
+      "fcf_post": -4559.55,
+      "text": "El pago mensual de RD$6,092 consume el 398% de tu flujo libre (RD$1,532). Es demasiado alto. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-4,560, es decir, un déficit de RD$4,560 cada mes. No podrías cubrir tus gastos."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 100060.0,
+      "dti_current": 0.37565230861483107,
+      "price": 9483,
+      "score": 0.2219,
+      "viable": false,
+      "dti_post": 0.3757,
+      "fcf_post": 3131.8,
+      "text": "El pago mensual de RD$9,483 consume el 75% de tu flujo libre (RD$12,615). Es demasiado alto. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "La cuota de RD$9,483/mes consumiría el 75% de tu flujo libre actual (RD$12,615). Eso te deja muy poco margen para imprevistos.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 165729.0,
+      "dti_current": 0.18929366616584908,
+      "price": 8760,
+      "score": 0.74,
+      "viable": true,
+      "dti_post": 0.1893,
+      "fcf_post": 35713.01,
+      "text": "El pago mensual de RD$8,760 es cómodo para tu presupuesto (20% de tu flujo libre). Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$35,713/mes de flujo libre y tu endeudamiento se mantendría en 19%."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 128248.0,
+      "dti_current": 0.4312716767512944,
+      "price": 3504,
+      "score": 0.1043,
+      "viable": false,
+      "dti_post": 0.4313,
+      "fcf_post": -18764.04,
+      "text": "El pago mensual de RD$3,504 consume el 350400% de tu flujo libre (RD$-15,260). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-18,764, es decir, un déficit de RD$18,764 cada mes. No podrías cubrir tus gastos.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 115406.0,
+      "dti_current": 0.31004514496646624,
+      "price": 8523,
+      "score": 0.5453,
+      "viable": true,
+      "dti_post": 0.31,
+      "fcf_post": 15491.12,
+      "text": "El pago mensual de RD$8,523 es el 35% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$15,491/mes de flujo libre y tu endeudamiento se mantendría en 31%."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 92589.0,
+      "dti_current": 0.08529630949680847,
+      "price": 8217,
+      "score": 0.5567,
+      "viable": true,
+      "dti_post": 0.0853,
+      "fcf_post": 8667.85,
+      "text": "El pago mensual de RD$8,217 es el 49% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables. Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.",
+      "explanations": [
+        "Después de la compra te quedarían solo RD$8,668/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 184539.0,
+      "dti_current": 0.3309417521499521,
+      "price": 8725,
+      "score": 0.2811,
+      "viable": true,
+      "dti_post": 0.3309,
+      "fcf_post": 2346.11,
+      "text": "El pago mensual de RD$8,725 consume el 79% de tu flujo libre (RD$11,071). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "La cuota de RD$8,725/mes consumiría el 79% de tu flujo libre actual (RD$11,071). Eso te deja muy poco margen para imprevistos.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 197687.0,
+      "dti_current": 0.2691579618285471,
+      "price": 2405,
+      "score": 0.4496,
+      "viable": false,
+      "dti_post": 0.2692,
+      "fcf_post": 11898.93,
+      "text": "El pago mensual de RD$2,405 es cómodo para tu presupuesto (17% de tu flujo libre). Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Después de la compra te quedarían solo RD$11,899/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 68688.0,
+      "dti_current": 0.07553226182157,
+      "price": 5551,
+      "score": 0.741,
+      "viable": true,
+      "dti_post": 0.0755,
+      "fcf_post": 11401.89,
+      "text": "El pago mensual de RD$5,551 es cómodo para tu presupuesto (33% de tu flujo libre). Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$11,402/mes de flujo libre y tu endeudamiento se mantendría en 8%."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 170940.0,
+      "dti_current": 0.11598402948402949,
+      "price": 4991,
+      "score": 0.7207,
+      "viable": true,
+      "dti_post": 0.116,
+      "fcf_post": 30210.97,
+      "text": "El pago mensual de RD$4,991 es cómodo para tu presupuesto (14% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$30,211/mes de flujo libre y tu endeudamiento se mantendría en 12%."
+      ]
+    }
+  ],
+  "home": [
+    {
+      "test_id": 1,
+      "income": 37638.0,
+      "dti_current": 0.026865667676284604,
+      "price": 3531270,
+      "score": 0.025,
+      "viable": false,
+      "dti_post": 7.8454,
+      "fcf_post": -271955.28,
+      "text": "La cuota de RD$294,272/mes a 12 meses consume el 1319% de tu flujo libre (RD$22,317). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-271,955, es decir, un déficit de RD$271,955 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 785% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso.",
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 194088.0,
+      "dti_current": 0.2591494579778245,
+      "price": 8823468,
+      "score": 0.1,
+      "viable": false,
+      "dti_post": 1.2063,
+      "fcf_post": -126972.86,
+      "text": "La cuota de RD$183,822/mes a 48 meses consume el 323% de tu flujo libre (RD$56,849). Es demasiado alto. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-126,973, es decir, un déficit de RD$126,973 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 121% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 42030.0,
+      "dti_current": 0.36317701641684513,
+      "price": 5196879,
+      "score": 0.0,
+      "viable": false,
+      "dti_post": 2.424,
+      "fcf_post": -86718.7,
+      "text": "La cuota de RD$86,615/mes a 60 meses consume el 8661465% de tu flujo libre (RD$-104). Es demasiado alto. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-86,719, es decir, un déficit de RD$86,719 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 242% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 45865.0,
+      "dti_current": 0.42833511392129076,
+      "price": 6114173,
+      "score": 0.05,
+      "viable": false,
+      "dti_post": 0.4283,
+      "fcf_post": -1507.88,
+      "text": "No es recomendable pagar al contado. Tus ahorros (RD$278,878) no cubren el precio (RD$6,114,173), y basándonos en tu perfil de control de gastos, necesitarías 13291680 meses ahorrando RD$0/mes. El financiamiento en cuotas fijas te da más estructura y disciplina. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-1,508, es decir, un déficit de RD$1,508 cada mes. No podrías cubrir tus gastos.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$6,114,173) consumiría más del 80% de tu liquidez (RD$278,878). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 197866.0,
+      "dti_current": 0.14890739187126642,
+      "price": 8201119,
+      "score": 0.2272,
+      "viable": false,
+      "dti_post": 0.1489,
+      "fcf_post": 23734.74,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~947 meses (78.9 años) ahorrando RD$11,867/mes. Financiar sería mucho más práctico. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$8,201,119) consumiría más del 80% de tu liquidez (RD$976,866). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 41981.0,
+      "dti_current": 0.2575422214811462,
+      "price": 8586199,
+      "score": 0.05,
+      "viable": false,
+      "dti_post": 0.2575,
+      "fcf_post": 499.85,
+      "text": "No es recomendable pagar al contado. Tus ahorros (RD$401,348) no cubren el precio (RD$8,586,199), y basándonos en tu perfil de control de gastos, necesitarías 74684 meses ahorrando RD$250/mes. El financiamiento en cuotas fijas te da más estructura y disciplina. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Después de la compra te quedarían solo RD$500/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$8,586,199) consumiría más del 80% de tu liquidez (RD$401,348). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 137106.0,
+      "dti_current": 0.16632714833778245,
+      "price": 4344570,
+      "score": 0.0,
+      "viable": false,
+      "dti_post": 1.0465,
+      "fcf_post": -73836.45,
+      "text": "La cuota de RD$120,682/mes a 36 meses consume el 258% de tu flujo libre (RD$46,846). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-73,836, es decir, un déficit de RD$73,836 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 105% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso.",
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 120411.0,
+      "dti_current": 0.37238474890167844,
+      "price": 7527675,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 1.6748,
+      "fcf_post": -148722.26,
+      "text": "La cuota de RD$156,827/mes a 48 meses consume el 1935% de tu flujo libre (RD$8,104). Es demasiado alto. Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-148,722, es decir, un déficit de RD$148,722 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 167% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 98184.0,
+      "dti_current": 0.49373350036665853,
+      "price": 7441501,
+      "score": 0.05,
+      "viable": false,
+      "dti_post": 0.4937,
+      "fcf_post": -10632.3,
+      "text": "No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~14883002 meses (1240250.2 años) ahorrando RD$0/mes. Financiar sería mucho más práctico. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-10,632, es decir, un déficit de RD$10,632 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 49%. Es aceptable para un préstamo hipotecario, pero requerirá disciplina mensual.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional.",
+        "El pago inicial consumiría casi toda tu liquidez disponible, dejándote sin reservas.",
+        "Pagar al contado (RD$7,441,501) consumiría más del 80% de tu liquidez (RD$830,684). Es riesgoso descapitalizarte así."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 116230.0,
+      "dti_current": 0.4876783962832315,
+      "price": 9613262,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 2.2108,
+      "fcf_post": -216642.04,
+      "text": "La cuota de RD$200,276/mes a 48 meses consume el 20027629% de tu flujo libre (RD$-16,366). Es demasiado alto. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-216,642, es decir, un déficit de RD$216,642 cada mes. No podrías cubrir tus gastos.",
+        "Tu nivel de endeudamiento llegaría al 221% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso."
+      ]
+    }
+  ],
+  "travel": [
+    {
+      "test_id": 1,
+      "income": 129671.0,
+      "dti_current": 0.34128625521512135,
+      "price": 128153,
+      "score": 0.6,
+      "viable": true,
+      "dti_post": 0.3619,
+      "fcf_post": 32355.96,
+      "text": "La cuota de RD$2,670/mes a 48 meses es cómoda para tu presupuesto (8% de tu flujo libre). Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$32,356/mes de flujo libre y tu endeudamiento se mantendría en 36%."
+      ]
+    },
+    {
+      "test_id": 2,
+      "income": 42341.0,
+      "dti_current": 0.24453886304055172,
+      "price": 42122,
+      "score": 0.763,
+      "viable": true,
+      "dti_post": 0.2445,
+      "fcf_post": 13956.74,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$127,248 en ahorros y el producto cuesta RD$42,122. Te quedaría suficiente reserva. Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 3,
+      "income": 145247.0,
+      "dti_current": 0.44758198103919533,
+      "price": 106996,
+      "score": 0.4,
+      "viable": true,
+      "dti_post": 0.4783,
+      "fcf_post": 23005.49,
+      "text": "La cuota de RD$4,458/mes a 24 meses es cómoda para tu presupuesto (16% de tu flujo libre). Tu presupuesto es ajustado. Procede solo si la compra es una necesidad. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "Tu endeudamiento post-compra sería 48%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre 1.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 4,
+      "income": 138086.0,
+      "dti_current": 0.18083136596034355,
+      "price": 46020,
+      "score": 0.8094,
+      "viable": true,
+      "dti_post": 0.1901,
+      "fcf_post": 60263.9,
+      "text": "La cuota de RD$1,278/mes a 36 meses es cómoda para tu presupuesto (2% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional."
+      ]
+    },
+    {
+      "test_id": 5,
+      "income": 93406.0,
+      "dti_current": 0.16917906772584201,
+      "price": 89762,
+      "score": 0.6181,
+      "viable": false,
+      "dti_post": 0.1959,
+      "fcf_post": 17095.13,
+      "text": "La cuota de RD$2,493/mes a 36 meses es cómoda para tu presupuesto (13% de tu flujo libre). Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo."
+      ]
+    },
+    {
+      "test_id": 6,
+      "income": 65195.0,
+      "dti_current": 0.3709674054758801,
+      "price": 78161,
+      "score": 0.4,
+      "viable": true,
+      "dti_post": 0.4043,
+      "fcf_post": 12091.11,
+      "text": "La cuota de RD$2,171/mes a 36 meses es cómoda para tu presupuesto (15% de tu flujo libre). Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad. Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.",
+      "explanations": [
+        "Tu endeudamiento post-compra sería 40%, por encima del ideal de 35% pero aún manejable con disciplina."
+      ]
+    },
+    {
+      "test_id": 7,
+      "income": 73148.0,
+      "dti_current": 0.1575879039755017,
+      "price": 102917,
+      "score": 0.6731,
+      "viable": true,
+      "dti_post": 0.2162,
+      "fcf_post": 9801.32,
+      "text": "La cuota de RD$4,288/mes a 24 meses es cómoda para tu presupuesto (30% de tu flujo libre). Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$9,801/mes de flujo libre y tu endeudamiento se mantendría en 22%."
+      ]
+    },
+    {
+      "test_id": 8,
+      "income": 24800.0,
+      "dti_current": 0.481133064516129,
+      "price": 92006,
+      "score": 0.15,
+      "viable": false,
+      "dti_post": 0.4811,
+      "fcf_post": -4831.9,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$194,623 en ahorros y el producto cuesta RD$92,006. Te quedaría suficiente reserva. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Con esta compra, tu flujo mensual quedaría en RD$-4,832, es decir, un déficit de RD$4,832 cada mes. No podrías cubrir tus gastos.",
+        "Tu endeudamiento post-compra sería 48%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    },
+    {
+      "test_id": 9,
+      "income": 138690.0,
+      "dti_current": 0.08633975052274857,
+      "price": 103313,
+      "score": 0.9296,
+      "viable": true,
+      "dti_post": 0.1174,
+      "fcf_post": 46189.01,
+      "text": "La cuota de RD$4,305/mes a 24 meses es cómoda para tu presupuesto (9% de tu flujo libre). Tu elección se alinea bien con tu capacidad financiera.",
+      "explanations": [
+        "La compra es financieramente sostenible. Te quedarían RD$46,189/mes de flujo libre y tu endeudamiento se mantendría en 12%."
+      ]
+    },
+    {
+      "test_id": 10,
+      "income": 188420.0,
+      "dti_current": 0.44787591550790784,
+      "price": 81330,
+      "score": 0.4,
+      "viable": false,
+      "dti_post": 0.4479,
+      "fcf_post": 24323.82,
+      "text": "Pagar al contado es excelente en tu caso: tienes RD$315,096 en ahorros y el producto cuesta RD$81,330. Te quedaría suficiente reserva. Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.",
+      "explanations": [
+        "Tu endeudamiento post-compra sería 45%, por encima del ideal de 35% pero aún manejable con disciplina.",
+        "Tu fondo de emergencia cubre 2.0 meses. Es limitado pero funcional.",
+        "Tienes suficiente liquidez para pagar al contado sin descapitalizarte. Es la opción más eficiente porque evitas intereses."
+      ]
+    }
+  ]
+}

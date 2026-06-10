@@ -743,15 +743,21 @@ def build_user_dict_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         "monthly_savings_capacity": savings_capacity
     }
 
-def find_optimal_term(user_dict: dict, product_price: float, down_payment: float, annual_rate: float) -> int:
+def find_optimal_term(user_dict: dict, product_price: float, down_payment: float, annual_rate: float, category: str = "technology") -> int:
     """Busca el plazo que mejor se adapte al flujo libre del usuario."""
     fcf = max(user_dict.get("free_cash_flow_current", 0), 100)
     financed = max(product_price - down_payment, 0)
     
     if financed <= 0: return 0
     
-    # Probamos plazos comunes
-    candidate_terms = [6, 12, 18, 24, 36, 48, 60]
+    # Probamos plazos comunes según la categoría
+    if category == "home":
+        candidate_terms = [120, 180, 240, 360]
+    elif category == "vehicle":
+        candidate_terms = [36, 48, 60, 72, 84]
+    else:
+        candidate_terms = [6, 12, 18, 24, 36, 48, 60]
+        
     best_term = candidate_terms[-1]
     
     for term in candidate_terms:
@@ -812,7 +818,7 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
                           f"y te quedarían RD${liquid - price:,.0f} de reserva ({emergency_after_purchase:.1f} meses).")
     else:
         # User does NOT have the cash — needs to save
-        virtual_installment = effective_savings_rate  # The saving effort per month
+        virtual_installment = 0  # No aplicamos cuota irreal al ML para no dañar FCF/DTI
         
         # Adjust months_to_save by discipline: undisciplined people take longer
         discipline_factor = 1.0 / max(budget_adherence, 0.3)  # Lower adherence = longer time
@@ -843,7 +849,8 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
     })
     
     # 2. Escenario Óptimo — the shortest term where installment < 30% of FCF
-    opt_term = find_optimal_term(user_dict, price, down_payment, rate)
+    category = normalize_category(product_data.get("product_category", "technology"))
+    opt_term = find_optimal_term(user_dict, price, down_payment, rate, category)
     opt_installment = monthly_payment(price - down_payment, rate, opt_term)
     opt_pct = (opt_installment / max(fcf, 1)) * 100
     
@@ -862,7 +869,13 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
     })
     
     # 3. Escenario Cuota Mínima — longest reasonable term
-    long_term = 48 if opt_term < 36 else 60
+    if category == "home":
+        long_term = 360
+    elif category == "vehicle":
+        long_term = 84
+    else:
+        long_term = 48 if opt_term < 36 else 60
+        
     long_installment = monthly_payment(price - down_payment, rate, long_term)
     long_pct = (long_installment / max(fcf, 1)) * 100
     total_paid = long_installment * long_term + down_payment
@@ -1085,13 +1098,22 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     else:
         user_installment = user_choice["scenario_details"].get("installment", 0)
         user_pct = (user_installment / max(fcf_current, 1)) * 100
+        category = normalize_category(option_dict.get("product_category", "technology"))
         
-        if user_pct > 60:
-            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
-        elif user_pct > 35:
-            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+        if category == "insurance":
+            if user_pct > 60:
+                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
+            elif user_pct > 35:
+                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+            else:
+                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} es cómodo para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
         else:
-            suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
+            if user_pct > 60:
+                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
+            elif user_pct > 35:
+                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+            else:
+                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
     
     # 2. Compare with the best option if different
     if user_score < best_score - 0.08:
@@ -1108,14 +1130,15 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     elif user_score >= 0.65:
         suggestion_parts.append("Tu elección se alinea bien con tu capacidad financiera.")
     
-    # 3. Segment context
-    if "sobreendeudado" in segment_name.lower():
-        suggestion_parts.append("Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.")
-    elif "ajustado" in segment_name.lower():
-        suggestion_parts.append("Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.")
+    # 3. Segment context (only if score is not excellent)
+    if user_score < 0.65:
+        if "sobreendeudado" in segment_name.lower():
+            suggestion_parts.append("Tu perfil financiero muestra sobreendeudamiento. Prioriza reducir deudas antes de nuevos compromisos.")
+        elif "ajustado" in segment_name.lower():
+            suggestion_parts.append("Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.")
     
     # 4. Discipline warning for users with low budget adherence
-    if budget_adherence < 0.5 and chosen_method != "contado":
+    if budget_adherence < 0.5 and chosen_method != "contado" and user_score < 0.65:
         suggestion_parts.append("Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.")
     
     suggestion_text = " ".join(suggestion_parts)
@@ -1160,12 +1183,22 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
     smart_price = price * 0.80
     premium_price = price * 1.20
     
-    eco_installment = eco_price / 12
-    smart_installment = smart_price / 18
-    prem_term = find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18)
-
     category = normalize_category(product_data.get("product_category", "technology"))
     
+    if category == "home":
+        eco_term = 240
+        smart_term = 360
+    elif category == "vehicle":
+        eco_term = 60
+        smart_term = 72
+    else:
+        eco_term = 12
+        smart_term = 18
+    
+    eco_installment = monthly_payment(eco_price, 0.15, eco_term)
+    smart_installment = monthly_payment(smart_price, 0.15, smart_term)
+    prem_term = find_optimal_term(user_dict, premium_price, premium_price * 0.2, 0.18, category)
+
     # Use generic distinct names for alternatives rather than just suffixing
     eco_name = "Opción de Entrada / Económica"
     smart_name = "Opción Intermedia (Mejor Valor)"
@@ -1179,6 +1212,10 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
         eco_name = "Vehículo Usado Compacto"
         smart_name = "Vehículo Seminuevo Eficiente"
         prem_name = "Vehículo Nuevo SUV / Sedán"
+    elif category == "home":
+        eco_name = "Apartamento Pequeño / Periferia"
+        smart_name = "Vivienda Estándar"
+        prem_name = "Residencia Premium"
     elif category == "smartphone" or category == "technology":
         eco_name = "Dispositivo de Gama de Entrada"
         smart_name = "Dispositivo de Gama Media-Alta"
@@ -1188,14 +1225,14 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
         {
             "name": f"{eco_name} vs {product_name}",
             "price": f"RD${eco_price:,.0f} aprox",
-            "desc": f"Cuota de RD${eco_installment:,.0f}/mes a 12 meses. Cabe cómodamente en tu flujo libre mensual. Cumple lo básico.",
-            "payment": "Financiamiento a 12 meses"
+            "desc": f"Cuota de RD${eco_installment:,.0f}/mes a {eco_term} meses. Cumple lo básico.",
+            "payment": f"Financiamiento a {eco_term} meses"
         },
         {
             "name": f"{smart_name}",
             "price": f"RD${smart_price:,.0f} aprox",
-            "desc": f"Cuota de RD${smart_installment:,.0f}/mes a 18 meses. Mejor balance entre calidad y asequibilidad.",
-            "payment": "Financiamiento a 18 meses"
+            "desc": f"Cuota de RD${smart_installment:,.0f}/mes a {smart_term} meses. Mejor balance entre calidad y asequibilidad.",
+            "payment": f"Financiamiento a {smart_term} meses"
         },
         {
             "name": f"{prem_name} superior a {product_name}",
