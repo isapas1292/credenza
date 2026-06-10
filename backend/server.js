@@ -15,14 +15,16 @@ app.use('/api/auth', authRoutes); // Contiene register, login, y /usuarios/:id/p
 app.use('/api/recommendations', recommendationRoutes);
 
 // Configuración de la base de datos
+// Configuración de la base de datos (vía variables de entorno en producción).
+// Los valores por defecto permiten el desarrollo local sin configuración extra.
 const dbConfig = {
-    user: 'jami_user',
-    password: '6013',
-    server: 'localhost',
-    database: 'Credenza',
+    user: process.env.DB_USER || 'jami_user',
+    password: process.env.DB_PASSWORD || '6013',
+    server: process.env.DB_SERVER || 'localhost',
+    database: process.env.DB_NAME || 'Credenza',
     options: {
-        encrypt: false,
-        trustServerCertificate: true
+        encrypt: process.env.DB_ENCRYPT === 'true',
+        trustServerCertificate: process.env.DB_TRUST_CERT !== 'false'
     }
 };
 

@@ -5,7 +5,6 @@ import typing_extensions as typing
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,8 +13,11 @@ from credenza_engine_backend_ready import (
     build_user_dict_from_payload,
     load_or_train_artifacts,
     predict_segment,
-    predict_recommendation
+    predict_recommendation,
+    normalize_category,
 )
+import dr_market
+import llm_provider
 
 app = FastAPI(title="Credenza AI Service", version="2.1.0")
 
@@ -64,17 +66,31 @@ class GeminiResponse(typing.TypedDict):
     similar_products: List[SimilarProduct]
     viable_alternatives: List[ViableAlternative]
 
-# Configuración de Gemini
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash') # Usando el modelo con 20 peticiones diarias gratuitas
-else:
-    model = None
+# Proveedor de IA generativa activo (groq / openrouter / gemini), autodetectado
+# según la API key presente en el entorno. Puede no haber ninguno: en ese caso
+# el sistema usa la salida del motor determinista.
+LLM_PROVIDER = llm_provider.active_provider()
+
+# Mensaje de sistema con el ESQUEMA JSON exacto, para proveedores OpenAI-
+# compatibles (groq/openrouter) que no soportan response_schema nativo.
+LLM_SYSTEM = (
+    "Eres un asesor financiero y de compras experto en el mercado de República Dominicana. "
+    "Hablas en español dominicano claro, en segunda persona y con tono cercano y honesto. "
+    "Respondes SIEMPRE con un único objeto JSON VÁLIDO, sin texto fuera del JSON, con EXACTAMENTE estas claves:\n"
+    '{\n'
+    '  "suggestion_text": "string",\n'
+    '  "action_steps": ["string", ...],\n'
+    '  "alternatives": [{"name":"string","price":"string","desc":"string","payment":"string"}],\n'
+    '  "similar_products": [{"name":"string","price":"string","desc":"string","why_fits":"string"}],\n'
+    '  "viable_alternatives": [{"name":"string","category":"string","price":"string","desc":"string","why_better":"string"}]\n'
+    '}\n'
+    "Nunca inventes tasas, precios ni instituciones: usa solo los datos verificados y la referencia de mercado que se te entreguen."
+)
 
 def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> dict:
-    """Usa Gemini con Structured Outputs para evitar parse errors."""
-    if not model:
+    """Enriquece el análisis con el proveedor de IA activo (groq/openrouter/gemini).
+    Si no hay proveedor o la llamada falla, devuelve la salida del motor intacta."""
+    if not LLM_PROVIDER:
         return analysis_result
 
     product_name = product.get('name', 'el producto')
@@ -94,51 +110,65 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
     # Dependents from perfil
     personal = perfil.get('personal', perfil)
     dependents = personal.get('dependents', 0)
+    emp_type = personal.get('employmentType', personal.get('situacionLaboral', 'No especificado'))
 
-    # Determine if the purchase is incompatible
+    # Determine if the purchase is incompatible.
+    # Se alinea con el veredicto de viabilidad del motor (no un umbral suelto),
+    # para que la UI y la IA sean coherentes con el resto del análisis.
     chosen = analysis_result.get('chosen_analysis', {})
     rec_score = chosen.get('recommendation_score', 1.0)
-    is_incompatible = rec_score < 0.50
+    is_incompatible = (chosen.get('viable') is False) or rec_score < 0.45
+
+    # ── Grounding: referencia de mercado RD + comparación de tasa ──────────
+    # Se le entrega a la IA datos verificados del motor para que NO invente
+    # tasas, precios ni instituciones.
+    norm_cat = normalize_category(category)
+    market_ref = dr_market.market_reference_for_prompt(norm_cat)
+    rate_analysis = analysis_result.get('rate_analysis')
+    metrics = chosen.get('metrics', {})
+    grounding_prompt = f"""
+        DATOS VERIFICADOS DEL MOTOR (úsalos como fuente de verdad; NO los contradigas):
+        - Veredicto de viabilidad: {'VIABLE' if chosen.get('viable') else 'NO VIABLE'} (score {rec_score:.0%}, banda: {chosen.get('risk_band_name','')}).
+        - Flujo libre actual: RD${metrics.get('fcf_current', 0):,.0f}/mes; flujo tras la compra: RD${metrics.get('fcf_post', 0):,.0f}/mes.
+        - Endeudamiento (DTI) tras la compra: {metrics.get('dti_post', 0)*100:.0f}%; cuota estimada: RD${metrics.get('installment', 0):,.0f}/mes.
+        - Fondo de emergencia: {metrics.get('emergency_months', 0):.1f} meses de gastos.
+        - Segmento del usuario: {analysis_result.get('segment_name','')}.
+        {f"- COMPARACIÓN DE TASA: el usuario paga {rate_analysis['user_rate_pct']:.0f}% anual (mercado RD típico ~{rate_analysis['market_typical_pct']:.0f}%, mínimo ~{rate_analysis['market_low_pct']:.0f}%). Veredicto: tasa {rate_analysis['verdict']}. Cambiando de entidad podría bajar la cuota a ~RD${rate_analysis['best_reference_installment']:,.0f}/mes y ahorrar ~RD${rate_analysis['potential_total_savings']:,.0f} en el plazo." if rate_analysis else ""}
+
+        REFERENCIA DE MERCADO DOMINICANO (usa SOLO estas instituciones/tasas; si citas tasas o bancos, deben venir de aquí):
+        {market_ref if market_ref else '(sin referencia específica para esta categoría; usa marcas/productos reales y conocidos del mercado, sin inventar precios exactos)'}
+
+        REGLAS DE FACTIBILIDAD (obligatorias):
+        - Toda sugerencia debe ser ALCANZABLE para este usuario según su flujo libre; no propongas nada cuya cuota supere el 35% de su flujo libre actual.
+        - Las alternativas deben ser SIMILARES a lo que el usuario quiere ("{purpose}") pero realmente factibles para su bolsillo.
+        - No inventes tasas, precios ni instituciones. Si no tienes un dato verificado, usa los rangos de referencia provistos e indícalo como "referencial".
+    """
 
     try:
-        # Build the incompatible-only section of the prompt
-        incompatible_prompt = ""
+        # similar_products / viable_alternatives ya no se muestran (todo se
+        # consolidó en `alternatives`). Pedimos esos campos vacíos y, si la
+        # compra no es viable, exigimos que las alternativas sean asequibles.
+        finances = perfil.get('finances', perfil)
+        monthly_income = float(finances.get('monthlyIncome', finances.get('monthly_income_avg', 0)) or 0)
+        fixed_exp = float(finances.get('fixedExpenses', finances.get('fixed_expenses_monthly', 0)) or 0)
+        variable_exp = float(finances.get('variableExpenses', finances.get('variable_expenses_monthly_avg', 0)) or 0)
+        debts = float(finances.get('activeDebts', finances.get('current_debt_payment_monthly', 0)) or 0)
+        free_cash = monthly_income - fixed_exp - variable_exp - debts
+        max_affordable_monthly = max(free_cash * 0.30, 0)
+
         if is_incompatible:
-            finances = perfil.get('finances', perfil)
-            monthly_income = float(finances.get('monthlyIncome', finances.get('monthly_income_avg', 0)) or 0)
-            fixed_exp = float(finances.get('fixedExpenses', finances.get('fixed_expenses_monthly', 0)) or 0)
-            debts = float(finances.get('activeDebts', finances.get('current_debt_payment_monthly', 0)) or 0)
-            free_cash = monthly_income - fixed_exp - debts
-            max_affordable_monthly = max(free_cash * 0.30, 0)
-            max_affordable_12m = max_affordable_monthly * 12
-
             incompatible_prompt = f"""
-        
         IMPORTANTE — LA COMPRA NO ES VIABLE PARA ESTE USUARIO (score: {rec_score:.0%}).
-        Su flujo libre mensual es aproximadamente RD${free_cash:,.0f} y puede pagar máximo RD${max_affordable_monthly:,.0f}/mes en cuotas.
-        El precio máximo que puede costear a 12 meses es aproximadamente RD${max_affordable_12m:,.0f} (o aprox. ${max_affordable_12m/60:,.0f} USD).
-
-        4. Provee EXACTAMENTE 3 `similar_products`: Productos REALES del mercado actual que son del MISMO tipo que "{product_name}" (categoría "{category}") pero que el usuario SÍ puede costear (precio menor a ${max_affordable_12m/60:,.0f} USD).
-           Para cada uno incluye:
-           - `name`: Nombre REAL del producto (marca y modelo específico)
-           - `price`: Precio fijo REAL en formato "$XXX USD" (tomado de Amazon, Best Buy, tienda oficial, etc.)
-           - `desc`: Una oración describiendo las especificaciones clave del producto
-           - `why_fits`: Por qué este producto se ajusta al presupuesto. DEBES incluir la fuente del precio (ej. "Precio Amazon: $XXX USD").
-
-        5. Provee EXACTAMENTE 2 `viable_alternatives`: Productos REALES de una CATEGORÍA DIFERENTE a "{category}" que podrían cumplir el mismo propósito ("{purpose}") de manera más accesible.
-           Por ejemplo, si quiere una laptop para trabajar pero no puede pagarla, sugerir una tablet con teclado o un Chromebook. Si quiere un carro, sugerir una moto o transporte alternativo.
-           Para cada uno incluye:
-           - `name`: Nombre REAL del producto
-           - `category`: La categoría del producto alternativo
-           - `price`: Precio fijo REAL en formato "$XXX USD"
-           - `desc`: Qué es y sus especificaciones clave
-           - `why_better`: Por qué esta alternativa es más viable y cómo cumple su propósito. Incluye la fuente (ej. "Precio Best Buy: $XXX USD").
+        Su flujo libre mensual es ~RD${free_cash:,.0f} y puede pagar como máximo ~RD${max_affordable_monthly:,.0f}/mes en cuotas.
+        Por eso, las 3 `alternatives` que sugieras DEBEN ser productos REALES que el usuario SÍ pueda costear
+        (cuota mensual por debajo de RD${max_affordable_monthly:,.0f}), ya sea del mismo tipo más económico, o de una
+        categoría distinta que cumpla el mismo propósito ("{purpose}") de forma más accesible
+        (ej.: si no puede pagar una laptop, una tablet con teclado o un Chromebook; si no puede un carro, una moto o scooter).
+        Devuelve `similar_products` y `viable_alternatives` como listas VACÍAS [].
             """
         else:
             incompatible_prompt = """
-        
-        4. Para `similar_products`: Devuelve una lista VACÍA [] porque la compra sí es viable.
-        5. Para `viable_alternatives`: Devuelve una lista VACÍA [] porque la compra sí es viable.
+        Devuelve `similar_products` y `viable_alternatives` como listas VACÍAS [] (la compra es viable).
             """
 
         if category.lower() == "préstamo":
@@ -210,27 +240,22 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         - Su prioridad o restricción principal: {main_constraint}
         - Método de pago elegido: {payment_type}
         - Notas adicionales del usuario: {notes if notes else 'Ninguna'}
-        - Método de pago sugerido o elegido por el sistema: {json.dumps(chosen.get('scenario_details', {}))}
-        - Perfil Financiero completo: {json.dumps(perfil)}
-        - Análisis Técnico de Viabilidad: {json.dumps(chosen)}
+        - Plan elegido: {chosen.get('scenario_details', {}).get('name','')} (cuota RD${metrics.get('installment', 0):,.0f}/mes).
+        - Datos del usuario: ingreso RD${monthly_income:,.0f}/mes, gastos fijos RD${fixed_exp:,.0f}, variables RD${variable_exp:,.0f}, deudas RD${debts:,.0f}, {dependents} dependientes, empleo: {emp_type}.
+        {grounding_prompt}
 
         TAREA:
-        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas que resuma si la compra o préstamo es viable o no. DEBES leer la manera en que el usuario quiere hacer la transacción y decirle directamente por qué le conviene o no basándote en cómo gasta actualmente (sus ingresos vs gastos fijos/variables). Menciona su propósito ("{purpose}") y cómo se alinea o no con eso. Si es un préstamo, enfócate en la carga de la cuota mensual.
-        2. Escribe `action_steps`: Una lista de 2 a 3 pasos concretos y accionables para mejorar su situación antes o después de la compra/préstamo.
+        1. Escribe un `suggestion_text`: Un párrafo de 2-4 líneas, en segunda persona y tono cercano, que resuma si la compra o préstamo es viable o no PARA ESTE usuario en específico. Apóyate en sus números reales (flujo libre, DTI, cuota, fondo de emergencia de los DATOS VERIFICADOS) y en su propósito ("{purpose}"). No contradigas el veredicto del motor. Si es un préstamo y su tasa está "alta", dile explícitamente que está pagando de más y cuánto podría ahorrar cambiando de entidad.
+        2. Escribe `action_steps`: 2 a 3 pasos concretos, accionables y personalizados (con cifras de su caso cuando aplique) para mejorar su situación antes o después de la compra/préstamo.
         {alternatives_prompt}
         {incompatible_prompt}
         """
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=GeminiResponse
-            ),
-            request_options={"timeout": 15}
+        gemini_data = llm_provider.generate_structured(
+            LLM_SYSTEM, prompt, gemini_schema=GeminiResponse, timeout=20
         )
-        
-        gemini_data = json.loads(response.text)
-        
+        if not gemini_data:
+            return analysis_result
+
         if "suggestion_text" in gemini_data:
             analysis_result["suggestion_text"] = gemini_data["suggestion_text"]
         if "action_steps" in gemini_data:
@@ -243,26 +268,24 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         if "viable_alternatives" in gemini_data and len(gemini_data["viable_alternatives"]) > 0:
             analysis_result["viable_alternatives"] = gemini_data["viable_alternatives"]
 
-        print(f"[Gemini OK] similar_products={len(gemini_data.get('similar_products', []))}, viable_alternatives={len(gemini_data.get('viable_alternatives', []))}")
-            
+        print(f"[LLM OK · {LLM_PROVIDER}] similar_products={len(gemini_data.get('similar_products', []))}, viable_alternatives={len(gemini_data.get('viable_alternatives', []))}")
+
     except Exception as e:
-        import traceback
-        print(f"[Gemini ERROR] enrich_with_gemini falló: {e}")
-        print(traceback.format_exc())
-        # Si falla, mantenemos el resultado original (incluyendo fallbacks del motor)
-        
+        print(f"[LLM ERROR · {LLM_PROVIDER}] enrich falló: {e}. Se usa la salida del motor determinista.")
+        # Si falla, mantenemos el resultado original (fallbacks del motor)
+
     return analysis_result
 
 # ─── Endpoints ──────────────────────────────────────────────
 
 @app.get("/")
 def health():
-    return {"status": "ok", "service": "Credenza AI Service", "version": "2.2.0 (Structured Outputs)", "gemini_active": model is not None}
+    return {"status": "ok", "service": "Credenza AI Service", "version": "3.0.0 (multi-LLM)", "llm_provider": LLM_PROVIDER}
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "model_loaded": artifacts is not None, "gemini_active": model is not None}
+    return {"status": "healthy", "model_loaded": artifacts is not None, "llm_provider": LLM_PROVIDER}
 
 
 @app.post("/profile/segment")

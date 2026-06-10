@@ -731,3 +731,92 @@
   flex-shrink: 0;
   font-size: 16px;
 }
+/* ── Panel de comparación de tasa (mercado RD) ───────────────── */
+.rate-analysis-panel {
+  border: 1px solid var(--line-light);
+}
+
+.rate-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.rate-stat {
+  flex: 1;
+  min-width: 110px;
+  background: var(--bg);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rate-stat .rate-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.rate-stat strong {
+  font-size: 20px;
+  color: var(--text-main);
+}
+
+.rate-stat strong.rate-save {
+  color: #059669;
+}
+
+.rate-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.rate-providers {
+  display: grid;
+  gap: 12px;
+}
+
+.rate-provider-card {
+  background: var(--bg);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+}
+
+.rate-provider-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.rate-provider-top strong {
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.rate-provider-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.rate-provider-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rate-disclaimer {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 12px;
+}

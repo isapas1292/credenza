@@ -66,28 +66,37 @@ export class ResultsComponent implements OnInit {
 
   get financialData() {
     const profile = this.user();
-    if (!profile || !profile.finances) return { income: 0, fixed: 0, debts: 0 };
+    if (!profile || !profile.finances) return { income: 0, fixed: 0, variable: 0, debts: 0 };
     return {
       income: parseFloat(profile.finances.monthlyIncome || profile.finances.monthly_income_avg || 0),
       fixed: parseFloat(profile.finances.fixedExpenses || profile.finances.fixed_expenses_monthly || 0),
+      variable: parseFloat(profile.finances.variableExpenses || profile.finances.variable_expenses_monthly_avg || 0),
       debts: parseFloat(profile.finances.activeDebts || profile.finances.current_debt_payment_monthly || 0),
     };
   }
 
   get simulatedInstallment() {
     const price = this.draft()?.product.price || 0;
-    return price / this.sliderMonths();
+    const months = this.sliderMonths();
+    if (months <= 1) return price; // contado: el "esfuerzo" es el precio completo
+    // Usa la tasa real del producto (sistema francés) si el usuario la indicó.
+    const annualRate = (this.draft()?.product.interestRate || 0) / 100;
+    if (annualRate > 0) {
+      const r = annualRate / 12;
+      return (price * r) / (1 - Math.pow(1 + r, -months));
+    }
+    return price / months;
   }
 
   get simulatedFreeCashFlow() {
-    const { income, fixed, debts } = this.financialData;
-    return income - fixed - debts - this.simulatedInstallment;
+    const { income, fixed, variable, debts } = this.financialData;
+    return income - fixed - variable - debts - this.simulatedInstallment;
   }
 
   get pieChartData(): ChartData<'doughnut'> {
-    const { income, fixed, debts } = this.financialData;
+    const { income, fixed, variable, debts } = this.financialData;
     const newInstallment = this.simulatedInstallment;
-    const currentExpenses = fixed + debts;
+    const currentExpenses = fixed + variable + debts;
     const free = Math.max(0, income - currentExpenses - newInstallment);
 
     return {
@@ -108,14 +117,29 @@ export class ResultsComponent implements OnInit {
   get overallCompatibility() {
     const res = this.aiResult;
     if (!res) {
-      return { score: '0%', class: 'badge-neutral', message: 'Cargando datos...' };
+      return { score: '0%', class: 'badge-neutral', message: 'Cargando datos...', label: '' };
     }
     const score = Math.round((res.chosen_analysis?.recommendation_score || 0) * 100);
+    const viable = res.chosen_analysis?.viable === true;
+    // La etiqueta refleja el veredicto real del motor, no un "Viable" fijo.
+    const label = res.chosen_analysis?.risk_band_name
+      ? this.capitalize(res.chosen_analysis.risk_band_name)
+      : (viable ? 'Viable' : 'No recomendable');
     return {
       score: `${score}%`,
-      class: score >= 70 ? 'badge-success' : score >= 40 ? 'badge-warn' : 'badge-danger',
-      message: res.suggestion_text || res.chosen_analysis?.explanation || 'Revisión técnica de la compra.'
+      class: score >= 65 ? 'badge-success' : score >= 45 ? 'badge-warn' : 'badge-danger',
+      message: res.suggestion_text || res.chosen_analysis?.explanation || 'Revisión técnica de la compra.',
+      label
     };
+  }
+
+  private capitalize(s: string): string {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
+
+  get rateAnalysis() {
+    const res = this.aiResult;
+    return res?.rate_analysis || null;
   }
 
   get scenarios() {
@@ -154,29 +178,6 @@ export class ResultsComponent implements OnInit {
       return res.chosen_analysis.action_plan;
     }
     
-    return [];
-  }
-
-  get isIncompatible(): boolean {
-    const res = this.aiResult;
-    if (!res) return false;
-    const score = res.chosen_analysis?.recommendation_score || 0;
-    return score < 0.50;
-  }
-
-  get aiSimilarProducts() {
-    const res = this.aiResult;
-    if (res && res.similar_products && res.similar_products.length > 0) {
-      return res.similar_products;
-    }
-    return [];
-  }
-
-  get viableAlternatives() {
-    const res = this.aiResult;
-    if (res && res.viable_alternatives && res.viable_alternatives.length > 0) {
-      return res.viable_alternatives;
-    }
     return [];
   }
 }

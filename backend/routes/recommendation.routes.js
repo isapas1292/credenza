@@ -72,7 +72,7 @@ router.post('/analyze', async (req, res) => {
         if (!perfil || !product) {
             return res.status(400).json({ error: 'perfil y product son requeridos' });
         }
-        const result = RecommendationAiService.getRecommendation(perfil, product);
+        const result = await RecommendationAiService.getRecommendation(perfil, product);
         res.json(result);
     } catch (error) {
         console.error('Error en /api/recommendations/analyze:', error.message);

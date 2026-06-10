@@ -24,7 +24,7 @@
         <span class="mini-label accent">Simulación Mensual</span>
         <h3>Tu Dinero en Acción</h3>
       </div>
-      <span [class]="overallCompatibility.class + ' compatibility-badge'">{{ overallCompatibility.score }} Viable</span>
+      <span [class]="overallCompatibility.class + ' compatibility-badge'">{{ overallCompatibility.score }} · {{ overallCompatibility.label }}</span>
     </div>
 
     <p class="compatibility-msg">{{ overallCompatibility.message }}</p>
@@ -76,6 +76,59 @@
     </article>
     
     
+    <!-- Comparación de Tasa (préstamo / vehículo / hipoteca) -->
+    <article class="results-panel rate-analysis-panel" *ngIf="rateAnalysis">
+      <div class="results-head">
+        <div>
+          <span class="mini-label accent">Mercado Dominicano</span>
+          <h3>Comparación de tu Tasa</h3>
+        </div>
+        <span class="ai-badge"
+              [class.badge-danger]="rateAnalysis.verdict === 'alta'"
+              [class.badge-success]="rateAnalysis.verdict === 'baja'"
+              [class.badge-warn]="rateAnalysis.verdict === 'mercado'">
+          Tasa {{ rateAnalysis.verdict }}
+        </span>
+      </div>
+
+      <div class="rate-summary">
+        <div class="rate-stat">
+          <span class="rate-label">Tu tasa</span>
+          <strong>{{ rateAnalysis.user_rate_pct }}%</strong>
+        </div>
+        <div class="rate-stat">
+          <span class="rate-label">Mercado típico RD</span>
+          <strong>~{{ rateAnalysis.market_typical_pct }}%</strong>
+        </div>
+        <div class="rate-stat" *ngIf="rateAnalysis.potential_total_savings > 0">
+          <span class="rate-label">Ahorro potencial</span>
+          <strong class="rate-save">RD${{ rateAnalysis.potential_total_savings | number:'1.0-0' }}</strong>
+        </div>
+      </div>
+
+      <p class="rate-hint" *ngIf="rateAnalysis.verdict === 'alta' && rateAnalysis.better_providers.length > 0">
+        Estás pagando por encima del mercado. Estas entidades dominicanas podrían ofrecerte una mejor tasa:
+      </p>
+      <p class="rate-hint" *ngIf="rateAnalysis.verdict !== 'alta'">
+        Tu tasa está dentro de lo razonable para el mercado dominicano. Aun así, puedes comparar:
+      </p>
+
+      <div class="rate-providers">
+        <article class="rate-provider-card" *ngFor="let p of rateAnalysis.better_providers">
+          <div class="rate-provider-top">
+            <strong>{{ p.name }}</strong>
+            <span class="badge-neutral mini-badge">{{ p.rate_range }}</span>
+          </div>
+          <p class="rate-provider-note">{{ p.note }}</p>
+          <div class="rate-provider-bottom">
+            <span class="metric-chip">💳 ~RD${{ p.est_installment | number:'1.0-0' }}/mes</span>
+            <span class="metric-chip" *ngIf="p.monthly_saving_vs_user > 0">🟢 Ahorras RD${{ p.monthly_saving_vs_user | number:'1.0-0' }}/mes</span>
+          </div>
+        </article>
+      </div>
+      <p class="rate-disclaimer">{{ rateAnalysis.disclaimer }}</p>
+    </article>
+
     <!-- Escenarios -->
     <article class="results-panel">
       <div class="results-head">
@@ -149,68 +202,5 @@
       </div>
     </article>
 
-    <!-- Productos Similares Accesibles (solo si la compra no es viable) -->
-    <article class="results-panel flex-1 similar-products-panel" *ngIf="isIncompatible && aiSimilarProducts.length > 0">
-      <div class="results-head">
-        <div>
-          <span class="mini-label similar-label">Dentro de tu Alcance</span>
-          <h3>Productos Similares Accesibles</h3>
-        </div>
-        <span class="ai-badge similar-badge">
-          <span class="ai-sparkle">🔄</span> IA · Mismo tipo
-        </span>
-      </div>
-
-      <p class="panel-subtitle">Productos del mismo tipo que sí se ajustan a tu presupuesto actual.</p>
-
-      <div class="similar-grid">
-        <article class="similar-card animate-fade-in-up" *ngFor="let item of aiSimilarProducts; let i = index" [style.animation-delay]="i * 0.12 + 's'">
-          <div class="similar-top">
-            <div class="similar-info">
-              <strong>{{ item.name }}</strong>
-              <p class="similar-desc">{{ item.desc }}</p>
-            </div>
-            <span class="badge-neutral price-badge similar-price">{{ item.price }}</span>
-          </div>
-          <div class="similar-bottom">
-            <span class="why-fits-icon">✅</span>
-            <span>{{ item.why_fits }}</span>
-          </div>
-        </article>
-      </div>
-    </article>
-
-    <!-- Alternativas Más Viables (solo si la compra no es viable) -->
-    <article class="results-panel flex-1 viable-alternatives-panel" *ngIf="isIncompatible && viableAlternatives.length > 0">
-      <div class="results-head">
-        <div>
-          <span class="mini-label viable-label">Opciones Inteligentes</span>
-          <h3>Alternativas Más Viables</h3>
-        </div>
-        <span class="ai-badge viable-badge">
-          <span class="ai-sparkle">💡</span> IA · Otra categoría
-        </span>
-      </div>
-
-      <p class="panel-subtitle">Productos de otra categoría que cumplen tu propósito de forma más accesible.</p>
-
-      <div class="viable-grid">
-        <article class="viable-card animate-fade-in-up" *ngFor="let item of viableAlternatives; let i = index" [style.animation-delay]="i * 0.15 + 's'">
-          <div class="viable-top">
-            <div class="viable-info">
-              <strong>{{ item.name }}</strong>
-              <span class="category-chip">{{ item.category }}</span>
-              <p class="viable-desc">{{ item.desc }}</p>
-            </div>
-            <span class="badge-neutral price-badge viable-price">{{ item.price }}</span>
-          </div>
-          <div class="viable-bottom">
-            <span class="why-better-icon">💡</span>
-            <span>{{ item.why_better }}</span>
-          </div>
-        </article>
-      </div>
-    </article>
-    
   </div>
 </section>

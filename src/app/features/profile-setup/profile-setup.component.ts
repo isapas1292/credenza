@@ -86,7 +86,8 @@ export class ProfileSetupComponent implements OnInit {
       variableExpenses: 0,
       activeDebts: 0,
       monthlySavingsCapacity: 0,
-      emergencyFundMonths: 0
+      emergencyFundMonths: 0,
+      liquidSavings: 0
     },
     goals: {
       mainGoal: 'Comprar mejor',

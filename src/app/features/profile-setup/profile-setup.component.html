@@ -129,6 +129,12 @@
             <input [(ngModel)]="model.finances.monthlySavingsCapacity" name="monthlySavingsCapacity" type="number" placeholder="$0.00"/>
           </div>
 
+          <div class="field">
+            <label>Ahorros líquidos disponibles</label>
+            <input [(ngModel)]="model.finances.liquidSavings" name="liquidSavings" type="number" placeholder="$0.00"/>
+            <small class="field-hint">Dinero disponible hoy (cuenta, efectivo) para una compra o emergencia.</small>
+          </div>
+
           <div class="field field-full">
             <label>¿Cuántos meses de fondo de emergencia tienes?</label>
             <input [(ngModel)]="model.finances.emergencyFundMonths" name="emergencyFundMonths" type="number" placeholder="Ej. 3 meses"/>

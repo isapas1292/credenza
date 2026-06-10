@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+import dr_market
+
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -909,50 +911,55 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
         "budget_adherence": budget_adherence
     })
     
-    # 2. Escenario Óptimo — the shortest term where installment < 30% of FCF
-    category = normalize_category(product_data.get("product_category", "technology"))
+    # 2. Escenarios de financiamiento — varios plazos DISTINTOS para comparar,
+    #    cada uno con su cuota real (amortizada) e intereses totales. Antes solo
+    #    se generaban 2 y podían quedar duplicados (ambos a 60 meses).
+    financed = max(price - down_payment, 0)
     opt_term = find_optimal_term(user_dict, price, down_payment, rate, category)
-    opt_installment = monthly_payment(price - down_payment, rate, opt_term)
-    opt_pct = (opt_installment / max(fcf, 1)) * 100
-    
-    if opt_installment > 0:
-        opt_desc = f"Cuota de RD${opt_installment:,.0f}/mes ({opt_pct:.0f}% de tu flujo libre). Plazo calculado para no comprometer más del 35% de tu capacidad mensual."
-    else:
-        opt_desc = "No se encontró un plazo viable con tus condiciones actuales."
-    
-    scenarios.append({
-        "type": "sugerido",
-        "name": f"Financiamiento a {opt_term} meses",
-        "term": opt_term,
-        "installment": opt_installment,
-        "down_payment": down_payment,
-        "description": opt_desc
-    })
-    
-    # 3. Escenario Cuota Mínima — longest reasonable term
+
     if category == "home":
-        long_term = 360
+        candidate_terms = [120, 180, 240, 360]
     elif category == "vehicle":
-        long_term = 84
+        candidate_terms = [24, 36, 48, 60, 72]
+    elif category == "loan":
+        candidate_terms = [12, 24, 36, 48, 60]
     else:
-        long_term = 48 if opt_term < 36 else 60
-        
-    long_installment = monthly_payment(price - down_payment, rate, long_term)
-    long_pct = (long_installment / max(fcf, 1)) * 100
-    total_paid = long_installment * long_term + down_payment
-    total_interest = total_paid - price
-    
-    long_desc = f"Cuota de RD${long_installment:,.0f}/mes ({long_pct:.0f}% de tu flujo libre). Pero pagarías RD${total_interest:,.0f} en intereses totales."
-    
-    scenarios.append({
-        "type": "largo_plazo",
-        "name": f"Financiamiento a {long_term} meses",
-        "term": long_term,
-        "installment": long_installment,
-        "down_payment": down_payment,
-        "description": long_desc
-    })
-    
+        candidate_terms = [6, 12, 18, 24, 36]
+
+    # Mostrar un RANGO real (más corto, intermedio, óptimo y más largo) para que
+    # el usuario compare "cuota alta/menos interés" vs "cuota baja/más interés".
+    mid = candidate_terms[len(candidate_terms) // 2]
+    key_terms = {candidate_terms[0], mid, candidate_terms[-1]}
+    if opt_term:
+        key_terms.add(opt_term)
+    terms = sorted(t for t in key_terms if t and t > 0)[:4]
+
+    for term in terms:
+        installment = monthly_payment(financed, rate, term)
+        if installment <= 0:
+            continue
+        pct = (installment / max(fcf, 1)) * 100
+        total_interest = max(installment * term + down_payment - price, 0)
+        is_opt = (term == opt_term)
+        if is_opt:
+            note = "Plazo equilibrado: cuota manejable sin comprometer más del 35% de tu capacidad."
+        elif term == terms[0]:
+            note = "Plazo corto: cuota más alta, pero pagas menos intereses."
+        elif term == terms[-1]:
+            note = "Plazo largo: la cuota más baja, pero pagas más intereses en total."
+        else:
+            note = "Opción intermedia entre cuota y costo total."
+        scenarios.append({
+            "type": f"fin_{term}",
+            "name": f"Financiamiento a {term} meses",
+            "term": term,
+            "installment": installment,
+            "down_payment": down_payment,
+            "total_interest": round(total_interest, 2),
+            "description": (f"Cuota de RD${installment:,.0f}/mes ({pct:.0f}% de tu flujo libre). "
+                            f"{note} Intereses totales ~RD${total_interest:,.0f}."),
+        })
+
     # ── Evaluate each scenario through the prediction engine ────
     results = []
     for sc in scenarios:
@@ -1109,11 +1116,21 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         user_choice["recommendation_score"] = round(adjusted_score, 4)
 
     else:
-        # Build the user's specific scenario
-        user_installment = price / max(user_term, 1)
+        # Build the user's specific scenario.
+        # La cuota se calcula con la tasa REAL del producto (sistema francés),
+        # no precio/plazo: ignorar el interés subestimaba la carga del usuario.
+        user_down = _num(option_dict.get("down_payment", 0))
+        user_rate_choice = _num(option_dict.get("interest_rate", 0))
+        financed_choice = max(price - user_down, 0)
+        if is_insurance:
+            user_installment = price  # la "prima" mensual es el precio declarado
+        elif user_rate_choice > 0:
+            user_installment = monthly_payment(financed_choice, user_rate_choice, user_term)
+        else:
+            user_installment = financed_choice / max(user_term, 1)
         temp_prod = option_dict.copy()
         temp_prod["estimated_installment_monthly"] = user_installment
-        temp_prod["down_payment"] = 0
+        temp_prod["down_payment"] = user_down
         temp_prod["term_months"] = user_term
 
         user_choice = predict_recommendation_base(user_dict, temp_prod, artifacts, option_dict)
@@ -1255,6 +1272,28 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         "segment_name": segment_name
     }
 
+    # ── Comparación de tasa contra el mercado dominicano ───────────
+    # Para productos financiados con tasa de interés (préstamo, vehículo,
+    # hipoteca): detecta si el usuario paga de más y propone entidades RD
+    # con tasas referenciales más bajas, calculando el ahorro real.
+    rate_category = {"loan": "loan", "vehicle": "vehicle", "home": "home"}.get(category)
+    user_rate = _num(option_dict.get("interest_rate", 0))
+    if rate_category and chosen_method != "contado" and user_rate > 0:
+        down = _num(option_dict.get("down_payment", 0))
+        financed = max(price - down, 0) or price
+        rate_term = user_term if user_term and user_term > 1 else 36
+        rate_analysis = dr_market.compare_loan_rate(rate_category, user_rate, financed, rate_term)
+        if rate_analysis:
+            result["rate_analysis"] = rate_analysis
+            # Si la tasa está alta, reforzamos el texto de sugerencia con el dato.
+            if rate_analysis["verdict"] == "alta" and rate_analysis["potential_monthly_savings"] > 0:
+                result["suggestion_text"] += (
+                    f" Tu tasa de {rate_analysis['user_rate_pct']:.0f}% está por encima del mercado dominicano "
+                    f"(típica ~{rate_analysis['market_typical_pct']:.0f}%). Negociando o cambiando de entidad podrías "
+                    f"bajar la cuota hasta ~RD${rate_analysis['best_reference_installment']:,.0f}/mes y ahorrar cerca de "
+                    f"RD${rate_analysis['potential_total_savings']:,.0f} en intereses durante el plazo."
+                )
+
     # Mostrar productos similares y alternativas de otra categoría cuando la
     # compra NO es viable. Se usa el mismo veredicto de viabilidad para que
     # nunca aparezcan alternativas "de rescate" en una compra aprobada.
@@ -1278,6 +1317,33 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
     )
     
     category = normalize_category(product_data.get("product_category", "technology"))
+
+    # ── Caso especial: PRÉSTAMO → opciones de financiamiento reales en RD ──
+    # No tiene sentido un "préstamo premium": lo valioso es comparar entidades
+    # y tasas. Mostramos instituciones dominicanas con tasa referencial más baja.
+    if category == "loan":
+        user_rate = _num(product_data.get("interest_rate", 0))
+        term = _int(product_data.get("term_months", 36), 36) or 36
+        financed = max(price - _num(product_data.get("down_payment", 0)), 0) or price
+        alts = []
+        providers = dr_market.LOAN_PROVIDERS.get("loan", [])
+        # Si el usuario tiene tasa, priorizar las entidades más baratas que la suya
+        ranked = sorted(providers, key=lambda p: (p["rate"][0] + p["rate"][1]) / 2)
+        for p in ranked[:3]:
+            lo, hi = p["rate"]
+            est = monthly_payment(financed, (lo + hi) / 2, term)
+            saving = ""
+            if user_rate > 0:
+                user_inst = monthly_payment(financed, user_rate, term)
+                if user_inst - est > 50:
+                    saving = f" Ahorrarías ~RD${(user_inst - est) * term:,.0f} en el plazo frente a tu tasa de {user_rate*100:.0f}%."
+            alts.append({
+                "name": f"{p['name']} ({p['type']})",
+                "price": f"Tasa ref. {lo*100:.0f}%–{hi*100:.0f}% anual",
+                "desc": f"Cuota estimada ~RD${est:,.0f}/mes a {term} meses. {p['note']}{saving}",
+                "payment": f"Financiamiento a {term} meses",
+            })
+        return alts
 
     # ── Caso especial: SEGURO → niveles de prima mensual, no financiamiento ──
     if category == "insurance":
