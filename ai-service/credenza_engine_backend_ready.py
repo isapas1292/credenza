@@ -1053,6 +1053,16 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     if is_insurance:
         chosen_method = "cuotas"
 
+    def _pct_phrase(pct: float) -> str:
+        """Evita mostrar porcentajes absurdos (p. ej. 5857%) cuando la cuota
+        supera con creces el flujo libre; usa fraseo cualitativo."""
+        if pct > 100:
+            veces = pct / 100.0
+            if veces >= 2:
+                return f"más de {veces:.0f} veces tu flujo libre disponible"
+            return "más del 100% de tu flujo libre disponible"
+        return f"el {pct:.0f}% de tu flujo libre"
+
     # ── Analyze what the USER specifically chose ───────────────
     if chosen_method == "contado":
         user_choice = next((s for s in all_scenarios if s["scenario_details"]["type"] == "contado"), all_scenarios[0])
@@ -1114,7 +1124,7 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
                            f"por lo que asumir esta prima fija no es sostenible ahora.")
             else:
                 user_pct = (user_installment / fcf_current) * 100
-                sc_desc = f"Prima de RD${user_installment:,.0f}/mes, equivalente al {user_pct:.0f}% de tu flujo libre actual."
+                sc_desc = f"Prima de RD${user_installment:,.0f}/mes, equivalente a {_pct_phrase(user_pct)} actual."
         else:
             sc_name = f"Tu elección: {payment_type} a {user_term} meses"
             if in_deficit:
@@ -1122,8 +1132,8 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
                            f"de lo que ingresas, así que esta cuota agravaría tu déficit.")
             else:
                 user_pct = (user_installment / fcf_current) * 100
-                sc_desc = (f"Tu plan: cuota de RD${user_installment:,.0f}/mes, que representaría el {user_pct:.0f}% "
-                           f"de tu flujo libre actual.")
+                sc_desc = (f"Tu plan: cuota de RD${user_installment:,.0f}/mes, que representaría "
+                           f"{_pct_phrase(user_pct)} actual.")
         user_choice["scenario_details"] = {
             "type": "usuario",
             "name": sc_name,
@@ -1152,7 +1162,12 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
 
         if liquid >= price * 1.5:
-            suggestion_parts.append(f"Pagar al contado es una buena opción en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}, por lo que te quedaría una reserva sólida.")
+            if user_score < 0.5:
+                # Tiene liquidez de sobra, pero su perfil general es delicado:
+                # el contado es preferible a financiar para no sumar deuda nueva.
+                suggestion_parts.append(f"Dado tu nivel de endeudamiento, pagar al contado es preferible a financiar, porque evitas sumar una nueva deuda. Tienes RD${liquid:,.0f} en ahorros frente a un precio de RD${price:,.0f}, así que conservarías reserva.")
+            else:
+                suggestion_parts.append(f"Pagar al contado es una buena opción en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}, por lo que te quedaría una reserva sólida.")
         elif liquid >= price:
             remaining = liquid - price
             essential_exp = user_dict.get("essential_expenses_monthly", 5000)
@@ -1192,9 +1207,9 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
             # El tono lo decide el SCORE final, no solo el % de la cuota, para
             # que el mensaje sea coherente con el veredicto de viabilidad.
             if user_score < 0.45 or user_pct > 60:
-                suggestion_parts.append(f"{concepto} {monto}consumiría el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es una carga demasiado alta para tu presupuesto.".replace("  ", " "))
+                suggestion_parts.append(f"{concepto} {monto}consumiría {_pct_phrase(user_pct)} (RD${fcf_current:,.0f}). Es una carga demasiado alta para tu presupuesto.".replace("  ", " "))
             elif user_score < 0.65 or user_pct > 35:
-                suggestion_parts.append(f"{concepto} {monto}representa el {user_pct:.0f}% de tu flujo libre. Es ajustado; procede con cautela y cuida tus gastos variables.".replace("  ", " "))
+                suggestion_parts.append(f"{concepto} {monto}representa {_pct_phrase(user_pct)}. Es ajustado; procede con cautela y cuida tus gastos variables.".replace("  ", " "))
             else:
                 suggestion_parts.append(f"{concepto} {monto}es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).".replace("  ", " "))
 

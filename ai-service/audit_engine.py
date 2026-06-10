@@ -223,9 +223,16 @@ def check_invariants(res, product):
     if (not has_similar) and (not viable):
         issues.append(("no_similar_when_not_viable", f"score={score}, viable={viable}"))
 
-    # 7. Texto dice "cómoda/cómodo" pero score bajo
+    # 7. Texto con VEREDICTO afirmativo pero score bajo (no confundir con
+    #    consejos comparativos como "financiar podría ser más cómodo").
     low = text.lower()
-    if ("cómoda" in low or "cómodo" in low or "se alinea bien" in low or "excelente en tu caso" in low) and score < 0.5:
+    positive_verdicts = [
+        "es cómoda para tu presupuesto",
+        "es cómodo para tu presupuesto",
+        "se alinea bien con tu capacidad",
+        "buena opción en tu caso",
+    ]
+    if any(p in low for p in positive_verdicts) and score < 0.5:
         issues.append(("text_positive_but_low_score", f"score={score} :: {text[:120]}"))
 
     # 8. Porcentaje negativo en texto (flujo libre negativo mal manejado)
