@@ -243,6 +243,17 @@ def primary_reason_from_row(row: Dict[str, Any]) -> str:
 def viable_from_risk_band(band: int) -> bool:
     return band >= 2
 
+def band_from_score(score: float) -> int:
+    """Deriva la banda de riesgo a partir del score final unificado.
+    Mantiene coherencia total entre el % mostrado, la viabilidad y los textos."""
+    if score < 0.25:
+        return 0  # No recomendable
+    if score < 0.45:
+        return 1  # Riesgo alto
+    if score < 0.65:
+        return 2  # Viable con ajustes
+    return 3      # Viable saludable
+
 def label_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["label_risk_band"] = df.apply(risk_band_from_row, axis=1)
     df["label_viable"] = df["label_risk_band"].apply(viable_from_risk_band)
@@ -785,7 +796,42 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
     budget_adherence = user_dict.get("budget_adherence_score", 0.65)
     savings_capacity = user_dict.get("monthly_savings_capacity", 0)
     essential = user_dict.get("essential_expenses_monthly", 5000)
-    
+    category = normalize_category(product_data.get("product_category", "technology"))
+
+    # ── Caso especial: SEGURO ──────────────────────────────────
+    # Un seguro es una prima mensual recurrente, no un bien que se financia
+    # a plazos ni que se paga "al contado". Solo existe un escenario: la prima.
+    if category == "insurance":
+        premium = price  # el "precio" del seguro es la prima mensual
+        pct = (premium / max(fcf, 1)) * 100 if fcf > 0 else None
+        if fcf <= 0:
+            ins_desc = (f"Prima mensual de RD${premium:,.0f}. Actualmente tus gastos igualan o superan "
+                        f"tus ingresos, por lo que asumir una prima fija adicional no es sostenible ahora.")
+        elif pct > 60:
+            ins_desc = (f"Prima mensual de RD${premium:,.0f} ({pct:.0f}% de tu flujo libre). Es una carga alta "
+                        f"para tu presupuesto actual.")
+        elif pct > 35:
+            ins_desc = (f"Prima mensual de RD${premium:,.0f} ({pct:.0f}% de tu flujo libre). Ajustada pero "
+                        f"manejable si controlas tus gastos variables.")
+        else:
+            ins_desc = (f"Prima mensual de RD${premium:,.0f} ({pct:.0f}% de tu flujo libre). Cómoda y "
+                        f"sostenible para tu presupuesto.")
+        ins_scenario = {
+            "type": "seguro",
+            "name": "Prima mensual",
+            "term": 1,
+            "installment": round(premium, 2),
+            "down_payment": 0,
+            "description": ins_desc,
+        }
+        temp_prod = product_data.copy()
+        temp_prod["estimated_installment_monthly"] = premium
+        temp_prod["down_payment"] = 0
+        temp_prod["term_months"] = 1
+        res = predict_recommendation_base(user_dict, temp_prod, artifacts, product_data)
+        res["scenario_details"] = ins_scenario
+        return [res]
+
     # 1. Escenario Contado — realistically evaluated
     # Calculate how many months user needs to save to afford it
     # Use declared savings capacity if available, otherwise estimate from FCF
@@ -981,7 +1027,17 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     
     # ── Find the best scenario by score ────────────────────────
     best_overall = max(all_scenarios, key=lambda x: x["recommendation_score"])
-    
+
+    category = normalize_category(option_dict.get("product_category", "technology"))
+    is_insurance = category == "insurance"
+    # Déficit real: el usuario ya gasta igual o más de lo que ingresa.
+    in_deficit = fcf_current <= 0
+    deficit_amount = abs(fcf_current)
+
+    # Seguro: el flujo no contempla "contado", siempre es prima mensual.
+    if is_insurance:
+        chosen_method = "cuotas"
+
     # ── Analyze what the USER specifically chose ───────────────
     if chosen_method == "contado":
         user_choice = next((s for s in all_scenarios if s["scenario_details"]["type"] == "contado"), all_scenarios[0])
@@ -994,55 +1050,39 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         
         liquidity_impact = contado_details.get("liquidity_impact", price / max(liquid, 1))
         emergency_after = contado_details.get("emergency_after", 0)
-        months_needed = contado_details.get("months_to_save", 0)
-        
+
         contado_penalty = 0.0
-        
+
         if liquid < price:
             # User doesn't have the money — penalize based on save time and discipline
             effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
-            actual_months = price / max(effective_savings, 1)
-            discipline_factor = 1.0 / max(budget_adherence, 0.3)
-            adjusted_months = actual_months * discipline_factor
-            
-            if adjusted_months > 24:
-                contado_penalty = 0.40  # Essentially not viable as contado
-            elif adjusted_months > 12:
-                contado_penalty = 0.25
-            elif adjusted_months > 6:
-                contado_penalty = 0.15
-            
-            # Extra penalty for low discipline
-            if budget_adherence < 0.5:
-                contado_penalty += 0.10  # People who don't track expenses will fail at saving
+            if effective_savings <= 0:
+                # Sin flujo libre no hay forma de ahorrar: contado inviable
+                contado_penalty = 0.45
+            else:
+                adjusted_months = (price / effective_savings) * (1.0 / max(budget_adherence, 0.3))
+                if adjusted_months > 24:
+                    contado_penalty = 0.40  # Essentially not viable as contado
+                elif adjusted_months > 12:
+                    contado_penalty = 0.25
+                elif adjusted_months > 6:
+                    contado_penalty = 0.15
+                # Extra penalty for low discipline
+                if budget_adherence < 0.5:
+                    contado_penalty += 0.10  # People who don't track expenses will fail at saving
         else:
             # User HAS the money, but evaluate descapitalization risk
             if liquidity_impact > 0.85:
                 contado_penalty = 0.20  # Nearly all savings gone
             elif liquidity_impact > 0.70:
                 contado_penalty = 0.10
-            
+
             if emergency_after < 1:
                 contado_penalty += 0.10  # Less than 1 month emergency after
-        
+
         adjusted_score = max(raw_score - contado_penalty, 0.05)
         user_choice["recommendation_score"] = round(adjusted_score, 4)
-        
-        # Recalculate risk band based on adjusted score
-        if adjusted_score < 0.25:
-            user_choice["risk_band"] = 0
-            user_choice["risk_band_name"] = RISK_BAND_NAMES[0]
-            user_choice["viable"] = False
-        elif adjusted_score < 0.45:
-            user_choice["risk_band"] = 1
-            user_choice["risk_band_name"] = RISK_BAND_NAMES[1]
-            user_choice["viable"] = False
-        elif adjusted_score < 0.65:
-            user_choice["risk_band"] = 2
-            user_choice["risk_band_name"] = RISK_BAND_NAMES[2]
-            user_choice["viable"] = True
-        # else: keep original band (viable saludable)
-        
+
     else:
         # Build the user's specific scenario
         user_installment = price / max(user_term, 1)
@@ -1050,20 +1090,43 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         temp_prod["estimated_installment_monthly"] = user_installment
         temp_prod["down_payment"] = 0
         temp_prod["term_months"] = user_term
-        
+
         user_choice = predict_recommendation_base(user_dict, temp_prod, artifacts, option_dict)
-        user_pct = (user_installment / max(fcf_current, 1)) * 100
+        if is_insurance:
+            sc_name = "Prima mensual"
+            if in_deficit:
+                sc_desc = (f"Prima de RD${user_installment:,.0f}/mes. Tu presupuesto ya está en déficit, "
+                           f"por lo que asumir esta prima fija no es sostenible ahora.")
+            else:
+                user_pct = (user_installment / fcf_current) * 100
+                sc_desc = f"Prima de RD${user_installment:,.0f}/mes, equivalente al {user_pct:.0f}% de tu flujo libre actual."
+        else:
+            sc_name = f"Tu elección: {payment_type} a {user_term} meses"
+            if in_deficit:
+                sc_desc = (f"Tu plan: cuota de RD${user_installment:,.0f}/mes. Hoy gastas RD${deficit_amount:,.0f} más "
+                           f"de lo que ingresas, así que esta cuota agravaría tu déficit.")
+            else:
+                user_pct = (user_installment / fcf_current) * 100
+                sc_desc = (f"Tu plan: cuota de RD${user_installment:,.0f}/mes, que representaría el {user_pct:.0f}% "
+                           f"de tu flujo libre actual.")
         user_choice["scenario_details"] = {
             "type": "usuario",
-            "name": f"Tu elección: {payment_type} a {user_term} meses",
+            "name": sc_name,
             "term": user_term,
             "installment": round(user_installment, 2),
             "down_payment": 0,
-            "description": f"Tu plan: cuota de RD${user_installment:,.0f}/mes, que representaría el {user_pct:.0f}% de tu flujo libre actual."
+            "description": sc_desc,
         }
 
+    # ── Unificar banda de riesgo y viabilidad con el score final ──
+    # Coherencia total entre el % mostrado, el veredicto de viabilidad
+    # y el texto de la sugerencia, para TODOS los métodos de pago.
     segment_name = user_choice.get("segment_name", "")
     user_score = user_choice["recommendation_score"]
+    final_band = band_from_score(user_score)
+    user_choice["risk_band"] = final_band
+    user_choice["risk_band_name"] = RISK_BAND_NAMES[final_band]
+    user_choice["viable"] = viable_from_risk_band(final_band)
     best_score = best_overall["recommendation_score"]
     
     # ── Build a GENUINE suggestion_text ────────────────────────
@@ -1072,49 +1135,54 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     # 1. Evaluate the user's chosen method
     if chosen_method == "contado":
         effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
-        
+
         if liquid >= price * 1.5:
-            suggestion_parts.append(f"Pagar al contado es excelente en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}. Te quedaría suficiente reserva.")
+            suggestion_parts.append(f"Pagar al contado es una buena opción en tu caso: tienes RD${liquid:,.0f} en ahorros y el producto cuesta RD${price:,.0f}, por lo que te quedaría una reserva sólida.")
         elif liquid >= price:
             remaining = liquid - price
             essential_exp = user_dict.get("essential_expenses_monthly", 5000)
             months_covered = remaining / max(essential_exp, 1)
-            
+
             if months_covered < 2:
                 suggestion_parts.append(f"Puedes pagar al contado, pero te quedarían solo RD${remaining:,.0f} de reserva ({months_covered:.1f} meses de gastos esenciales). Esto es arriesgado — cualquier imprevisto te dejaría sin respaldo. Considera financiar al menos una parte.")
             else:
                 suggestion_parts.append(f"Puedes pagar al contado. Te quedarían RD${remaining:,.0f} de reserva ({months_covered:.1f} meses de gastos esenciales). Viable si no esperas imprevistos grandes.")
+        elif in_deficit or effective_savings <= 0:
+            # No hay flujo libre para ahorrar: pagar al contado no es factible
+            suggestion_parts.append(f"No es viable pagar al contado: tus ahorros (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}) y actualmente no te queda flujo libre para ahorrar. Primero necesitas equilibrar tu presupuesto reduciendo gastos o aumentando ingresos.")
         else:
-            # User doesn't have enough savings
-            discipline_factor = 1.0 / max(budget_adherence, 0.3)
-            months_needed = (price / max(effective_savings, 1)) * discipline_factor
-            
-            if budget_adherence < 0.5:
-                suggestion_parts.append(f"No es recomendable pagar al contado. Tus ahorros (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}), y basándonos en tu perfil de control de gastos, necesitarías {months_needed:.0f} meses ahorrando RD${effective_savings:,.0f}/mes. El financiamiento en cuotas fijas te da más estructura y disciplina.")
+            # User doesn't have enough savings but has some saving capacity
+            months_needed = (price / effective_savings) * (1.0 / max(budget_adherence, 0.3))
+
+            if months_needed > 60:
+                suggestion_parts.append(f"Pagar al contado no es realista: con tu capacidad de ahorro actual (RD${effective_savings:,.0f}/mes) tardarías más de 5 años en juntar el monto. El financiamiento es una opción mucho más práctica.")
+            elif budget_adherence < 0.5:
+                suggestion_parts.append(f"No es recomendable pagar al contado. Tus ahorros (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}), y por tu perfil de control de gastos necesitarías ~{months_needed:.0f} meses ahorrando RD${effective_savings:,.0f}/mes. El financiamiento en cuotas fijas te da más estructura y disciplina.")
             elif months_needed > 12:
                 suggestion_parts.append(f"No cuentas con liquidez suficiente para pagar al contado. Necesitarías ~{months_needed:.0f} meses ({months_needed/12:.1f} años) ahorrando RD${effective_savings:,.0f}/mes. Financiar sería mucho más práctico.")
             else:
                 suggestion_parts.append(f"Tus ahorros actuales (RD${liquid:,.0f}) no cubren el precio (RD${price:,.0f}). Necesitarías ~{months_needed:.0f} meses ahorrando. Es factible si mantienes disciplina, pero financiar podría ser más cómodo.")
     else:
         user_installment = user_choice["scenario_details"].get("installment", 0)
-        user_pct = (user_installment / max(fcf_current, 1)) * 100
-        category = normalize_category(option_dict.get("product_category", "technology"))
-        
-        if category == "insurance":
-            if user_pct > 60:
-                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
-            elif user_pct > 35:
-                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+
+        if in_deficit:
+            if is_insurance:
+                suggestion_parts.append(f"La prima mensual de RD${user_installment:,.0f} no es sostenible: hoy gastas RD${deficit_amount:,.0f} más de lo que ingresas cada mes. Primero equilibra tu presupuesto.")
             else:
-                suggestion_parts.append(f"El pago mensual de RD${user_installment:,.0f} es cómodo para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
+                suggestion_parts.append(f"Esta cuota de RD${user_installment:,.0f}/mes no es viable: tu presupuesto ya está en déficit de RD${deficit_amount:,.0f}/mes (gastas más de lo que ingresas). Antes de cualquier compra necesitas equilibrar tus finanzas.")
         else:
-            if user_pct > 60:
-                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses consume el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es demasiado alto.")
-            elif user_pct > 35:
-                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes es el {user_pct:.0f}% de tu flujo libre. Es ajustado pero posible si controlas tus gastos variables.")
+            user_pct = (user_installment / fcf_current) * 100
+            concepto = "La prima mensual" if is_insurance else f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses"
+            monto = f"de RD${user_installment:,.0f} " if is_insurance else ""
+            # El tono lo decide el SCORE final, no solo el % de la cuota, para
+            # que el mensaje sea coherente con el veredicto de viabilidad.
+            if user_score < 0.45 or user_pct > 60:
+                suggestion_parts.append(f"{concepto} {monto}consumiría el {user_pct:.0f}% de tu flujo libre (RD${fcf_current:,.0f}). Es una carga demasiado alta para tu presupuesto.".replace("  ", " "))
+            elif user_score < 0.65 or user_pct > 35:
+                suggestion_parts.append(f"{concepto} {monto}representa el {user_pct:.0f}% de tu flujo libre. Es ajustado; procede con cautela y cuida tus gastos variables.".replace("  ", " "))
             else:
-                suggestion_parts.append(f"La cuota de RD${user_installment:,.0f}/mes a {user_term} meses es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).")
-    
+                suggestion_parts.append(f"{concepto} {monto}es cómoda para tu presupuesto ({user_pct:.0f}% de tu flujo libre).".replace("  ", " "))
+
     # 2. Compare with the best option if different
     if user_score < best_score - 0.08:
         best_sc = best_overall["scenario_details"]
@@ -1124,7 +1192,7 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
             if contado_sc.get("liquidity_impact", 1) < 0.6:
                 suggestion_parts.append(f"Sin embargo, la mejor opción para ti sería pagar al contado para evitar intereses.")
             # Don't recommend contado if liquidity impact is high
-        else:
+        elif best_sc.get("installment", 0) > 0:
             best_inst = best_sc.get("installment", 0)
             suggestion_parts.append(f"Te recomendamos considerar {best_sc['name']} (cuota de RD${best_inst:,.0f}/mes) que se adapta mejor a tu perfil financiero.")
     elif user_score >= 0.65:
@@ -1137,10 +1205,11 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         elif "ajustado" in segment_name.lower():
             suggestion_parts.append("Tu presupuesto es ajustado. Procede solo si la compra es una necesidad.")
     
-    # 4. Discipline warning for users with low budget adherence
-    if budget_adherence < 0.5 and chosen_method != "contado" and user_score < 0.65:
+    # 4. Discipline warning for users with low budget adherence (solo en la
+    #    zona "viable con ajustes": si no es viable ya se le dijo lo importante)
+    if budget_adherence < 0.5 and chosen_method != "contado" and not is_insurance and 0.45 <= user_score < 0.65:
         suggestion_parts.append("Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.")
-    
+
     suggestion_text = " ".join(suggestion_parts)
 
     # ── Alternatives ───────────────────────────────────────────
@@ -1156,7 +1225,10 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
         "segment_name": segment_name
     }
 
-    if user_score < 0.50:
+    # Mostrar productos similares y alternativas de otra categoría cuando la
+    # compra NO es viable. Se usa el mismo veredicto de viabilidad para que
+    # nunca aparezcan alternativas "de rescate" en una compra aprobada.
+    if not user_choice["viable"]:
         result["similar_products"] = generate_similar_products_fallback(user_dict, option_dict)
         result["viable_alternatives"] = generate_viable_alternatives_fallback(option_dict, user_dict)
 
