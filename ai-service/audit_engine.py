@@ -216,12 +216,12 @@ def check_invariants(res, product):
     if (not viable) and score >= 0.65:
         issues.append(("not_viable_but_high_score", f"score={score}"))
 
-    # 6. similar_products debe existir solo si score<0.5
+    # 6. similar_products debe existir si y solo si la compra NO es viable
     has_similar = "similar_products" in res
-    if has_similar and score >= 0.50:
-        issues.append(("similar_when_viable", f"score={score}"))
-    if (not has_similar) and score < 0.50:
-        issues.append(("no_similar_when_not_viable", f"score={score}"))
+    if has_similar and viable:
+        issues.append(("similar_when_viable", f"score={score}, viable={viable}"))
+    if (not has_similar) and (not viable):
+        issues.append(("no_similar_when_not_viable", f"score={score}, viable={viable}"))
 
     # 7. Texto dice "cómoda/cómodo" pero score bajo
     low = text.lower()
@@ -273,9 +273,9 @@ def check_invariants(res, product):
     if not text.strip():
         issues.append(("empty_suggestion", "texto vacío"))
 
-    # 15. viable_alternatives presente solo si score<0.5
-    if "viable_alternatives" in res and score >= 0.5:
-        issues.append(("viable_alts_when_ok", f"score={score}"))
+    # 15. viable_alternatives presente solo si la compra NO es viable
+    if "viable_alternatives" in res and viable:
+        issues.append(("viable_alts_when_ok", f"score={score}, viable={viable}"))
 
     return issues
 

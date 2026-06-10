@@ -631,8 +631,18 @@ def build_explanation_details(feat: Dict[str, Any], segment_name: str = "", prod
         action_plan.append("Busca opciones con un pago inicial menor (10-20%) para conservar tu liquidez como colchón de seguridad.")
 
     # ── Segment-specific advice ────────────────────────────────
+    # Solo se añade el consejo cautelar del segmento si ESTA compra no es
+    # claramente sana; de lo contrario contradiría un veredicto favorable.
+    purchase_is_healthy = (
+        fcf_post >= income * 0.10
+        and (is_insurance or dti_post <= 0.40)
+        and em_months >= 2
+    )
     seg = segment_name.lower()
-    if "sobreendeudado" in seg:
+    if purchase_is_healthy:
+        if ("variable" in seg or "incertidumbre" in seg):
+            action_plan.append("Como tus ingresos son variables, mantén una reserva extra para cubrir el compromiso en meses de bajos ingresos.")
+    elif "sobreendeudado" in seg:
         action_plan.insert(0, "Tu perfil indica sobreendeudamiento. Lo más inteligente es saldar deudas existentes antes de asumir una nueva obligación financiera.")
     elif "ajustado" in seg:
         if not any("fondo de emergencia" in a for a in action_plan):
@@ -653,9 +663,14 @@ def build_explanation_details(feat: Dict[str, Any], segment_name: str = "", prod
     # ── Good scenario ──────────────────────────────────────────
     if not details:
         details.append(f"La compra es financieramente sostenible. Te quedarían RD${fcf_post:,.0f}/mes de flujo libre y tu endeudamiento se mantendría en {dti_post*100:.0f}%.")
-        if not action_plan:
-            action_plan.append("Estás en buena posición. Procede con la compra manteniendo tu disciplina de ahorro.")
-    
+
+    # ── Garantizar siempre al menos un paso de acción coherente ──
+    if not action_plan:
+        if fcf_post >= income * 0.10 and dti_post <= 0.40 and em_months >= 3:
+            action_plan.append("Estás en buena posición. Procede con la compra manteniendo tu disciplina de ahorro y tu fondo de emergencia.")
+        else:
+            action_plan.append("Antes de comprometerte, separa al menos un 10% de tu ingreso para reforzar tu fondo de emergencia y revisa que la cuota no supere el 35% de tu flujo libre.")
+
     return details, action_plan
 
 def build_explanation(risk_band, reason, feat, segment_name="", product_data=None):
@@ -1247,16 +1262,43 @@ def generate_alternatives(user_dict: dict, product_data: dict) -> List[dict]:
         - user_dict.get("current_debt_payment_monthly", 0)
     )
     
-    # Calculate what the user can actually afford at 30% of FCF over 12 months
-    max_affordable_monthly = fcf * 0.30
-    max_affordable_price = max_affordable_monthly * 12
+    category = normalize_category(product_data.get("product_category", "technology"))
 
-    eco_price = min(price * 0.60, max_affordable_price)
+    # ── Caso especial: SEGURO → niveles de prima mensual, no financiamiento ──
+    if category == "insurance":
+        return [
+            {
+                "name": "Cobertura Básica",
+                "price": f"RD${price * 0.60:,.0f}/mes aprox",
+                "desc": "Cubre lo esencial con una prima más baja. Ideal si el presupuesto es ajustado.",
+                "payment": "Pago mensual continuo",
+            },
+            {
+                "name": "Cobertura Intermedia (Mejor Valor)",
+                "price": f"RD${price:,.0f}/mes aprox",
+                "desc": "Balance entre cobertura y costo, con deducibles razonables.",
+                "payment": "Pago mensual continuo",
+            },
+            {
+                "name": "Cobertura Amplia / Premium",
+                "price": f"RD${price * 1.40:,.0f}/mes aprox",
+                "desc": "Mayor cobertura y menores deducibles, con una prima mensual más alta.",
+                "payment": "Pago mensual continuo",
+            },
+        ]
+
+    # Calculate what the user can actually afford at 30% of FCF over 12 months
+    max_affordable_price = max(fcf * 0.30, 0) * 12
+    # eco_price siempre positivo y por debajo del precio original; si la
+    # capacidad es muy baja igual mostramos una opción claramente más barata.
+    if max_affordable_price >= price * 0.40:
+        eco_price = min(price * 0.60, max_affordable_price)
+    else:
+        eco_price = price * 0.50
+    eco_price = max(eco_price, price * 0.30)
     smart_price = price * 0.80
     premium_price = price * 1.20
-    
-    category = normalize_category(product_data.get("product_category", "technology"))
-    
+
     if category == "home":
         eco_term = 240
         smart_term = 360
