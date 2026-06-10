@@ -175,9 +175,24 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["current_debt_payment_monthly", "monthly_income_avg", "fixed_expenses_monthly", 
                 "variable_expenses_monthly_avg", "emergency_fund_amount", "essential_expenses_monthly",
                 "estimated_installment_monthly", "down_payment", "liquid_savings",
-                "maintenance_cost_monthly", "insurance_cost_monthly"]:
+                "maintenance_cost_monthly", "insurance_cost_monthly", "product_price"]:
         if col not in df.columns:
             df[col] = 0.0
+            
+    if "product_category" not in df.columns:
+        df["product_category"] = "technology"
+
+    # Estimar costos ocultos si no se proporcionaron
+    is_vehicle = df["product_category"].str.lower() == "vehicle"
+    is_home = df["product_category"].str.lower() == "home"
+    is_insurance = df["product_category"].str.lower() == "insurance"
+
+    # Vehículo: ~0.5% mant, ~0.5% seguro mensual si no viene del usuario
+    df.loc[is_vehicle & (df["maintenance_cost_monthly"] == 0), "maintenance_cost_monthly"] = df["product_price"] * 0.005
+    df.loc[is_vehicle & (df["insurance_cost_monthly"] == 0), "insurance_cost_monthly"] = df["product_price"] * 0.005
+    
+    # Hogar: ~0.1% mant
+    df.loc[is_home & (df["maintenance_cost_monthly"] == 0), "maintenance_cost_monthly"] = df["product_price"] * 0.001
 
     # Features actuales
     df["dti_current"] = df["current_debt_payment_monthly"] / df["monthly_income_avg"].replace(0, EPS)
@@ -185,7 +200,13 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     df["emergency_months"] = df["emergency_fund_amount"] / df["essential_expenses_monthly"].replace(0, EPS)
     
     # Features post-compra
-    df["dti_post"] = (df["current_debt_payment_monthly"] + df["estimated_installment_monthly"]) / df["monthly_income_avg"].replace(0, EPS)
+    # El seguro no suma al DTI porque es un gasto mensual fijo, no una deuda
+    df["dti_post"] = np.where(
+        is_insurance,
+        df["current_debt_payment_monthly"] / df["monthly_income_avg"].replace(0, EPS),
+        (df["current_debt_payment_monthly"] + df["estimated_installment_monthly"]) / df["monthly_income_avg"].replace(0, EPS)
+    )
+    
     df["free_cash_flow_post"] = df["free_cash_flow_current"] - df["estimated_installment_monthly"] - df["maintenance_cost_monthly"] - df["insurance_cost_monthly"]
     
     df["upfront_burden"] = df["down_payment"] / df["liquid_savings"].replace(0, EPS)
@@ -445,7 +466,7 @@ def predict_viability(df: pd.DataFrame, class_arts: dict) -> Tuple[List[int], Li
     preds = (probs >= 0.5).astype(int)
     return preds.tolist(), probs.tolist()
 
-def compute_recommendation_score(viability_prob, engineered_record, preference_match=0.8):
+def compute_recommendation_score(viability_prob, engineered_record, category="technology", preference_match=0.8):
     """
     Score governed by financial reality. The ML probability adjusts within
     bands set by hard financial fundamentals — it can never override them.
@@ -461,18 +482,48 @@ def compute_recommendation_score(viability_prob, engineered_record, preference_m
     # These are non-negotiable ceilings based on financial fundamentals.
     if free_post < 0:
         hard_cap = 0.15  # Negative cash flow = not viable
-    elif dti_post > 0.60:
-        hard_cap = 0.25  # Severe over-indebtedness
-    elif dti_post > 0.50:
-        hard_cap = 0.40  # Dangerous debt level
-    elif dti_post > 0.40:
-        hard_cap = 0.60  # Tight but manageable
-    elif stress > 0.80:
-        hard_cap = 0.55  # New payment eats most free cash
-    elif months < 1 and free_post < income * 0.15:
-        hard_cap = 0.50  # No safety net and tight
+    elif category == "home":
+        # Las hipotecas toleran un mayor DTI
+        if dti_post > 0.65:
+            hard_cap = 0.25
+        elif dti_post > 0.55:
+            hard_cap = 0.40
+        elif dti_post > 0.45:
+            hard_cap = 0.60
+        elif stress > 0.85:
+            hard_cap = 0.55
+        elif months < 1 and free_post < income * 0.10:
+            hard_cap = 0.50
+        else:
+            hard_cap = 1.0
+    elif category in ["technology", "laptop", "travel"]:
+        # Bienes de consumo/experiencias son más riesgosos si se financian
+        if dti_post > 0.50:
+            hard_cap = 0.25
+        elif dti_post > 0.40:
+            hard_cap = 0.40
+        elif dti_post > 0.35:
+            hard_cap = 0.60
+        elif stress > 0.70:
+            hard_cap = 0.55
+        elif months < 1 and free_post < income * 0.15:
+            hard_cap = 0.50
+        else:
+            hard_cap = 1.0
     else:
-        hard_cap = 1.0   # No hard cap — user is in good shape
+        # Default (vehicle, loan, insurance)
+        if dti_post > 0.60:
+            hard_cap = 0.25  # Severe over-indebtedness
+        elif dti_post > 0.50:
+            hard_cap = 0.40  # Dangerous debt level
+        elif dti_post > 0.40:
+            hard_cap = 0.60  # Tight but manageable
+        elif stress > 0.80:
+            hard_cap = 0.55  # New payment eats most free cash
+        elif months < 1 and free_post < income * 0.15:
+            hard_cap = 0.50  # No safety net and tight
+        else:
+            hard_cap = 1.0   # No hard cap — user is in good shape
 
     # ── Component scores (0-1 each) ───────────────────────────
     # Budget fit: how comfortably the new payment fits in the budget
@@ -522,6 +573,10 @@ def build_explanation_details(feat: Dict[str, Any], segment_name: str = "", prod
         product_name = product_data.get("name", "el producto")
 
     # ── Core financial diagnosis with real numbers ──────────────
+    category = normalize_category(product_data.get("product_category", "technology")) if product_data else "technology"
+    is_home = category == "home"
+    is_insurance = category == "insurance"
+
     if fcf_post < 0:
         deficit = abs(fcf_post)
         details.append(f"Con esta compra, tu flujo mensual quedaría en RD${fcf_post:,.0f}, es decir, un déficit de RD${deficit:,.0f} cada mes. No podrías cubrir tus gastos.")
@@ -533,13 +588,25 @@ def build_explanation_details(feat: Dict[str, Any], segment_name: str = "", prod
     elif fcf_post < income * 0.10:
         details.append(f"Después de la compra te quedarían solo RD${fcf_post:,.0f}/mes de flujo libre, menos del 10% de tus ingresos. Cualquier imprevisto podría desbalancearte.")
     
-    if dti_post > 0.55:
-        pct = dti_post * 100
-        details.append(f"Tu nivel de endeudamiento llegaría al {pct:.0f}% de tus ingresos. El máximo recomendado es 40%.")
-        action_plan.append(f"Antes de asumir esta deuda, trabaja en reducir tus compromisos actuales. Tu DTI actual ya es {dti_current*100:.0f}%.")
-    elif dti_post > 0.40:
-        pct = dti_post * 100
-        details.append(f"Tu endeudamiento post-compra sería {pct:.0f}%, por encima del ideal de 35% pero aún manejable con disciplina.")
+    if is_insurance:
+        # Insurance doesn't increase DTI, just focus on FCF
+        pass
+    elif is_home:
+        if dti_post > 0.65:
+            pct = dti_post * 100
+            details.append(f"Tu nivel de endeudamiento llegaría al {pct:.0f}% de tus ingresos. Incluso para una hipoteca, esto es excesivo y muy riesgoso.")
+            action_plan.append(f"Antes de asumir este compromiso, trabaja en reducir tus deudas actuales. Tu endeudamiento actual ya es {dti_current*100:.0f}%.")
+        elif dti_post > 0.45:
+            pct = dti_post * 100
+            details.append(f"Tu endeudamiento post-compra sería {pct:.0f}%. Es aceptable para un préstamo hipotecario, pero requerirá disciplina mensual.")
+    else:
+        if dti_post > 0.55:
+            pct = dti_post * 100
+            details.append(f"Tu nivel de endeudamiento llegaría al {pct:.0f}% de tus ingresos. El máximo recomendado es 40%.")
+            action_plan.append(f"Antes de asumir esta deuda, trabaja en reducir tus compromisos actuales. Tu DTI actual ya es {dti_current*100:.0f}%.")
+        elif dti_post > 0.40:
+            pct = dti_post * 100
+            details.append(f"Tu endeudamiento post-compra sería {pct:.0f}%, por encima del ideal de 35% pero aún manejable con disciplina.")
     
     if em_months < 1:
         details.append(f"Tu fondo de emergencia cubre menos de 1 mes de gastos. Si ocurre un imprevisto, no tendrías respaldo.")
@@ -840,9 +907,11 @@ def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: d
     seg_ids, seg_names = predict_segment(df_engineered[SEGMENT_NUMERIC_FEATURES + SEGMENT_CATEGORICAL_FEATURES], artifacts["segmentation_artifacts"])
     viab_preds, viab_probs = predict_viability(df_engineered[CLASSIFIER_NUMERIC_FEATURES + CLASSIFIER_CATEGORICAL_FEATURES], artifacts["classifier_artifacts"])
     
+    category = normalize_category(option_dict.get("product_category", "technology"))
+    
     risk_band = risk_band_from_row(engineered_record)
     reason = primary_reason_from_row(engineered_record)
-    score = compute_recommendation_score(viab_probs[0], engineered_record)
+    score = compute_recommendation_score(viab_probs[0], engineered_record, category)
     
     segment_name = seg_names[0] if seg_names else ""
     prod_for_explanation = original_product or option_dict

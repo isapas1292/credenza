@@ -144,7 +144,7 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         if category.lower() == "préstamo":
             alternatives_prompt = f"""
         3. Provee EXACTAMENTE 3 `alternatives` que son opciones de entidades financieras o bancos REALES en el país del usuario (ej. República Dominicana: Banco Popular, Banreservas, BHD, Asociación Popular, etc.) que ofrezcan préstamos personales.
-           - Evalúa si la tasa que el usuario ingresó (o la tasa estándar calculada de {product_data.get('interest_rate', 0.18)*100:.1f}%) es competitiva con el mercado actual.
+           - Evalúa si la tasa que el usuario ingresó (o la tasa estándar calculada de {product.get('interest_rate', 0.18)*100:.1f}%) es competitiva con el mercado actual.
            Para cada alternativa incluye:
            - `name`: Nombre del Banco o Entidad + "(Mejor Tasa)" o "(Más Flexible)" según corresponda. (ej. "Banco Popular - Préstamo Personal (Mejor Tasa)")
            - `price`: "Tasa estimada: X% a Y%"
