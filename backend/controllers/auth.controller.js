@@ -16,8 +16,10 @@ const AuthController = {
 
             const request = new sql.Request();
 
-            // Verificar si el correo ya existe
-            const checkResult = await request.query(`SELECT Id FROM Usuarios WHERE Email = '${email}'`);
+            // Verificar si el correo ya existe (parametrizado: evita inyección SQL)
+            const checkReq = new sql.Request();
+            checkReq.input('Email', sql.VarChar, email);
+            const checkResult = await checkReq.query('SELECT Id FROM Usuarios WHERE Email = @Email');
             if (checkResult.recordset.length > 0) {
                 return res.status(400).json({ error: 'El email ya está registrado' });
             }
@@ -29,23 +31,9 @@ const AuthController = {
             const perfilJson = perfil ? JSON.stringify(perfil) : null;
             let apellido = '';
             let ciudad = '';
-            let objetivo = '';
-            let ingresos = 0, gastos = 0, deudas = 0, emergencia = 0;
-            
-            if (perfil) {
-                if (perfil.personal) {
-                    apellido = perfil.personal.lastName || '';
-                    ciudad = perfil.personal.city || '';
-                }
-                if (perfil.goals) {
-                    objetivo = perfil.goals.mainGoal || '';
-                }
-                if (perfil.finances) {
-                    ingresos = parseFloat(perfil.finances.monthlyIncome || perfil.finances.monthly_income_avg || 0);
-                    gastos = parseFloat(perfil.finances.fixedExpenses || perfil.finances.fixed_expenses_monthly || 0);
-                    deudas = parseFloat(perfil.finances.activeDebts || perfil.finances.current_debt_payment_monthly || 0);
-                    emergencia = parseFloat(perfil.finances.emergencyFund || perfil.finances.emergency_fund_amount || 0);
-                }
+            if (perfil && perfil.personal) {
+                apellido = perfil.personal.lastName || '';
+                ciudad = perfil.personal.city || '';
             }
 
             request.input('Nombre', sql.VarChar, nombre || 'Usuario');
@@ -53,33 +41,18 @@ const AuthController = {
             request.input('Email', sql.VarChar, email);
             request.input('ContrasenaHash', sql.VarChar, hashedPassword);
             request.input('Ciudad', sql.VarChar, ciudad);
-            request.input('ObjetivoPrincipalTexto', sql.VarChar, objetivo);
             request.input('Perfil', sql.NVarChar, perfilJson);
 
             const insertQuery = `
-                INSERT INTO Usuarios (Nombre, Apellido, Email, ContrasenaHash, Ciudad, ObjetivoPrincipalTexto, Perfil, RolId, Activo, FechaCreacion, FechaActualizacion)
+                INSERT INTO Usuarios (Nombre, Apellido, Email, ContrasenaHash, Ciudad, Perfil, RolId, Activo, FechaCreacion, FechaActualizacion)
                 OUTPUT INSERTED.Id, INSERTED.Nombre, INSERTED.Email, INSERTED.Perfil
-                VALUES (@Nombre, @Apellido, @Email, @ContrasenaHash, @Ciudad, @ObjetivoPrincipalTexto, @Perfil, 1, 1, GETDATE(), GETDATE())
+                VALUES (@Nombre, @Apellido, @Email, @ContrasenaHash, @Ciudad, @Perfil, 1, 1, GETDATE(), GETDATE())
             `;
 
             const result = await request.query(insertQuery);
             const newUser = result.recordset[0];
 
-            // 1. Guardar en tabla normalizada FinanzasUsuario
-            if (perfil && perfil.finances) {
-                const finanzasReq = new sql.Request();
-                finanzasReq.input('UserId', sql.Int, newUser.Id);
-                finanzasReq.input('Ingresos', sql.Decimal(18,2), ingresos);
-                finanzasReq.input('Gastos', sql.Decimal(18,2), gastos);
-                finanzasReq.input('Deudas', sql.Decimal(18,2), deudas);
-                finanzasReq.input('Emergencia', sql.Decimal(18,2), emergencia);
-                await finanzasReq.query(`
-                    INSERT INTO FinanzasUsuario (UsuarioId, IngresoMensual, GastosFijos, DeudasActivas, FondoEmergencia)
-                    VALUES (@UserId, @Ingresos, @Gastos, @Deudas, @Emergencia)
-                `);
-            }
-
-            // 2. Clasificar segmento
+            // Clasificar segmento financiero del usuario
             let segmento = null;
             if (perfil) {
                 segmento = await AiService.clasificarYGuardarSegmento(newUser.Id, perfil);
@@ -173,31 +146,6 @@ const AuthController = {
 
             if (result.rowsAffected[0] === 0) {
                 return res.status(404).json({ error: 'Usuario no encontrado' });
-            }
-
-            // Actualizar tabla relacional
-            if (perfil.finances) {
-                const ingresos = parseFloat(perfil.finances.monthlyIncome || perfil.finances.monthly_income_avg || 0);
-                const gastos = parseFloat(perfil.finances.fixedExpenses || perfil.finances.fixed_expenses_monthly || 0);
-                const deudas = parseFloat(perfil.finances.activeDebts || perfil.finances.current_debt_payment_monthly || 0);
-                const emergencia = parseFloat(perfil.finances.emergencyFund || perfil.finances.emergency_fund_amount || 0);
-
-                const finanzasReq = new sql.Request();
-                finanzasReq.input('UserId', sql.Int, userId);
-                finanzasReq.input('Ingresos', sql.Decimal(18,2), ingresos);
-                finanzasReq.input('Gastos', sql.Decimal(18,2), gastos);
-                finanzasReq.input('Deudas', sql.Decimal(18,2), deudas);
-                finanzasReq.input('Emergencia', sql.Decimal(18,2), emergencia);
-                
-                await finanzasReq.query(`
-                    IF EXISTS (SELECT 1 FROM FinanzasUsuario WHERE UsuarioId = @UserId)
-                        UPDATE FinanzasUsuario 
-                        SET IngresoMensual=@Ingresos, GastosFijos=@Gastos, DeudasActivas=@Deudas, FondoEmergencia=@Emergencia, FechaActualizacion=GETDATE()
-                        WHERE UsuarioId = @UserId
-                    ELSE
-                        INSERT INTO FinanzasUsuario (UsuarioId, IngresoMensual, GastosFijos, DeudasActivas, FondoEmergencia)
-                        VALUES (@UserId, @Ingresos, @Gastos, @Deudas, @Emergencia)
-                `);
             }
 
             const segmento = await AiService.clasificarYGuardarSegmento(parseInt(userId), perfil);

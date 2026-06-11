@@ -22,12 +22,9 @@ export class ProfileComponent implements OnInit {
   history = signal<any[]>([]);
   loadingHistory = signal<boolean>(false);
   historyError = signal<string | null>(null);
-  showAll = signal<boolean>(false);
 
-  visibleHistory = computed(() => {
-    const all = this.history();
-    return this.showAll() ? all : all.slice(0, 5);
-  });
+  // En el perfil solo se muestran los 3 más recientes; el resto en /historial.
+  recentHistory = computed(() => this.history().slice(0, 3));
 
   ngOnInit(): void {
     if (this.currentUser()) {
@@ -50,8 +47,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  toggleShowAll(): void {
-    this.showAll.update(v => !v);
+  goToFullHistory(): void {
+    this.router.navigate(['/historial']);
   }
 
   scoreClass(score: number): string {
@@ -93,12 +90,6 @@ export class ProfileComponent implements OnInit {
       { title: 'Tolerancia al riesgo', value: p.riskTolerance },
       { title: 'Cuota ideal máxima', value: `RD$${Math.max(freeCashFlow * 0.5, 0).toLocaleString()}` }
     ];
-  }
-
-  /** Progreso real del fondo de emergencia (meta: 6 meses). */
-  get emergencyProgress(): number {
-    const months = Number(this.currentUser()?.perfil?.finances?.emergencyFundMonths) || 0;
-    return Math.min(Math.round((months / 6) * 100), 100);
   }
 
   editProfile() {

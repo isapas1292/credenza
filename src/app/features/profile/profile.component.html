@@ -67,7 +67,7 @@
     </div>
 
     <div class="history-list" *ngIf="!loadingHistory() && history().length > 0">
-      <div class="history-item" *ngFor="let item of visibleHistory()">
+      <div class="history-item" *ngFor="let item of recentHistory()">
         <div class="history-details">
           <strong>{{ item.ProductoNombre }}</strong>
           <p>
@@ -83,18 +83,9 @@
     </div>
 
     <button class="btn btn-secondary history-toggle"
-            *ngIf="!loadingHistory() && history().length > 5"
-            (click)="toggleShowAll()">
-      {{ showAll() ? 'Mostrar menos' : 'Ver todo el historial (' + history().length + ')' }}
+            *ngIf="!loadingHistory() && history().length > 3"
+            (click)="goToFullHistory()">
+      Ver todo el historial ({{ history().length }})
     </button>
-
-    <div class="goal-box">
-      <div class="goal-head">
-        <strong>Fondo de Emergencia</strong>
-        <span>Recomendado: 3 a 6 meses</span>
-      </div>
-      <div class="progress"><span [style.width.%]="emergencyProgress"></span></div>
-      <p>Estás en un {{ emergencyProgress }}% de tu meta ideal (6 meses).</p>
-    </div>
   </article>
 </section>
