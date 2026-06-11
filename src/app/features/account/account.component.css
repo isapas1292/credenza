@@ -134,3 +134,154 @@
     margin-top: 8px;
   }
 }
+/* ── Historial de análisis ───────────────────────────────── */
+.history-panel {
+  margin-top: 24px;
+}
+
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.history-refresh {
+  white-space: nowrap;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.history-state {
+  padding: 16px 0;
+  color: var(--text-muted, #6b7280);
+}
+
+.history-state.error {
+  color: #b91c1c;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+}
+
+.history-empty-icon {
+  font-size: 34px;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+}
+
+.history-main {
+  min-width: 0;
+}
+
+.history-name {
+  font-size: 15px;
+  color: #111827;
+}
+
+.history-cat {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.history-msg {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.history-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-score {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.hist-score-good { color: #059669; }
+.hist-score-mid  { color: #d97706; }
+.hist-score-bad  { color: #dc2626; }
+
+.history-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.history-badge.viable {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.history-badge.no-viable {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.history-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.history-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.history-toggle {
+  margin-top: 16px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .history-item {
+    flex-direction: column;
+  }
+  .history-side {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}

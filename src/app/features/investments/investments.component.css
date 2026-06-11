@@ -68,6 +68,12 @@
   flex-direction: column;
 }
 
+/* El título del panel oscuro debe ir en blanco (evita texto oscuro sobre fondo oscuro). */
+.hero-panel h3,
+.hero-panel .mini-label {
+  color: #fff;
+}
+
 .hero-head,
 .panel-head {
   display: flex;

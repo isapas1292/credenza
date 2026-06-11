@@ -53,27 +53,48 @@
     <div class="panel-header">
       <div>
         <h3>Historial</h3>
-        <p class="subtitle">Últimos análisis realizados</p>
+        <p class="subtitle">Tus análisis realizados</p>
+      </div>
+      <button class="btn btn-secondary history-refresh" (click)="loadHistory()" [disabled]="loadingHistory()">Actualizar</button>
+    </div>
+
+    <p class="history-state" *ngIf="loadingHistory()">Cargando tu historial…</p>
+    <p class="history-state error" *ngIf="historyError()">{{ historyError() }}</p>
+
+    <div class="history-empty" *ngIf="!loadingHistory() && !historyError() && history().length === 0">
+      <span class="history-empty-icon">📭</span>
+      <p>Aún no has analizado ningún producto. Cuando lo hagas, aparecerá aquí.</p>
+    </div>
+
+    <div class="history-list" *ngIf="!loadingHistory() && history().length > 0">
+      <div class="history-item" *ngFor="let item of visibleHistory()">
+        <div class="history-details">
+          <strong>{{ item.ProductoNombre }}</strong>
+          <p>
+            <span class="history-cat" *ngIf="item.ProductoCategoria">{{ item.ProductoCategoria }}</span>
+            RD${{ item.ProductoPrecio | number:'1.0-0' }} · {{ item.FechaAnalisis | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+        <div class="history-verdict">
+          <span class="history-pct">{{ (item.RecomendacionScore * 100) | number:'1.0-0' }}%</span>
+          <span [class]="scoreClass(item.RecomendacionScore)">{{ item.Viable ? 'Viable' : 'No viable' }}</span>
+        </div>
       </div>
     </div>
 
-    <div class="history-list">
-      <div class="history-item" *ngFor="let item of history">
-        <div class="history-details">
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.amount }}</p>
-        </div>
-        <span [class]="item.type === 'warn' ? 'badge-warn' : 'badge-success'">{{ item.label }}</span>
-      </div>
-    </div>
+    <button class="btn btn-secondary history-toggle"
+            *ngIf="!loadingHistory() && history().length > 5"
+            (click)="toggleShowAll()">
+      {{ showAll() ? 'Mostrar menos' : 'Ver todo el historial (' + history().length + ')' }}
+    </button>
 
     <div class="goal-box">
       <div class="goal-head">
         <strong>Fondo de Emergencia</strong>
         <span>Recomendado: 3 a 6 meses</span>
       </div>
-      <div class="progress"><span style="width:40%"></span></div>
-      <p>Estás en un 40% de tu meta ideal.</p>
+      <div class="progress"><span [style.width.%]="emergencyProgress"></span></div>
+      <p>Estás en un {{ emergencyProgress }}% de tu meta ideal (6 meses).</p>
     </div>
   </article>
 </section>

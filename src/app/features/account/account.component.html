@@ -77,4 +77,52 @@
       </ng-container>
     </div>
   </article>
+
+  <!-- Historial de análisis del usuario (desde la BD) -->
+  <article class="account-panel history-panel delay-200 animate-fade-in-up" *ngIf="authService.currentUser()">
+    <div class="page-title history-head">
+      <div>
+        <span class="eyebrow">Tu actividad</span>
+        <h3>Historial de análisis</h3>
+      </div>
+      <button class="btn btn-secondary history-refresh" (click)="loadHistory()" [disabled]="loadingHistory()">
+        Actualizar
+      </button>
+    </div>
+
+    <div class="history-state" *ngIf="loadingHistory()">Cargando tu historial…</div>
+    <div class="history-state error" *ngIf="historyError()">{{ historyError() }}</div>
+
+    <div class="history-empty" *ngIf="!loadingHistory() && !historyError() && history().length === 0">
+      <span class="history-empty-icon">📭</span>
+      <p>Aún no has hecho ningún análisis. Cuando analices un producto, aparecerá aquí.</p>
+      <a class="btn btn-primary" routerLink="/analizar">Hacer mi primer análisis</a>
+    </div>
+
+    <div class="history-list" *ngIf="!loadingHistory() && history().length > 0">
+      <article class="history-item" *ngFor="let item of visibleHistory()">
+        <div class="history-main">
+          <strong class="history-name">{{ item.ProductoNombre }}</strong>
+          <span class="history-cat" *ngIf="item.ProductoCategoria">{{ item.ProductoCategoria }}</span>
+          <p class="history-msg">{{ item.MensajeSugerencia }}</p>
+        </div>
+        <div class="history-side">
+          <span class="history-score" [class]="scoreClass(item.RecomendacionScore)">
+            {{ (item.RecomendacionScore * 100) | number:'1.0-0' }}%
+          </span>
+          <span class="history-badge" [class.viable]="item.Viable" [class.no-viable]="!item.Viable">
+            {{ item.Viable ? 'Viable' : 'No viable' }}
+          </span>
+          <span class="history-price">RD${{ item.ProductoPrecio | number:'1.0-0' }}</span>
+          <span class="history-date">{{ item.FechaAnalisis | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </article>
+    </div>
+
+    <button class="btn btn-secondary history-toggle"
+            *ngIf="!loadingHistory() && history().length > 5"
+            (click)="toggleShowAll()">
+      {{ showAll() ? 'Mostrar menos' : 'Ver todo el historial (' + history().length + ')' }}
+    </button>
+  </article>
 </section>

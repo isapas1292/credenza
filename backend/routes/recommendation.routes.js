@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const sql = require('mssql');
 const RecommendationAiService = require('../services/recommendationAi.service');
+const { verifyToken } = require('../middlewares/auth.middleware');
 
 router.post('/', async (req, res) => {
     try {
@@ -77,6 +78,27 @@ router.post('/analyze', async (req, res) => {
     } catch (error) {
         console.error('Error en /api/recommendations/analyze:', error.message);
         res.status(500).json({ error: 'Error al analizar compatibilidad' });
+    }
+});
+
+// Historial de análisis del usuario autenticado (solo el suyo, vía token).
+router.get('/history', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const dbReq = new sql.Request();
+        dbReq.input('UsuarioId', sql.Int, userId);
+        const result = await dbReq.query(`
+            SELECT TOP 200
+                Id, ProductoNombre, ProductoPrecio, ProductoCategoria,
+                RecomendacionScore, Viable, MensajeSugerencia, FechaAnalisis
+            FROM HistorialAnalisis
+            WHERE UsuarioId = @UsuarioId
+            ORDER BY FechaAnalisis DESC
+        `);
+        res.json({ succeeded: true, data: result.recordset });
+    } catch (error) {
+        console.error('Error obteniendo historial:', error.message);
+        res.status(500).json({ error: 'Error al obtener el historial' });
     }
 });
 

@@ -730,7 +730,10 @@ def build_user_dict_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     personal = payload.get("personal", payload)
     goals = payload.get("goals", {})
     
-    income = round(_num(_first(finances, ["monthlyIncome", "ingresoMensualPrincipal", "monthly_income_avg"]), 0), 2)
+    base_income = round(_num(_first(finances, ["monthlyIncome", "ingresoMensualPrincipal", "monthly_income_avg"]), 0), 2)
+    # La ganancia extra (ingresos adicionales) suma al poder adquisitivo real.
+    extra_income = round(_num(_first(finances, ["extraIncome", "ingresoExtra", "extra_income"]), 0), 2)
+    income = round(base_income + extra_income, 2)
     fixed = round(_num(_first(finances, ["fixedExpenses", "gastosFijosMensuales", "fixed_expenses_monthly"]), 0), 2)
     variable = round(_num(_first(finances, ["variableExpenses", "gastosVariablesMensuales", "variable_expenses_monthly_avg"]), 0), 2)
     debt = round(_num(_first(finances, ["activeDebts", "compromisosDeudasActivas", "current_debt_payment_monthly"]), 0), 2)

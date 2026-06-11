@@ -57,6 +57,11 @@ export class AnalysisService {
     );
   }
 
+  /** Historial de análisis del usuario autenticado (desde la BD). */
+  getHistory(): Observable<any> {
+    return this.http.get(`${this.API_URL}/history`);
+  }
+
   clearAnalysisDraft() {
     this.analysisDraftSig.set(null);
     localStorage.removeItem(this.STORAGE_KEY);

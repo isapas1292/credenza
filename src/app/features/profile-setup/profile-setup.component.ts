@@ -17,15 +17,6 @@ export class ProfileSetupComponent implements OnInit {
   step: StepNumber = 1;
   readonly totalSteps = 5;
 
-  readonly categoryOptions = [
-    'Tecnología',
-    'Vehículo',
-    'Seguro',
-    'Préstamo',
-    'Hogar',
-    'Inversiones'
-  ];
-
   readonly goalOptions = [
     'Comprar mejor',
     'Reducir deudas',
@@ -33,22 +24,6 @@ export class ProfileSetupComponent implements OnInit {
     'Ahorrar más',
     'Empezar a invertir',
     'Tomar decisiones con menos riesgo'
-  ];
-
-  readonly assetOptions = [
-    'Fondos indexados',
-    'Bonos / renta fija',
-    'Acciones',
-    'ETFs',
-    'Certificados',
-    'Liquidez / efectivo'
-  ];
-
-  readonly urgencyOptions = [
-    'Inmediata',
-    'Este mes',
-    'En 3 a 6 meses',
-    'Más adelante'
   ];
 
   readonly riskCards = [
@@ -69,6 +44,7 @@ export class ProfileSetupComponent implements OnInit {
     }
   ];
 
+  // Solo se capturan los datos que el análisis y las pantallas realmente usan.
   model = {
     personal: {
       firstName: '',
@@ -91,32 +67,17 @@ export class ProfileSetupComponent implements OnInit {
     },
     goals: {
       mainGoal: 'Comprar mejor',
-      timeHorizon: '6 a 12 meses',
-      monthlyBudgetForNewCommitments: 0,
-      urgency: 'Este mes',
-      preferredCategories: [] as string[]
+      timeHorizon: '6 a 12 meses'
     },
     preferences: {
-      decisionStyle: 'Analítico',
       riskTolerance: 'Moderado',
-      prefersLowInstallment: true,
-      prioritizesBrand: false,
-      prefersLongTermValue: true,
-      wantsSimpleRecommendations: true,
-      investmentInterestLevel: 'Medio',
-      liquidityNeed: 'Media',
-      
-      // Consumer profiling
-      extraMoneyAction: '',
+      // Perfil de consumo (usado por el motor de análisis)
       bigPurchaseHabit: '',
       expenseTracking: ''
     },
     investments: {
       hasExperience: 'No',
-      currentCapital: 0,
-      preferredAssets: [] as string[],
-      expectedReturn: 'Moderado',
-      frequency: 'Mensual'
+      currentCapital: 0
     }
   };
 
@@ -173,22 +134,6 @@ export class ProfileSetupComponent implements OnInit {
 
   goToStep(step: StepNumber): void {
     this.step = step;
-  }
-
-  toggleCategory(option: string): void {
-    const exists = this.model.goals.preferredCategories.includes(option);
-
-    this.model.goals.preferredCategories = exists
-      ? this.model.goals.preferredCategories.filter(item => item !== option)
-      : [...this.model.goals.preferredCategories, option];
-  }
-
-  toggleAsset(option: string): void {
-    const exists = this.model.investments.preferredAssets.includes(option);
-
-    this.model.investments.preferredAssets = exists
-      ? this.model.investments.preferredAssets.filter(item => item !== option)
-      : [...this.model.investments.preferredAssets, option];
   }
 
   setGoal(goal: string): void {

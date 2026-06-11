@@ -219,3 +219,72 @@
   .profile-actions { justify-content: stretch; }
   .profile-actions .btn { flex: 1; }
 }
+/* ── Historial real (panel de perfil) ───────────────────────── */
+.history-refresh {
+  padding: 8px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.history-state {
+  color: var(--muted, #6b7280);
+  padding: 8px 0 16px;
+}
+
+.history-state.error {
+  color: #b91c1c;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--muted, #6b7280);
+  padding: 24px 12px;
+}
+
+.history-empty-icon {
+  font-size: 30px;
+}
+
+.history-cat {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 1px 8px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.history-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.history-pct {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.history-toggle {
+  width: 100%;
+  margin-top: 16px;
+}

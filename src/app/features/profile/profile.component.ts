@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AnalysisService } from '../../core/services/analysis.service';
 
 @Component({
   selector: 'app-profile',
@@ -10,24 +11,68 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
+  private analysisService = inject(AnalysisService);
   private router = inject(Router);
 
   currentUser = this.authService.currentUser;
+
+  // ── Historial REAL del usuario (desde la BD) ──
+  history = signal<any[]>([]);
+  loadingHistory = signal<boolean>(false);
+  historyError = signal<string | null>(null);
+  showAll = signal<boolean>(false);
+
+  visibleHistory = computed(() => {
+    const all = this.history();
+    return this.showAll() ? all : all.slice(0, 5);
+  });
+
+  ngOnInit(): void {
+    if (this.currentUser()) {
+      this.loadHistory();
+    }
+  }
+
+  loadHistory(): void {
+    this.loadingHistory.set(true);
+    this.historyError.set(null);
+    this.analysisService.getHistory().subscribe({
+      next: (res) => {
+        this.history.set(res?.data || []);
+        this.loadingHistory.set(false);
+      },
+      error: () => {
+        this.historyError.set('No se pudo cargar tu historial en este momento.');
+        this.loadingHistory.set(false);
+      }
+    });
+  }
+
+  toggleShowAll(): void {
+    this.showAll.update(v => !v);
+  }
+
+  scoreClass(score: number): string {
+    const pct = Math.round((score || 0) * 100);
+    return pct >= 65 ? 'badge-success' : pct >= 45 ? 'badge-warn' : 'badge-danger';
+  }
 
   get stats() {
     const user = this.currentUser();
     if (!user || !user.perfil || !user.perfil.finances) return [];
 
     const f = user.perfil.finances;
-    const freeCashFlow = f.monthlyIncome - f.fixedExpenses - f.activeDebts;
+    const income = (Number(f.monthlyIncome) || 0) + (Number(f.extraIncome) || 0);
+    const expenses = (Number(f.fixedExpenses) || 0) + (Number(f.variableExpenses) || 0);
+    const freeCashFlow = income - expenses - (Number(f.activeDebts) || 0);
 
     return [
-      { title: 'Ingresos mensuales', value: `RD$${f.monthlyIncome.toLocaleString()}`, hint: 'Actualizados este mes' },
-      { title: 'Gastos recurrentes', value: `RD$${f.fixedExpenses.toLocaleString()}`, hint: 'Servicios, hogar y otros' },
-      { title: 'Compromisos activos', value: `RD$${f.activeDebts.toLocaleString()}`, hint: 'Préstamos y cuotas' },
-      { title: 'Capacidad disponible', value: `RD$${freeCashFlow.toLocaleString()}`, hint: 'Margen estimado' }
+      { title: 'Ingresos mensuales', value: `RD$${income.toLocaleString()}`, hint: 'Principal + extra' },
+      { title: 'Gastos recurrentes', value: `RD$${expenses.toLocaleString()}`, hint: 'Fijos + variables' },
+      { title: 'Compromisos activos', value: `RD$${(Number(f.activeDebts) || 0).toLocaleString()}`, hint: 'Préstamos y cuotas' },
+      { title: 'Capacidad disponible', value: `RD$${freeCashFlow.toLocaleString()}`, hint: 'Flujo libre estimado' }
     ];
   }
 
@@ -37,22 +82,24 @@ export class ProfileComponent {
 
     const f = user.perfil.finances;
     const p = user.perfil.preferences;
-    const freeCashFlow = f.monthlyIncome - f.fixedExpenses - f.activeDebts;
+    const income = (Number(f.monthlyIncome) || 0) + (Number(f.extraIncome) || 0);
+    const expenses = (Number(f.fixedExpenses) || 0) + (Number(f.variableExpenses) || 0);
+    const freeCashFlow = income - expenses - (Number(f.activeDebts) || 0);
     const emergencyStatus = f.emergencyFundMonths >= 3 ? 'Saludable' : 'En construcción';
 
     return [
-      { title: 'Ahorro/meta mensual', value: `RD$${f.monthlySavingsCapacity.toLocaleString()}` },
+      { title: 'Ahorro/meta mensual', value: `RD$${(Number(f.monthlySavingsCapacity) || 0).toLocaleString()}` },
       { title: 'Nivel de estabilidad', value: emergencyStatus },
       { title: 'Tolerancia al riesgo', value: p.riskTolerance },
-      { title: 'Cuota ideal máxima', value: `RD$${(freeCashFlow * 0.5).toLocaleString()}` }
+      { title: 'Cuota ideal máxima', value: `RD$${Math.max(freeCashFlow * 0.5, 0).toLocaleString()}` }
     ];
   }
 
-  history = [
-    { title: 'Laptop de trabajo', amount: 'RD$3,500/mes', label: 'Recomendada', type: 'success' },
-    { title: 'Vehículo compacto', amount: 'RD$17,100/mes', label: 'Con cautela', type: 'warn' },
-    { title: 'Seguro de salud', amount: 'RD$1,850/mes', label: 'Buena opción', type: 'success' }
-  ];
+  /** Progreso real del fondo de emergencia (meta: 6 meses). */
+  get emergencyProgress(): number {
+    const months = Number(this.currentUser()?.perfil?.finances?.emergencyFundMonths) || 0;
+    return Math.min(Math.round((months / 6) * 100), 100);
+  }
 
   editProfile() {
     this.router.navigate(['/perfil-configuracion']);

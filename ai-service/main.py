@@ -150,6 +150,7 @@ def enrich_with_gemini(analysis_result: dict, perfil: dict, product: dict) -> di
         # compra no es viable, exigimos que las alternativas sean asequibles.
         finances = perfil.get('finances', perfil)
         monthly_income = float(finances.get('monthlyIncome', finances.get('monthly_income_avg', 0)) or 0)
+        monthly_income += float(finances.get('extraIncome', 0) or 0)  # ganancia extra
         fixed_exp = float(finances.get('fixedExpenses', finances.get('fixed_expenses_monthly', 0)) or 0)
         variable_exp = float(finances.get('variableExpenses', finances.get('variable_expenses_monthly_avg', 0)) or 0)
         debts = float(finances.get('activeDebts', finances.get('current_debt_payment_monthly', 0)) or 0)

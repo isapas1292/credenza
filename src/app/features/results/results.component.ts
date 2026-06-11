@@ -67,8 +67,11 @@ export class ResultsComponent implements OnInit {
   get financialData() {
     const profile = this.user();
     if (!profile || !profile.finances) return { income: 0, fixed: 0, variable: 0, debts: 0 };
+    const baseIncome = parseFloat(profile.finances.monthlyIncome || profile.finances.monthly_income_avg || 0);
+    const extraIncome = parseFloat(profile.finances.extraIncome || 0);
     return {
-      income: parseFloat(profile.finances.monthlyIncome || profile.finances.monthly_income_avg || 0),
+      // El ingreso incluye la ganancia extra (afecta el poder adquisitivo real).
+      income: baseIncome + (isNaN(extraIncome) ? 0 : extraIncome),
       fixed: parseFloat(profile.finances.fixedExpenses || profile.finances.fixed_expenses_monthly || 0),
       variable: parseFloat(profile.finances.variableExpenses || profile.finances.variable_expenses_monthly_avg || 0),
       debts: parseFloat(profile.finances.activeDebts || profile.finances.current_debt_payment_monthly || 0),

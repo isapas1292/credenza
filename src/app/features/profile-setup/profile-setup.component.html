@@ -168,7 +168,7 @@
         </div>
 
         <div class="question-grid top-gap">
-          <div class="field">
+          <div class="field field-full">
             <label>Horizonte de decisión</label>
             <select [(ngModel)]="model.goals.timeHorizon" name="timeHorizon">
               <option>Menos de 3 meses</option>
@@ -176,33 +176,6 @@
               <option>6 a 12 meses</option>
               <option>Más de 1 año</option>
             </select>
-          </div>
-
-          <div class="field">
-            <label>Presupuesto para nuevos compromisos</label>
-            <input [(ngModel)]="model.goals.monthlyBudgetForNewCommitments" name="monthlyBudgetForNewCommitments" type="number" placeholder="$0.00"/>
-          </div>
-
-          <div class="field field-full">
-            <label>Nivel de urgencia</label>
-            <select [(ngModel)]="model.goals.urgency" name="urgency">
-              <option *ngFor="let urgency of urgencyOptions">{{ urgency }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="block-group top-gap">
-          <label class="block-label">¿Qué categorías te interesan?</label>
-          <div class="chip-grid">
-            <button
-              type="button"
-              class="chip-option"
-              *ngFor="let option of categoryOptions"
-              [class.active]="model.goals.preferredCategories.includes(option)"
-              (click)="toggleCategory(option)"
-            >
-              {{ option }}
-            </button>
           </div>
         </div>
       </section>
@@ -217,37 +190,7 @@
           <span class="badge-neutral">Ajuste Fino</span>
         </div>
 
-        <div class="question-grid">
-          <div class="field">
-            <label>Estilo de decisión</label>
-            <select [(ngModel)]="model.preferences.decisionStyle" name="decisionStyle">
-              <option>Analítico</option>
-              <option>Práctico</option>
-              <option>Rápido</option>
-              <option>Con mucha comparación</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Interés en inversiones</label>
-            <select [(ngModel)]="model.preferences.investmentInterestLevel" name="investmentInterestLevel">
-              <option>Bajo</option>
-              <option>Medio</option>
-              <option>Alto</option>
-            </select>
-          </div>
-
-          <div class="field field-full">
-            <label>Necesidad de liquidez</label>
-            <select [(ngModel)]="model.preferences.liquidityNeed" name="liquidityNeed">
-              <option>Baja</option>
-              <option>Media</option>
-              <option>Alta</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="block-group top-gap">
+        <div class="block-group">
           <label class="block-label">Tolerancia al riesgo</label>
           <div class="risk-grid">
             <button
@@ -263,42 +206,9 @@
           </div>
         </div>
 
-        <div class="toggle-grid top-gap">
-          <label class="toggle-card">
-            <input [(ngModel)]="model.preferences.prefersLowInstallment" name="prefersLowInstallment" type="checkbox" />
-            <span>Prefiero cuotas mensuales bajas</span>
-          </label>
-
-          <label class="toggle-card">
-            <input [(ngModel)]="model.preferences.prioritizesBrand" name="prioritizesBrand" type="checkbox" />
-            <span>Doy prioridad a marca/reputación</span>
-          </label>
-
-          <label class="toggle-card">
-            <input [(ngModel)]="model.preferences.prefersLongTermValue" name="prefersLongTermValue" type="checkbox" />
-            <span>Prefiero valor a largo plazo</span>
-          </label>
-
-          <label class="toggle-card">
-            <input [(ngModel)]="model.preferences.wantsSimpleRecommendations" name="wantsSimpleRecommendations" type="checkbox" />
-            <span>Quiero recomendaciones simples</span>
-          </label>
-        </div>
-        
         <div class="block-group top-gap">
           <label class="block-label">Comportamiento de Consumo</label>
           <div class="question-grid">
-            <div class="field field-full">
-              <label>Si te sobra el 20% de tu sueldo, ¿qué sueles hacer?</label>
-              <select [(ngModel)]="model.preferences.extraMoneyAction" name="extraMoneyAction">
-                <option value="">Selecciona una opción</option>
-                <option value="Comprar algo deseado">Gastarlo en algo que quería hace tiempo</option>
-                <option value="Ahorrar">Ahorrarlo intacto</option>
-                <option value="Pagar deuda">Adelantar pagos de deudas</option>
-                <option value="Invertir">Invertirlo</option>
-              </select>
-            </div>
-
             <div class="field field-full">
               <label>Al enfrentar la compra de un producto costoso:</label>
               <select [(ngModel)]="model.preferences.bigPurchaseHabit" name="bigPurchaseHabit">
@@ -324,53 +234,22 @@
         </div>
 
         <div class="block-group top-gap">
-          <label class="block-label">Activos que más te interesan</label>
-          <div class="chip-grid">
-            <button
-              type="button"
-              class="chip-option"
-              *ngFor="let option of assetOptions"
-              [class.active]="model.investments.preferredAssets.includes(option)"
-              (click)="toggleAsset(option)"
-            >
-              {{ option }}
-            </button>
-          </div>
-        </div>
+          <label class="block-label">Inversiones</label>
+          <div class="question-grid">
+            <div class="field">
+              <label>¿Tienes experiencia invirtiendo?</label>
+              <select [(ngModel)]="model.investments.hasExperience" name="hasExperience">
+                <option>No</option>
+                <option>Poca</option>
+                <option>Intermedia</option>
+                <option>Alta</option>
+              </select>
+            </div>
 
-        <div class="question-grid top-gap">
-          <div class="field">
-            <label>¿Tienes experiencia invirtiendo?</label>
-            <select [(ngModel)]="model.investments.hasExperience" name="hasExperience">
-              <option>No</option>
-              <option>Poca</option>
-              <option>Intermedia</option>
-              <option>Alta</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Capital actual para invertir</label>
-            <input [(ngModel)]="model.investments.currentCapital" name="currentCapital" type="number" placeholder="$0.00"/>
-          </div>
-
-          <div class="field">
-            <label>Retorno esperado</label>
-            <select [(ngModel)]="model.investments.expectedReturn" name="expectedReturn">
-              <option>Conservador</option>
-              <option>Moderado</option>
-              <option>Agresivo</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Frecuencia de aporte</label>
-            <select [(ngModel)]="model.investments.frequency" name="frequency">
-              <option>Mensual</option>
-              <option>Quincenal</option>
-              <option>Trimestral</option>
-              <option>Esporádica</option>
-            </select>
+            <div class="field">
+              <label>Capital actual para invertir</label>
+              <input [(ngModel)]="model.investments.currentCapital" name="currentCapital" type="number" placeholder="$0.00"/>
+            </div>
           </div>
         </div>
       </section>
@@ -395,29 +274,25 @@
           <article class="summary-card">
             <span>Ingreso mensual</span>
             <strong>${{ model.finances.monthlyIncome }}</strong>
-            <p>Capacidad de ahorro: ${{ model.finances.monthlySavingsCapacity }}</p>
+            <p>Extra: ${{ model.finances.extraIncome }} · Ahorro: ${{ model.finances.monthlySavingsCapacity }}</p>
+          </article>
+
+          <article class="summary-card">
+            <span>Gastos y deudas</span>
+            <strong>${{ model.finances.fixedExpenses + model.finances.variableExpenses }}</strong>
+            <p>Deudas activas: ${{ model.finances.activeDebts }}</p>
           </article>
 
           <article class="summary-card">
             <span>Objetivo principal</span>
             <strong>{{ model.goals.mainGoal }}</strong>
-            <p>Urgencia: {{ model.goals.urgency }}</p>
+            <p>Horizonte: {{ model.goals.timeHorizon }}</p>
           </article>
 
           <article class="summary-card">
-            <span>Riesgo & Liquidez</span>
+            <span>Perfil de riesgo</span>
             <strong>{{ model.preferences.riskTolerance }}</strong>
-            <p>Necesidad: {{ model.preferences.liquidityNeed }}</p>
-          </article>
-
-          <article class="summary-card summary-card-wide">
-            <span>Categorías preferidas</span>
-            <strong>{{ model.goals.preferredCategories.join(', ') || 'Sin selección' }}</strong>
-          </article>
-
-          <article class="summary-card summary-card-wide">
-            <span>Activos de interés</span>
-            <strong>{{ model.investments.preferredAssets.join(', ') || 'Sin selección' }}</strong>
+            <p>Capital a invertir: ${{ model.investments.currentCapital }}</p>
           </article>
         </div>
       </section>
