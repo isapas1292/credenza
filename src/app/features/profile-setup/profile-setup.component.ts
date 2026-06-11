@@ -86,6 +86,7 @@ export class ProfileSetupComponent implements OnInit {
 
   isFromRegister = false;
   isEditMode = false;
+  saving = false;
 
   ngOnInit() {
     const tempReg = this.authService.tempRegisterData();
@@ -145,18 +146,23 @@ export class ProfileSetupComponent implements OnInit {
   }
 
   saveProfile(): void {
-    // Mostrar un estado de carga opcional aquí (por ejemplo this.loading = true)
-    
+    if (this.saving) {
+      return;
+    }
+    this.saving = true;
+
     if (this.isEditMode) {
       const user = this.authService.currentUser();
       this.authService.updateProfile(user.id, this.model).subscribe({
         next: () => {
+          this.saving = false;
           console.log('Perfil actualizado');
           this.router.navigate(['/perfil']);
         },
         error: (err) => {
+          this.saving = false;
           console.error('Error al actualizar', err);
-          alert('Hubo un error al actualizar. Inténtalo de nuevo.');
+          alert(err?.error?.error || 'Hubo un error al actualizar. Inténtalo de nuevo.');
         }
       });
     } else {
@@ -171,12 +177,14 @@ export class ProfileSetupComponent implements OnInit {
       // Llamar al backend usando AuthService
       this.authService.register(payload).subscribe({
         next: (response) => {
+          this.saving = false;
           console.log('Registro exitoso', response);
           this.router.navigate(['/perfil']);
         },
         error: (error) => {
+          this.saving = false;
           console.error('Error al registrar usuario', error);
-          alert('Hubo un error al registrarse. Inténtalo de nuevo.');
+          alert(error?.error?.error || 'Hubo un error al registrarse. Inténtalo de nuevo.');
         }
       });
     }

@@ -29,7 +29,9 @@
       </div>
 
       <div class="button-wrap delay-200 animate-fade-in-up">
-        <button class="btn btn-primary" style="width: 100%;" type="button" (click)="login()">Continuar</button>
+        <button class="btn btn-primary" style="width: 100%;" type="button" (click)="login()" [disabled]="loading">
+          {{ loading ? 'Iniciando sesión...' : 'Continuar' }}
+        </button>
       </div>
 
       <div class="auth-switch delay-300 animate-fade-in-up">

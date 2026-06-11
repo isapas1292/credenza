@@ -12,6 +12,8 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
+  loading = false;
+
   credentials = {
     email: '',
     password: ''
@@ -21,15 +23,18 @@ export class LoginComponent {
   private authService = inject(AuthService);
 
   login() {
-    if (this.credentials.email && this.credentials.password) {
+    if (this.credentials.email && this.credentials.password && !this.loading) {
+      this.loading = true;
       this.authService.login(this.credentials).subscribe({
         next: (res) => {
+          this.loading = false;
           console.log('Login exitoso', res);
           this.router.navigate(['/perfil']);
         },
         error: (err) => {
+          this.loading = false;
           console.error('Error de login', err);
-          alert('Email o contraseña incorrectos');
+          alert(err?.error?.error || 'No fue posible iniciar sesión. Inténtalo de nuevo.');
         }
       });
     }

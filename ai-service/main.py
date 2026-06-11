@@ -11,6 +11,7 @@ load_dotenv()
 
 from credenza_engine_backend_ready import (
     build_user_dict_from_payload,
+    add_engineered_features,
     load_or_train_artifacts,
     predict_segment,
     predict_recommendation,
@@ -294,7 +295,7 @@ def segment_profile(body: SegmentRequest) -> Dict[str, Any]:
     try:
         user_features = build_user_dict_from_payload(body.perfil)
         import pandas as pd
-        df = pd.DataFrame([user_features])
+        df = add_engineered_features(pd.DataFrame([user_features]))
         from credenza_engine_backend_ready import SEGMENT_NUMERIC_FEATURES, SEGMENT_CATEGORICAL_FEATURES
         seg_ids, seg_names = predict_segment(df[SEGMENT_NUMERIC_FEATURES + SEGMENT_CATEGORICAL_FEATURES], artifacts["segmentation_artifacts"])
         

@@ -306,8 +306,8 @@
           Siguiente Paso
         </button>
 
-        <button type="button" class="btn btn-dark" *ngIf="step === totalSteps" (click)="saveProfile()">
-          Guardar Perfil
+        <button type="button" class="btn btn-dark" *ngIf="step === totalSteps" (click)="saveProfile()" [disabled]="saving">
+          {{ saving ? 'Guardando...' : 'Guardar Perfil' }}
         </button>
       </div>
     </main>

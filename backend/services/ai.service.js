@@ -1,7 +1,10 @@
 const axios = require('axios');
 const sql = require('mssql');
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+// Keep both backend AI clients on the same default URL. FastAPI runs on 8000
+// in local development; using 8001 here made registration wait for a timeout
+// after the user had already been inserted.
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
 
 const AiService = {
     async clasificarYGuardarSegmento(usuarioId, perfil) {
@@ -42,7 +45,13 @@ const AiService = {
             return { segment_id, segment_name, profile_score, summary };
         } catch (err) {
             console.error(`[AI] ❌ Error al clasificar/guardar segmento para usuario ${usuarioId}:`);
-            console.error('  Mensaje:', err.message);
+            console.error('  Mensaje:', err.message || err.code || 'Error desconocido');
+            if (err.cause) {
+                console.error('  Causa:', err.cause.message || err.cause);
+            }
+            if (Array.isArray(err.errors)) {
+                console.error('  Errores:', err.errors.map(error => error.message || error.code));
+            }
             if (err.response) {
                 console.error('  Respuesta AI service:', JSON.stringify(err.response.data));
             }
