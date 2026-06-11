@@ -2,6 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, computed } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 
+interface AllocationSlice { title: string; pct: number; amount: number; color: string; }
+interface Vehicle {
+  name: string;
+  type: string;
+  risk: 'Bajo' | 'Medio' | 'Alto';
+  yield: string;
+  what: string;
+  why: string;
+  where: string;
+}
+
 @Component({
   selector: 'app-investments',
   standalone: true,
@@ -10,180 +21,183 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./investments.component.css']
 })
 export class InvestmentsComponent {
-  get portfolio() {
-    const inv = this.user()?.investments;
-    const capital = inv?.currentCapital || 0;
-    
-    if (!capital || capital === 0) {
-      return [
-        { title: 'Capital inicial para invertir', value: 'RD$0' },
-        { title: 'Ganancia acumulada', value: 'RD$0' },
-        { title: 'Rendimiento', value: '0.0%' }
-      ];
-    }
-
-    // Como Credenza no conecta a un broker real aún, estimamos rendimientos
-    // basados en la expectativa del usuario o mostramos el capital neto real.
-    const isExperienced = inv?.hasExperience !== 'No';
-    const rendimiento = isExperienced ? 6.5 : 0;
-    const ganancia = capital * (rendimiento / 100);
-
-    return [
-      { title: 'Capital declarado', value: `RD$${capital.toLocaleString()}` },
-      { title: 'Ganancia estimada (Anual)', value: `+RD$${ganancia.toLocaleString()}` },
-      { title: 'Rendimiento proyectado', value: `${rendimiento}%` }
-    ];
-  }
-
-  trendDays = [
-    { day: 'Lun', value: 32 },
-    { day: 'Mar', value: 46 },
-    { day: 'Mié', value: 41 },
-    { day: 'Jue', value: 58 },
-    { day: 'Vie', value: 72 },
-    { day: 'Sáb', value: 68 },
-    { day: 'Dom', value: 84 }
-  ];
-
-  get topStocks() {
-    const assets = this.user()?.investments?.preferredAssets || [];
-    
-    // Si el usuario eligió Cripto
-    if (assets.includes('Criptomonedas')) {
-      return [
-        { symbol: 'BTC', name: 'Bitcoin', price: '$68,400', change: '+2.4%', sentiment: 'Alta volatilidad', type: 'positive' },
-        { symbol: 'ETH', name: 'Ethereum', price: '$3,800', change: '+1.1%', sentiment: 'Crecimiento de red', type: 'positive' },
-        { symbol: 'COIN', name: 'Coinbase', price: '$210.50', change: '-0.5%', sentiment: 'Soporte institucional', type: 'neutral' }
-      ];
-    }
-    // Si eligió Bienes Raíces (REITs)
-    if (assets.includes('Bienes Raíces')) {
-      return [
-        { symbol: 'VNQ', name: 'Vanguard Real Estate ETF', price: '$84.20', change: '+0.8%', sentiment: 'Dividendos estables', type: 'positive' },
-        { symbol: 'O', name: 'Realty Income Corp', price: '$54.10', change: '+1.2%', sentiment: 'Pago mensual seguro', type: 'positive' },
-        { symbol: 'SPG', name: 'Simon Property Group', price: '$150.30', change: '-0.3%', sentiment: 'Recuperación comercial', type: 'neutral' }
-      ];
-    }
-    
-    // Default / Acciones y ETFs
-    return [
-      { symbol: 'VOO', name: 'Vanguard S&P 500', price: '$480.10', change: '+1.2%', sentiment: 'Crecimiento seguro', type: 'positive' },
-      { symbol: 'NVDA', name: 'NVIDIA', price: '$118.40', change: '+4.8%', sentiment: 'Fuerte momentum en IA', type: 'positive' },
-      { symbol: 'MSFT', name: 'Microsoft', price: '$421.10', change: '+2.1%', sentiment: 'Estabilidad tecnológica', type: 'positive' },
-      { symbol: 'AAPL', name: 'Apple Inc.', price: '$190.50', change: '-0.4%', sentiment: 'Soporte fuerte', type: 'neutral' }
-    ];
-  }
-
-  get allocation() {
-    const assets = this.user()?.investments?.preferredAssets || [];
-    
-    if (assets.length > 0) {
-      const percentage = Math.round(100 / assets.length);
-      return assets.map((asset: string, i: number) => {
-        const isLast = i === assets.length - 1;
-        const val = isLast ? 100 - (percentage * i) : percentage;
-        return { title: asset, value: `${val}%` };
-      });
-    }
-
-    const risk = this.riskProfile;
-    if (risk === 'Conservador') {
-      return [
-        { title: 'Certificados Financieros', value: '70%' },
-        { title: 'Liquidez (Ahorros)', value: '30%' }
-      ];
-    } else if (risk === 'Agresivo') {
-      return [
-        { title: 'Acciones de crecimiento', value: '50%' },
-        { title: 'Criptomonedas', value: '30%' },
-        { title: 'Startups', value: '20%' }
-      ];
-    }
-    
-    return [
-      { title: 'Renta fija', value: '35%' },
-      { title: 'Fondos indexados', value: '40%' },
-      { title: 'Acciones', value: '25%' }
-    ];
-  }
-
   private authService = inject(AuthService);
   user = computed(() => this.authService.currentUser()?.perfil);
 
-  get riskProfile() {
-    return this.user()?.preferences?.riskTolerance || 'Moderado';
+  // ── Datos REALES declarados por el usuario ─────────────────────
+  get riskProfile(): string { return this.user()?.preferences?.riskTolerance || 'Moderado'; }
+  get capital(): number { return Number(this.user()?.investments?.currentCapital) || 0; }
+  get monthlySavings(): number { return Number(this.user()?.finances?.monthlySavingsCapacity) || 0; }
+  get emergencyMonths(): number { return Number(this.user()?.finances?.emergencyFundMonths) || 0; }
+  get hasExperience(): boolean {
+    const e = this.user()?.investments?.hasExperience;
+    return !!e && e !== 'No';
+  }
+  get mainGoal(): string { return this.user()?.goals?.mainGoal || 'Hacer crecer mi dinero'; }
+  get timeHorizon(): string { return this.user()?.goals?.timeHorizon || 'No definido'; }
+
+  /** Tarjetas con el perfil real del usuario (sin inventar nada). */
+  get profileFacts() {
+    return [
+      { label: 'Capital para invertir', value: this.capital > 0 ? `RD$${this.capital.toLocaleString()}` : 'Por definir' },
+      { label: 'Capacidad de ahorro', value: this.monthlySavings > 0 ? `RD$${this.monthlySavings.toLocaleString()}/mes` : '—' },
+      { label: 'Perfil de riesgo', value: this.riskProfile },
+      { label: 'Horizonte de tiempo', value: this.timeHorizon },
+      { label: 'Experiencia', value: this.hasExperience ? 'Con experiencia' : 'Principiante' }
+    ];
   }
 
-  get recommendedAreas() {
-    const prefs = this.user()?.preferences || {};
-    const risk = this.riskProfile;
-    const recommendations = [];
-
-    // 1. Bienes Raíces: Para quienes buscan valor a largo plazo y no necesitan liquidez inmediata
-    if (prefs.prefersLongTermValue && prefs.liquidityNeed === 'Baja') {
-      recommendations.push({
-        name: 'Bienes Raíces (Real Estate)',
-        desc: 'Como en tus compras prefieres el valor a largo plazo y no necesitas liquidez inmediata, la inversión en propiedades se alinea perfectamente con tu paciencia y enfoque patrimonial.'
-      });
+  /** ¿Está listo para invertir? El fondo de emergencia va primero (consejo real). */
+  get readiness(): { ready: boolean; message: string } {
+    if (this.emergencyMonths < 3) {
+      return {
+        ready: false,
+        message: `Antes de invertir, conviene tener un fondo de emergencia de 3 a 6 meses de gastos. ` +
+          `Hoy cubres ${this.emergencyMonths} ${this.emergencyMonths === 1 ? 'mes' : 'meses'}. ` +
+          `Prioriza completarlo: invertir con deudas o sin respaldo te obliga a vender en mal momento.`
+      };
     }
-
-    // 2. Acciones "Blue Chip": Para quienes priorizan marcas y calidad
-    if (prefs.prioritizesBrand && risk !== 'Conservador') {
-      recommendations.push({
-        name: 'Acciones "Blue Chip" (Empresas Líderes)',
-        desc: 'Sueles guiarte por marcas reconocidas y confiables al comprar. Invertir en empresas consolidadas y líderes de mercado (como Apple o Microsoft) te dará esa misma seguridad y calidad.'
-      });
+    if (this.capital <= 0 && this.monthlySavings <= 0) {
+      return {
+        ready: false,
+        message: `Aún no tienes capital ni capacidad de ahorro registrada. El primer paso no es invertir, ` +
+          `sino liberar un excedente mensual ajustando tus gastos. Cuando lo tengas, vuelve aquí.`
+      };
     }
+    return { ready: true, message: '' };
+  }
 
-    // 3. Fondos Indexados (ETFs): Para quienes quieren simplicidad
-    if (prefs.wantsSimpleRecommendations || risk === 'Moderado') {
-      recommendations.push({
-        name: 'Fondos Indexados (S&P 500)',
-        desc: 'Prefieres procesos simples sin complicaciones. Un fondo indexado hace el trabajo por ti, diversificando automáticamente en las 500 mejores empresas sin que tengas que analizar una por una.'
-      });
-    }
+  /** Aporte mensual sugerido: la mitad de la capacidad de ahorro (deja margen). */
+  get suggestedMonthly(): number {
+    return Math.round(this.monthlySavings * 0.5);
+  }
 
-    // 4. Value Investing / Stocks Individuales: Para los analíticos
-    if (prefs.decisionStyle === 'Analítico' && risk !== 'Conservador') {
-      recommendations.push({
-        name: 'Acciones Individuales (Value Investing)',
-        desc: 'Eres muy analítico y detallas tus opciones de compra. Esa habilidad es clave para evaluar estados financieros de empresas y encontrar acciones infravaloradas en el mercado.'
-      });
-    }
+  // ── Distribución sugerida según el perfil de riesgo ────────────
+  // Marco de asignación de activos estándar (no son precios ni rendimientos
+  // reales de mercado); los montos se calculan con el capital REAL del usuario.
+  get allocation(): AllocationSlice[] {
+    const colors = ['#8b5cf6', '#22c55e', '#06b6d4', '#f59e0b'];
+    let model: { title: string; pct: number }[];
+    const r = this.riskProfile;
 
-    // 5. Certificados y Renta Fija: Para conservadores con necesidad de liquidez
-    if (risk === 'Conservador' || prefs.liquidityNeed === 'Alta') {
-      recommendations.push({
-        name: 'Certificados Financieros / Bonos',
-        desc: 'Tu perfil de compra es cauteloso y prefieres tener dinero disponible en caso de emergencia. La renta fija te asegura capital protegido y rendimientos predecibles.'
-      });
-    }
-
-    // 6. Startups / Cripto: Para los más tolerantes al riesgo
-    if (risk === 'Agresivo' && prefs.investmentInterestLevel === 'Alto') {
-      recommendations.push({
-        name: 'Criptomonedas y Startups',
-        desc: 'Tienes un alto nivel de interés y toleras el riesgo. Te gusta apostar por lo disruptivo, por lo que una pequeña parte de tu portafolio puede buscar ganancias asimétricas aquí.'
-      });
-    }
-
-    // Deduplicate and return top 3
-    const uniqueRecs = Array.from(new Map(recommendations.map(item => [item.name, item])).values());
-    
-    // Si por alguna razón no hay coincidencias, retornar defaults basados en riesgo
-    if (uniqueRecs.length === 0) {
-      if (risk === 'Conservador') {
-        return [
-          { name: 'Certificados Financieros', desc: 'Tu meta central es mantener el capital. Las tasas fijas minimizan el riesgo.' },
-          { name: 'Bonos Gubernamentales', desc: 'Inversión respaldada por el estado, ideal para no correr riesgos.' }
-        ];
-      }
-      return [
-        { name: 'Fondos Indexados (S&P 500)', desc: 'Perfecto balance riesgo-rendimiento histórico para tu perfil.' },
-        { name: 'Renta Inmobiliaria', desc: 'Ofrece flujo de caja mensual con apreciación estable del activo.' }
+    if (r === 'Conservador') {
+      model = [
+        { title: 'Certificados / depósito a plazo', pct: 50 },
+        { title: 'Fondos de mercado de dinero', pct: 30 },
+        { title: 'Bonos de Hacienda / BCRD', pct: 15 },
+        { title: 'Liquidez (efectivo)', pct: 5 }
+      ];
+    } else if (r === 'Agresivo') {
+      model = [
+        { title: 'Acciones / ETFs internacionales', pct: 40 },
+        { title: 'Fondos de inversión diversificados', pct: 25 },
+        { title: 'Fondos cerrados (inmobiliario)', pct: 20 },
+        { title: 'Activos alternativos', pct: 15 }
+      ];
+    } else {
+      model = [
+        { title: 'Fondos de inversión (renta fija)', pct: 35 },
+        { title: 'Fondos diversificados / ETFs', pct: 30 },
+        { title: 'Acciones internacionales', pct: 20 },
+        { title: 'Liquidez (efectivo)', pct: 15 }
       ];
     }
 
-    return uniqueRecs.slice(0, 3);
+    return model.map((m, i) => ({
+      title: m.title,
+      pct: m.pct,
+      amount: Math.round(this.capital * (m.pct / 100)),
+      color: colors[i % colors.length]
+    }));
+  }
+
+  // ── Vehículos de inversión REALES disponibles en República Dominicana ──
+  // Seleccionados según el perfil de riesgo del usuario. Rendimientos
+  // referenciales del mercado dominicano (verificar con cada entidad).
+  get recommendations(): Vehicle[] {
+    const r = this.riskProfile;
+    const goalNote = this.goalRationale();
+
+    const CATALOG: Record<string, Vehicle> = {
+      certificado: {
+        name: 'Certificados Financieros / Depósito a plazo',
+        type: 'Renta fija', risk: 'Bajo', yield: '~8% a 11% anual (referencial)',
+        what: 'Depósitos a plazo fijo con tasa garantizada en bancos y asociaciones de ahorros y préstamos (Banco Popular, Banreservas, APAP, ACAP).',
+        why: `Protege tu capital y te da un rendimiento predecible. ${goalNote} Ideal para empezar sin sobresaltos.`,
+        where: 'Bancos múltiples y asociaciones reguladas por la Superintendencia de Bancos.'
+      },
+      mercadoDinero: {
+        name: 'Fondo de Mercado de Dinero',
+        type: 'Renta fija de corto plazo', risk: 'Bajo', yield: '~7% a 9% anual (referencial)',
+        what: 'Fondo abierto que invierte en instrumentos de muy corto plazo. Puedes retirar tu dinero casi de inmediato.',
+        why: 'Combina bajo riesgo con liquidez diaria: perfecto para tu fondo de oportunidades o como primer paso al invertir.',
+        where: 'Administradoras de fondos reguladas por la SIMV (AFI Popular, AFI Reservas, JMMB, Pioneer, Universal).'
+      },
+      bonos: {
+        name: 'Bonos del Ministerio de Hacienda / BCRD',
+        type: 'Renta fija soberana', risk: 'Bajo', yield: '~10% a 13% anual (referencial)',
+        what: 'Títulos de deuda del Estado dominicano. Pagan intereses periódicos y devuelven el capital al vencimiento.',
+        why: 'Respaldados por el Estado: de los activos más seguros del país, con rendimiento superior al de un certificado.',
+        where: 'Se compran a través de puestos de bolsa autorizados por la Bolsa y Mercados de Valores (BVRD).'
+      },
+      fondoRentaFija: {
+        name: 'Fondo de Inversión de Renta Fija',
+        type: 'Renta fija', risk: 'Bajo', yield: '~9% a 12% anual (referencial)',
+        what: 'Fondo gestionado por profesionales que invierte en bonos y certificados diversificados.',
+        why: `Diversifica tu renta fija sin que tengas que elegir instrumento por instrumento. ${goalNote}`,
+        where: 'Administradoras de fondos reguladas por la SIMV.'
+      },
+      fondoDiversificado: {
+        name: 'Fondo de Inversión Diversificado',
+        type: 'Mixto', risk: 'Medio', yield: '~10% a 14% anual (referencial)',
+        what: 'Combina renta fija y variable en un solo producto gestionado profesionalmente.',
+        why: 'Equilibra crecimiento y estabilidad, alineado con tu perfil moderado y tu horizonte de tiempo.',
+        where: 'Administradoras de fondos reguladas por la SIMV.'
+      },
+      accionesIntl: {
+        name: 'Acciones y ETFs internacionales',
+        type: 'Renta variable', risk: 'Alto', yield: 'Variable · histórico ~7-10% USD',
+        what: 'Participación en empresas globales o índices (ej. S&P 500) a través de un ETF.',
+        why: 'Mayor potencial de crecimiento a largo plazo. Tu tolerancia al riesgo permite una porción aquí, sin que sea todo tu portafolio.',
+        where: 'Puestos de bolsa locales (Parval, JMMB, Tivalsa) o brokers internacionales regulados.'
+      },
+      fondoCerrado: {
+        name: 'Fondo Cerrado Inmobiliario / de Desarrollo',
+        type: 'Alternativo regulado', risk: 'Medio', yield: '~9% a 12% anual (referencial)',
+        what: 'Invierte en proyectos inmobiliarios o de desarrollo y reparte las ganancias, sin que compres una propiedad directa.',
+        why: 'Te da exposición a bienes raíces con menos capital y mayor diversificación que comprar un inmueble.',
+        where: 'Fondos cerrados de oferta pública regulados por la SIMV (Pioneer, Excel, AFI Popular).'
+      },
+      alternativos: {
+        name: 'Activos alternativos (cripto / capital de riesgo)',
+        type: 'Especulativo', risk: 'Alto', yield: 'Variable · alta volatilidad',
+        what: 'Criptomonedas o participación en emprendimientos. Alto potencial pero también alta probabilidad de pérdida.',
+        why: 'Solo una porción pequeña (≤15%) y nunca con dinero que necesitarás pronto. Encaja con tu perfil agresivo como apuesta controlada.',
+        where: 'Plataformas reguladas; en RD el mercado cripto no está supervisado por la SIMV, invierte con cautela.'
+      }
+    };
+
+    let keys: string[];
+    if (r === 'Conservador') {
+      keys = ['certificado', 'mercadoDinero', 'bonos', 'fondoRentaFija'];
+    } else if (r === 'Agresivo') {
+      keys = ['accionesIntl', 'fondoDiversificado', 'fondoCerrado', 'alternativos'];
+    } else {
+      keys = ['fondoDiversificado', 'fondoRentaFija', 'accionesIntl', 'fondoCerrado'];
+    }
+    return keys.map(k => CATALOG[k]);
+  }
+
+  private goalRationale(): string {
+    switch (this.mainGoal) {
+      case 'Ahorrar más': return 'Acompaña tu meta de ahorrar más, haciendo crecer ese dinero en vez de dejarlo parado.';
+      case 'Reducir deudas': return 'Si aún tienes deudas caras, prioriza pagarlas antes de invertir aquí.';
+      case 'Empezar a invertir': return 'Es un excelente punto de partida para tu meta de empezar a invertir.';
+      default: return 'Se alinea con tu objetivo de hacer crecer tu patrimonio de forma ordenada.';
+    }
+  }
+
+  riskClass(level: string): string {
+    return level === 'Bajo' ? 'risk-low' : level === 'Medio' ? 'risk-mid' : 'risk-high';
   }
 }

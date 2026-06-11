@@ -1,8 +1,6 @@
 .investment-hero-grid,
-.investment-content-grid,
 .portfolio-grid,
-.stocks-grid,
-.allocation-grid {
+.vehicles-grid {
   display: grid;
   gap: 18px;
 }
@@ -16,19 +14,42 @@
   align-items: stretch;
 }
 
-.investment-content-grid {
-  grid-template-columns: 1.05fr 0.95fr;
-  margin-top: 26px;
+/* ── Aviso de preparación (fondo de emergencia primero) ── */
+.readiness-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  border-radius: var(--radius-lg);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
 }
 
+.readiness-icon {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.readiness-banner strong {
+  display: block;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+.readiness-banner p {
+  margin: 0;
+  color: #78350f;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* ── Paneles base ── */
 .hero-panel,
 .hero-side-panel,
-.chart-panel,
-.stocks-panel,
-.allocation-section,
 .portfolio-card,
-.stock-card,
-.allocation-card {
+.vehicles-section,
+.vehicle-card {
   background: var(--surface-solid);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
@@ -36,23 +57,19 @@
 
 .hero-panel,
 .hero-side-panel,
-.chart-panel,
-.stocks-panel,
-.allocation-section,
-.portfolio-card,
-.stock-card,
-.allocation-card {
+.vehicles-section {
   padding: 24px;
 }
 
 .hero-panel {
   background: linear-gradient(135deg, #0f172a, #312e81);
   color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .hero-head,
-.panel-head,
-.stock-top {
+.panel-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -62,7 +79,7 @@
 .hero-head h3,
 .panel-head h3 {
   margin: 6px 0 0;
-  font-size: 28px;
+  font-size: 26px;
 }
 
 .mini-label {
@@ -75,305 +92,233 @@
   opacity: 1;
 }
 
-.hero-text {
-  margin-top: 14px;
-  color: rgba(255,255,255,0.84);
-  line-height: 1.9;
-}
-
+/* ── Perfil del usuario (tarjetas) ── */
 .portfolio-grid {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   margin-top: 20px;
 }
 
 .portfolio-card {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: none;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
 }
 
 .portfolio-card span {
   display: block;
   font-size: 13px;
-  color: rgba(255,255,255,0.78);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .portfolio-card strong {
   display: block;
   margin-top: 8px;
-  font-size: 28px;
+  font-size: 22px;
   color: white;
 }
 
-.hero-side-panel h3 {
-  margin: 6px 0 8px;
-  font-size: 38px;
+/* ── Plan de aporte mensual ── */
+.monthly-plan {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 20px;
 }
 
-.hero-side-panel p {
+.monthly-plan-icon {
+  font-size: 20px;
+}
+
+.monthly-plan p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.monthly-plan strong {
+  color: #a5b4fc;
+}
+
+/* ── Distribución sugerida ── */
+.hero-side-panel h3 {
+  margin: 6px 0 8px;
+  font-size: 26px;
+}
+
+.side-intro {
   color: var(--muted);
-  line-height: 1.8;
+  line-height: 1.7;
+  font-size: 14px;
+  margin: 0 0 8px;
 }
 
 .allocation-preview {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .allocation-bar {
   display: flex;
   width: 100%;
-  height: 18px;
+  height: 16px;
   border-radius: 999px;
   overflow: hidden;
   background: #e5e7eb;
 }
 
-.fixed-income {
-  width: 35%;
-  background: #8b5cf6;
-}
-
-.index-funds {
-  width: 40%;
-  background: #22c55e;
-}
-
-.stocks {
-  width: 25%;
-  background: #06b6d4;
-}
-
-.allocation-legend {
+.allocation-list {
   display: grid;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.allocation-legend div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  display: inline-block;
-}
-
-.dot.fixed {
-  background: #8b5cf6;
-}
-
-.dot.index {
-  background: #22c55e;
-}
-
-.dot.stock {
-  background: #06b6d4;
-}
-
-.chart-panel,
-.stocks-panel,
-.allocation-section {
-  background: #ffffff;
-}
-
-.chart-badge {
-  padding: 9px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #166534;
-  background: #dcfce7;
-}
-
-.chart-area {
-  position: relative;
-  margin-top: 22px;
-  padding: 18px 12px 10px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #f8fafc, #ffffff);
-  border: 1px solid #edf2f7;
-  min-height: 320px;
-}
-
-.chart-grid-lines {
-  position: absolute;
-  inset: 18px 12px 36px 12px;
-  display: grid;
-  grid-template-rows: repeat(4, 1fr);
-  pointer-events: none;
-}
-
-.chart-grid-lines span {
-  border-top: 1px dashed #dbe4ef;
-}
-
-.bars-wrap {
-  position: relative;
-  z-index: 2;
-  height: 260px;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  align-items: end;
-  gap: 16px;
-}
-
-.bar-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 12px;
-  height: 100%;
-  justify-content: end;
-}
-
-.bar-outer {
-  width: 100%;
-  max-width: 46px;
-  height: 220px;
-  border-radius: 999px;
-  background: #e8eef7;
-  display: flex;
-  align-items: end;
-  overflow: hidden;
-}
-
-.bar-inner {
-  width: 100%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #8b5cf6, #06b6d4);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.22);
-}
-
-.bar-item small {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.chart-footer {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
   margin-top: 18px;
 }
 
-.chart-footer div {
-  padding: 16px;
-  border-radius: 18px;
-  background: #f8fafc;
+.allocation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
 }
 
-.chart-footer span {
-  display: block;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.chart-footer strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 20px;
+.allocation-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   color: var(--text);
 }
 
-.stocks-grid {
+.allocation-val {
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.allocation-val small {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Vehículos de inversión reales ── */
+.vehicles-section {
+  margin-top: 26px;
+}
+
+.vehicles-grid {
   grid-template-columns: repeat(2, 1fr);
   margin-top: 20px;
 }
 
-.stock-card {
-  background: linear-gradient(135deg, #ffffff, #f8faff);
-  border: 1px solid #edf2f7;
+.vehicle-card {
+  padding: 20px;
+  border: 1px solid var(--line-light, #edf2f7);
   box-shadow: none;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.stock-badge {
-  padding: 10px 12px;
-  border-radius: 14px;
-  font-size: 13px;
+.vehicle-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.vehicle-top strong {
+  font-size: 16px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.risk-chip {
+  font-size: 11px;
   font-weight: 800;
-  color: #312e81;
-  background: #ede9fe;
-}
-
-.stock-change {
-  padding: 8px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
+  white-space: nowrap;
 }
 
-.stock-change.positive {
+.risk-low {
   color: #166534;
   background: #dcfce7;
 }
 
-.stock-change.neutral {
+.risk-mid {
   color: #92400e;
   background: #fef3c7;
 }
 
-.stock-card strong {
-  display: block;
-  margin-top: 18px;
-  font-size: 24px;
+.risk-high {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.vehicle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.vehicle-type,
+.vehicle-yield {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.vehicle-yield {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.vehicle-what {
+  margin: 0;
+  font-size: 14px;
   color: var(--text);
+  line-height: 1.6;
 }
 
-.stock-price {
-  margin: 8px 0 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #111827;
-}
-
-.stock-note {
-  margin: 10px 0 0;
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-.allocation-section {
-  margin-top: 26px;
-}
-
-.allocation-grid {
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 20px;
-}
-
-.allocation-card {
-  background: #f8fafc;
-  border: 1px solid #edf2f7;
-  box-shadow: none;
-}
-
-.allocation-card span {
-  display: block;
+.vehicle-why,
+.vehicle-where {
+  margin: 0;
   font-size: 13px;
   color: var(--muted);
+  line-height: 1.6;
+  display: flex;
+  gap: 7px;
 }
 
-.allocation-card strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 28px;
-  color: var(--text);
+.why-icon {
+  color: #16a34a;
+  font-weight: 800;
+}
+
+.vehicles-disclaimer {
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 @media (max-width: 1100px) {
   .investment-hero-grid,
-  .investment-content-grid,
-  .portfolio-grid,
-  .stocks-grid,
-  .allocation-grid,
-  .chart-footer {
+  .vehicles-grid {
     grid-template-columns: 1fr;
   }
 }
