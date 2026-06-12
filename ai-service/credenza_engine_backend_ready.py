@@ -166,6 +166,40 @@ def normalize_financial_goal(value: Any) -> str:
     raw = _normalize_text(value)
     return GOAL_MAP.get(raw, "balanced")
 
+# ── Clasificación del propósito de la compra ────────────────────────────────
+# Un bien esencial / herramienta de trabajo justifica más estirar el presupuesto
+# que un gusto o lujo. Un producto de ocio que tensiona las finanzas no es
+# prudente aunque "alcance".
+PURPOSE_MAP = {
+    # Esenciales / necesidad / herramienta
+    "trabajo": "esencial", "reemplazo": "esencial", "vivir": "esencial",
+    "inversión": "esencial", "inversion": "esencial", "salud": "esencial",
+    "estudio": "esencial", "educación": "esencial", "educacion": "esencial",
+    "negocio": "esencial", "necesidad": "esencial",
+    "familiar": "esencial",                                  # vehículo: uso familiar
+    "vida": "esencial", "vehículo": "esencial", "vehiculo": "esencial",
+    "bienes": "esencial",                                    # seguro: proteger bienes
+    "consolidar": "esencial", "emergencia": "esencial",      # préstamo
+    # Intermedio
+    "mejora": "mejora", "actualización": "mejora", "actualizacion": "mejora",
+    # Ocio / lujo / discrecional
+    "entretenimiento": "ocio", "diversión": "ocio", "diversion": "ocio",
+    "lujo": "ocio", "ocio": "ocio", "regalo": "ocio", "capricho": "ocio", "hobby": "ocio",
+    "personal": "ocio",                                      # préstamo: gasto personal
+}
+
+PURPOSE_LABEL = {"esencial": "una necesidad", "mejora": "una mejora", "ocio": "un gusto o entretenimiento"}
+
+def classify_purpose(value: Any) -> str:
+    raw = _normalize_text(value)
+    return PURPOSE_MAP.get(raw, "mejora")  # neutral por defecto
+
+# Vida útil declarada -> meses (límite superior aproximado)
+LIFESPAN_MONTHS = {"1-2": 24, "3-5": 60, "5+": 120}
+
+def lifespan_to_months(value: Any) -> Optional[int]:
+    return LIFESPAN_MONTHS.get(_normalize_text(value))
+
 # ============================================================
 # LÓGICA DE NEGOCIO Y FEATURE ENGINEERING
 # ============================================================
@@ -799,6 +833,43 @@ def find_optimal_term(user_dict: dict, product_price: float, down_payment: float
             
     return best_term
 
+def compute_contado_penalty(liquid: float, price: float, savings_capacity: float,
+                            fcf_current: float, budget_adherence: float,
+                            liquidity_impact: float, emergency_after: float) -> float:
+    """Penalización de realismo para el pago al contado.
+    Ahorrar mucho tiempo, baja disciplina o descapitalizarse hacen que 'contado'
+    no sea tan ideal aunque el ML lo puntúe alto (lo evalúa con cuota 0)."""
+    penalty = 0.0
+    if liquid < price:
+        effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
+        if effective_savings <= 0:
+            penalty = 0.45
+        else:
+            adjusted_months = (price / effective_savings) * (1.0 / max(budget_adherence, 0.3))
+            if adjusted_months > 24:
+                penalty = 0.40
+            elif adjusted_months > 12:
+                penalty = 0.25
+            elif adjusted_months > 6:
+                penalty = 0.15
+            elif adjusted_months > 2:
+                penalty = 0.10  # incluso ahorrar pocos meses retrasa la compra
+            else:
+                penalty = 0.05
+            if budget_adherence < 0.5:
+                penalty += 0.10
+    else:
+        # Tiene el dinero, pero pagar al contado INMOVILIZA liquidez. Aplicamos
+        # un costo de oportunidad continuo proporcional a cuánto ahorro consume,
+        # para que el contado no gane SIEMPRE solo por evaluarse con cuota 0:
+        # si la compra es pequeña vs sus ahorros, casi no penaliza; si consume
+        # buena parte, el financiamiento barato puede ser mejor (conservar caja).
+        penalty = clamp(liquidity_impact, 0.0, 1.0) * 0.24
+        if emergency_after < 1:
+            penalty += 0.12  # quedarse casi sin colchón pesa más
+    return penalty
+
+
 def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> List[dict]:
     """
     Genera escenarios genuinos basados en el segmento y la realidad financiera del usuario.
@@ -970,11 +1041,26 @@ def generate_scenarios(user_dict: dict, product_data: dict, artifacts: dict) -> 
         temp_prod["estimated_installment_monthly"] = sc["installment"]
         temp_prod["down_payment"] = sc["down_payment"]
         temp_prod["term_months"] = sc["term"]
-        
+
         res = predict_recommendation_base(user_dict, temp_prod, artifacts, product_data)
+        if sc.get("type") == "contado":
+            # El contado se evalúa con cuota 0 (score inflado). Penalizamos el
+            # costo de oportunidad/realismo para que no gane SIEMPRE.
+            pen = compute_contado_penalty(
+                liquid, price, savings_capacity, fcf, budget_adherence,
+                sc.get("liquidity_impact", price / max(liquid, 1)),
+                sc.get("emergency_after", 0),
+            )
+            res["recommendation_score"] = max(round(res["recommendation_score"] - pen, 4), 0.05)
+        else:
+            # Penalizar el INTERÉS TOTAL: a mayor interés (plazos largos), peor.
+            # Así el "mejor" no es siempre el plazo más largo y el contado (sin
+            # interés) queda competitivo. Trade-off real cuota ↔ costo total.
+            interest_ratio = sc.get("total_interest", 0) / max(price, 1)
+            res["recommendation_score"] = max(round(res["recommendation_score"] - interest_ratio * 0.55, 4), 0.05)
         res["scenario_details"] = sc
         results.append(res)
-        
+
     return results
 
 def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: dict, original_product: dict = None) -> dict:
@@ -1075,48 +1161,10 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
 
     # ── Analyze what the USER specifically chose ───────────────
     if chosen_method == "contado":
+        # El escenario contado ya viene con la penalización de realismo aplicada
+        # en generate_scenarios (tiempo de ahorro, descapitalización, disciplina),
+        # por lo que su score ya es coherente y comparable con los demás.
         user_choice = next((s for s in all_scenarios if s["scenario_details"]["type"] == "contado"), all_scenarios[0])
-        
-        # ── Apply contado-specific score adjustments ──────────
-        # The ML model already evaluated with virtual_installment, but we need
-        # additional behavioral penalties that the ML can't capture
-        contado_details = user_choice.get("scenario_details", {})
-        raw_score = user_choice["recommendation_score"]
-        
-        liquidity_impact = contado_details.get("liquidity_impact", price / max(liquid, 1))
-        emergency_after = contado_details.get("emergency_after", 0)
-
-        contado_penalty = 0.0
-
-        if liquid < price:
-            # User doesn't have the money — penalize based on save time and discipline
-            effective_savings = savings_capacity if savings_capacity > 0 else max(fcf_current * 0.30, 0)
-            if effective_savings <= 0:
-                # Sin flujo libre no hay forma de ahorrar: contado inviable
-                contado_penalty = 0.45
-            else:
-                adjusted_months = (price / effective_savings) * (1.0 / max(budget_adherence, 0.3))
-                if adjusted_months > 24:
-                    contado_penalty = 0.40  # Essentially not viable as contado
-                elif adjusted_months > 12:
-                    contado_penalty = 0.25
-                elif adjusted_months > 6:
-                    contado_penalty = 0.15
-                # Extra penalty for low discipline
-                if budget_adherence < 0.5:
-                    contado_penalty += 0.10  # People who don't track expenses will fail at saving
-        else:
-            # User HAS the money, but evaluate descapitalization risk
-            if liquidity_impact > 0.85:
-                contado_penalty = 0.20  # Nearly all savings gone
-            elif liquidity_impact > 0.70:
-                contado_penalty = 0.10
-
-            if emergency_after < 1:
-                contado_penalty += 0.10  # Less than 1 month emergency after
-
-        adjusted_score = max(raw_score - contado_penalty, 0.05)
-        user_choice["recommendation_score"] = round(adjusted_score, 4)
 
     else:
         # Build the user's specific scenario.
@@ -1163,11 +1211,50 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
             "description": sc_desc,
         }
 
+    # ── Ajuste por PROPÓSITO de la compra ──────────────────────────
+    # El mismo producto puede ser viable como herramienta de trabajo y NO
+    # serlo como puro entretenimiento (un lujo que tensiona el presupuesto).
+    segment_name = user_choice.get("segment_name", "")
+    user_score = user_choice["recommendation_score"]
+    purpose_class = classify_purpose(option_dict.get("purpose"))
+    _m = user_choice.get("metrics", {})
+    _fcf_post = _m.get("fcf_post", 0)
+    _em = _m.get("emergency_months", 0)
+    _stress = _m.get("stress_ratio", 0)
+    purpose_note = ""
+    if not in_deficit and not is_insurance:
+        if purpose_class == "ocio":
+            strained = (_em < 1) or (_fcf_post < income * 0.15) or (_stress > 0.45)
+            tight = (_em < 3) or (_fcf_post < income * 0.25)
+            if strained:
+                user_score = max(user_score - 0.18, 0.05)
+                purpose_note = ("Además, es una compra de entretenimiento (un gusto, no una necesidad): "
+                                "comprometer tu margen o tu fondo de emergencia por un lujo no es prudente. "
+                                "Si fuera una herramienta de trabajo, la decisión sería más justificable.")
+            elif tight:
+                user_score = max(user_score - 0.08, 0.05)
+                purpose_note = ("Recuerda que es un gasto de entretenimiento: asegúrate de que no te reste "
+                                "capacidad para metas más importantes.")
+        elif purpose_class == "esencial":
+            # Un bien esencial / de trabajo justifica algo más de esfuerzo.
+            user_score = min(user_score + 0.06, 1.0)
+            purpose_note = "Al ser una necesidad o herramienta para tu día a día, la inversión se justifica mejor que un gasto discrecional."
+
+    # ── Vida útil vs plazo de financiamiento ───────────────────────
+    lifespan_warning = ""
+    _life_m = lifespan_to_months(option_dict.get("lifespan"))
+    if chosen_method != "contado" and not is_insurance and _life_m and user_term > _life_m:
+        lifespan_warning = (f"Ojo: planeas financiarlo a {user_term} meses, pero su vida útil es de ~{_life_m // 12} años. "
+                            f"Estarías pagando por algo que podría quedar obsoleto antes de terminar de pagarlo; "
+                            f"acorta el plazo o elige una opción más duradera.")
+
+    user_score = round(user_score, 4)
+    user_choice["recommendation_score"] = user_score
+    user_choice["purpose_class"] = purpose_class
+
     # ── Unificar banda de riesgo y viabilidad con el score final ──
     # Coherencia total entre el % mostrado, el veredicto de viabilidad
     # y el texto de la sugerencia, para TODOS los métodos de pago.
-    segment_name = user_choice.get("segment_name", "")
-    user_score = user_choice["recommendation_score"]
     final_band = band_from_score(user_score)
     user_choice["risk_band"] = final_band
     user_choice["risk_band_name"] = RISK_BAND_NAMES[final_band]
@@ -1259,6 +1346,12 @@ def predict_recommendation(user_dict: dict, option_dict: dict, artifacts: dict) 
     #    zona "viable con ajustes": si no es viable ya se le dijo lo importante)
     if budget_adherence < 0.5 and chosen_method != "contado" and not is_insurance and 0.45 <= user_score < 0.65:
         suggestion_parts.append("Tu perfil indica que podrías beneficiarte de cuotas fijas automáticas en lugar de depender del ahorro voluntario.")
+
+    # 5. Contexto de propósito (necesidad vs lujo) y vida útil vs plazo
+    if purpose_note:
+        suggestion_parts.append(purpose_note)
+    if lifespan_warning:
+        suggestion_parts.append(lifespan_warning)
 
     suggestion_text = " ".join(suggestion_parts)
 

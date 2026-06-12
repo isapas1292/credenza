@@ -328,3 +328,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Banner de estrategia personalizada ──────────────────────── */
+.strategy-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  border: 1px solid #ddd6fe;
+}
+
+.strategy-icon {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.strategy-banner strong {
+  display: block;
+  color: #4338ca;
+  margin-bottom: 4px;
+}
+
+.strategy-banner p {
+  margin: 0;
+  color: #3730a3;
+  line-height: 1.6;
+  font-size: 14px;
+}

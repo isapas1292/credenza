@@ -19,15 +19,22 @@
   
   <!-- Panel Principal Gráfico -->
   <article class="results-panel main-panel">
+    <!-- Veredicto del método ELEGIDO por el usuario -->
     <div class="results-head">
       <div>
-        <span class="mini-label accent">Simulación Mensual</span>
-        <h3>Tu Dinero en Acción</h3>
+        <span class="mini-label accent">{{ chosenMethodEyebrow }}</span>
+        <h3>{{ chosenMethodTitle }}</h3>
       </div>
       <span [class]="overallCompatibility.class + ' compatibility-badge'">{{ overallCompatibility.score }} · {{ overallCompatibility.label }}</span>
     </div>
 
     <p class="compatibility-msg">{{ overallCompatibility.message }}</p>
+
+    <!-- Simulador: si pagó al contado, esto es un "¿y si lo financio?" -->
+    <div class="sim-divider">
+      <span class="mini-label">{{ simulatorEyebrow }}</span>
+      <h4>Tu Dinero en Acción</h4>
+    </div>
 
     <!-- Visualización Gráfica -->
     <div class="chart-container">
@@ -137,7 +144,13 @@
           <h3>Escenarios Calculados</h3>
         </div>
       </div>
-      
+
+      <!-- Si ninguna forma de pago es viable, no marcamos nada como recomendado -->
+      <div class="no-recommend-note" *ngIf="noRecommendableScenario">
+        <span class="no-recommend-icon">🚫</span>
+        <p>Con tu situación financiera actual, <strong>ninguna forma de pago resulta recomendable</strong> para este producto. Revisa el plan de acción o considera una opción más accesible.</p>
+      </div>
+
       <div class="scenario-grid">
         <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
           <div class="scenario-header">

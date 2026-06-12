@@ -820,3 +820,42 @@
   font-style: italic;
   margin-top: 12px;
 }
+
+/* ── Separador del simulador (debajo del veredicto del método elegido) ── */
+.sim-divider {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--line-light, #e5e7eb);
+}
+
+.sim-divider .mini-label {
+  color: var(--primary, #8b5cf6);
+  font-weight: 700;
+}
+
+.sim-divider h4 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  color: var(--text-main, #111827);
+}
+
+/* ── Nota: ninguna opción recomendable ──────────────────────── */
+.no-recommend-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.no-recommend-icon { font-size: 20px; line-height: 1.2; }
+
+.no-recommend-note p {
+  margin: 0;
+  font-size: 14px;
+  color: #991b1b;
+  line-height: 1.55;
+}

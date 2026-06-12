@@ -145,18 +145,57 @@ export class ResultsComponent implements OnInit {
     return res?.rate_analysis || null;
   }
 
+  // ── Método de pago elegido por el usuario (para separar el veredicto) ──
+  get chosenScenario() {
+    return this.aiResult?.chosen_analysis?.scenario_details || null;
+  }
+
+  get isContado(): boolean {
+    return this.chosenScenario?.type === 'contado';
+  }
+
+  get isInsurance(): boolean {
+    return this.draft()?.category?.toLowerCase() === 'seguro';
+  }
+
+  get chosenMethodTitle(): string {
+    const sc = this.chosenScenario;
+    if (sc?.name) return sc.name;
+    return this.isContado ? 'Pago al contado' : 'Financiamiento';
+  }
+
+  get chosenMethodEyebrow(): string {
+    if (this.isInsurance) return 'Tu elección: Prima mensual';
+    return this.isContado ? 'Tu elección: Al contado' : 'Tu elección: Financiamiento';
+  }
+
+  // Rótulo del simulador según el método: si pagó al contado, es un "¿y si lo financio?"
+  get simulatorEyebrow(): string {
+    return this.isContado ? 'En caso de financiarlo' : 'Simula otros plazos';
+  }
+
   get scenarios() {
     const res = this.aiResult;
     if (!res || !res.all_scenarios) return [];
+    const bestType = res.best_option?.scenario_details?.type;
+    // Solo marcamos "Recomendado" si la mejor opción es REALMENTE viable.
+    const bestViable = res.best_option?.viable === true;
     return res.all_scenarios.map((s: any) => ({
       title: s.scenario_details?.name || 'Escenario',
       description: s.scenario_details?.description || '',
-      highlight: s.scenario_details?.type === res.best_option?.scenario_details?.type,
+      highlight: bestViable && s.scenario_details?.type === bestType,
       score: Math.round((s.recommendation_score || 0) * 100),
       installment: s.metrics?.installment || s.scenario_details?.installment || 0,
       dtiPost: s.metrics?.dti_post ? Math.round(s.metrics.dti_post * 100) : null,
       fcfPost: s.metrics?.fcf_post || null
     }));
+  }
+
+  /** True si NINGUNA forma de pago resulta recomendable (producto inviable). */
+  get noRecommendableScenario(): boolean {
+    const res = this.aiResult;
+    if (!res || !res.best_option) return false;
+    return res.best_option?.viable !== true;
   }
 
   get similarProducts() {

@@ -2,44 +2,44 @@
   "by_category": {
     "laptop": {
       "cases": 60,
-      "viable_rate": 0.5,
-      "avg_score": 0.499,
+      "viable_rate": 0.533,
+      "avg_score": 0.485,
       "issues": {}
     },
     "vehicle": {
       "cases": 60,
       "viable_rate": 0.267,
-      "avg_score": 0.254,
+      "avg_score": 0.285,
       "issues": {}
     },
     "loan": {
       "cases": 60,
-      "viable_rate": 0.383,
-      "avg_score": 0.367,
+      "viable_rate": 0.367,
+      "avg_score": 0.379,
       "issues": {}
     },
     "insurance": {
       "cases": 60,
-      "viable_rate": 0.6,
-      "avg_score": 0.533,
+      "viable_rate": 0.583,
+      "avg_score": 0.512,
       "issues": {}
     },
     "home": {
       "cases": 60,
-      "viable_rate": 0.15,
-      "avg_score": 0.17,
+      "viable_rate": 0.183,
+      "avg_score": 0.172,
       "issues": {}
     },
     "travel": {
       "cases": 60,
-      "viable_rate": 0.55,
-      "avg_score": 0.489,
+      "viable_rate": 0.533,
+      "avg_score": 0.499,
       "issues": {}
     },
     "technology": {
       "cases": 60,
-      "viable_rate": 0.583,
-      "avg_score": 0.531,
+      "viable_rate": 0.55,
+      "avg_score": 0.496,
       "issues": {}
     }
   },

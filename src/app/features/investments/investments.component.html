@@ -16,6 +16,15 @@
   </div>
 </div>
 
+<!-- Estrategia personalizada según el grupo del usuario -->
+<div class="strategy-banner">
+  <span class="strategy-icon">🎯</span>
+  <div>
+    <strong>Tu estrategia recomendada</strong>
+    <p>{{ strategySummary }}</p>
+  </div>
+</div>
+
 <section class="investment-hero-grid">
   <!-- Tu perfil de inversión (datos reales) -->
   <article class="hero-panel">
@@ -51,7 +60,7 @@
     <span class="mini-label muted">Distribución sugerida</span>
     <h3>Cómo repartir tu capital</h3>
     <p class="side-intro">
-      Reparto orientativo para un perfil <strong>{{ riskProfile }}</strong>.
+      Reparto orientativo para un perfil <strong>{{ effectiveRisk }}</strong>.
       <ng-container *ngIf="capital > 0">Calculado sobre tu capital de RD${{ capital.toLocaleString() }}.</ng-container>
     </p>
 
@@ -79,7 +88,7 @@
 <section class="vehicles-section">
   <div class="panel-head">
     <div>
-      <span class="mini-label muted">Recomendado para tu perfil {{ riskProfile }}</span>
+      <span class="mini-label muted">Recomendado para tu perfil {{ effectiveRisk }}</span>
       <h3>Dónde invertir en República Dominicana</h3>
     </div>
   </div>

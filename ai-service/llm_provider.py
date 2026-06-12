@@ -74,7 +74,9 @@ def _call_openai_compatible(name: str, system: str, user_prompt: str,
             {"role": "system", "content": system},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": 0.4,
+        # Temperatura algo más alta para que el texto varíe entre usuarios y no
+        # caiga en frases plantilla; sigue anclado por los datos del prompt.
+        "temperature": 0.6,
         "response_format": {"type": "json_object"},
     }
     resp = requests.post(cfg["url"], headers=headers, json=body, timeout=timeout)

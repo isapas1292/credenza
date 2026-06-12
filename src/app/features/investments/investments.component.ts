@@ -36,6 +36,73 @@ export class InvestmentsComponent {
   get mainGoal(): string { return this.user()?.goals?.mainGoal || 'Hacer crecer mi dinero'; }
   get timeHorizon(): string { return this.user()?.goals?.timeHorizon || 'No definido'; }
 
+  // ── Factores que definen el GRUPO del usuario (más allá del riesgo) ──
+  get experienceLevel(): 'principiante' | 'intermedio' | 'avanzado' {
+    const e = String(this.user()?.investments?.hasExperience || 'No').toLowerCase();
+    if (e === 'no' || e === 'poca') return 'principiante';
+    if (e === 'intermedia') return 'intermedio';
+    return 'avanzado'; // Alta
+  }
+
+  get capitalTier(): 'nulo' | 'bajo' | 'medio' | 'alto' {
+    const c = this.capital;
+    if (c <= 0) return 'nulo';
+    if (c < 50000) return 'bajo';
+    if (c < 300000) return 'medio';
+    return 'alto';
+  }
+
+  get ageBand(): 'joven' | 'medio' | 'maduro' {
+    const age = Number(this.user()?.personal?.age) || 0;
+    if (age && age < 35) return 'joven';
+    if (age >= 55) return 'maduro';
+    return 'medio';
+  }
+
+  /** Resumen de estrategia personalizado: combina riesgo, experiencia, capital,
+   *  edad y meta — dos usuarios distintos reciben un texto distinto. */
+  get strategySummary(): string {
+    const exp = this.experienceLevel;
+    const tier = this.capitalTier;
+    const parts: string[] = [];
+
+    if (exp === 'principiante') {
+      parts.push('Como estás empezando, conviene priorizar instrumentos simples y regulados (fondos de mercado de dinero y renta fija) antes de tomar más riesgo.');
+    } else if (exp === 'intermedio') {
+      parts.push('Con algo de experiencia, puedes combinar fondos diversificados con una porción en renta variable.');
+    } else {
+      parts.push('Con tu experiencia, puedes gestionar una cartera más amplia, incluyendo acciones/ETFs directos.');
+    }
+
+    if (tier === 'nulo') {
+      parts.push(`Aún no registras capital: empieza con aportes mensuales de ~RD$${this.suggestedMonthly.toLocaleString()} para construirlo.`);
+    } else if (tier === 'bajo') {
+      parts.push(`Con un capital de RD$${this.capital.toLocaleString()}, mantén pocas posiciones y aportes constantes; la disciplina importa más que el monto.`);
+    } else if (tier === 'alto') {
+      parts.push(`Tu capital de RD$${this.capital.toLocaleString()} permite diversificar en varias clases de activo a la vez.`);
+    }
+
+    if (this.ageBand === 'joven') {
+      parts.push('Por tu edad tienes horizonte largo: puedes tolerar más volatilidad a cambio de crecimiento.');
+    } else if (this.ageBand === 'maduro') {
+      parts.push('Cerca de etapas de retiro conviene proteger capital y priorizar liquidez sobre crecimiento agresivo.');
+    }
+
+    parts.push(this.goalRationale());
+    return parts.join(' ');
+  }
+
+  /** Riesgo EFECTIVO: parte del declarado pero lo ajusta por experiencia y edad.
+   *  Así dos usuarios "Moderado" pueden recibir carteras distintas. */
+  get effectiveRisk(): 'Conservador' | 'Moderado' | 'Agresivo' {
+    const levels = ['Conservador', 'Moderado', 'Agresivo'] as const;
+    let level = Math.max(0, levels.indexOf(this.riskProfile as any));
+    if (this.experienceLevel === 'principiante') level = Math.min(level, 1); // sin cartera agresiva si recién empieza
+    if (this.ageBand === 'maduro') level = Math.max(level - 1, 0);
+    if (this.experienceLevel === 'avanzado' && this.ageBand === 'joven') level = Math.min(level + 1, 2);
+    return levels[level];
+  }
+
   /** Tarjetas con el perfil real del usuario (sin inventar nada). */
   get profileFacts() {
     return [
@@ -78,7 +145,7 @@ export class InvestmentsComponent {
   get allocation(): AllocationSlice[] {
     const colors = ['#8b5cf6', '#22c55e', '#06b6d4', '#f59e0b'];
     let model: { title: string; pct: number }[];
-    const r = this.riskProfile;
+    const r = this.effectiveRisk;  // ajustado por experiencia y edad
 
     if (r === 'Conservador') {
       model = [
@@ -115,7 +182,7 @@ export class InvestmentsComponent {
   // Seleccionados según el perfil de riesgo del usuario. Rendimientos
   // referenciales del mercado dominicano (verificar con cada entidad).
   get recommendations(): Vehicle[] {
-    const r = this.riskProfile;
+    const r = this.effectiveRisk;  // ajustado por experiencia y edad
     const goalNote = this.goalRationale();
 
     const CATALOG: Record<string, Vehicle> = {
@@ -185,7 +252,21 @@ export class InvestmentsComponent {
     } else {
       keys = ['fondoDiversificado', 'fondoRentaFija', 'accionesIntl', 'fondoCerrado'];
     }
-    return keys.map(k => CATALOG[k]);
+
+    // Principiantes: arrancar por lo más simple y líquido (fondo de mercado de
+    // dinero) y quitar lo especulativo, aunque su riesgo declarado sea alto.
+    if (this.experienceLevel === 'principiante') {
+      keys = keys.filter(k => k !== 'alternativos');
+      if (!keys.includes('mercadoDinero')) keys.unshift('mercadoDinero');
+    }
+    // Meta "empezar a invertir": el fondo de mercado de dinero es el mejor primer paso.
+    if (this.mainGoal === 'Empezar a invertir' && !keys.includes('mercadoDinero')) {
+      keys.unshift('mercadoDinero');
+    }
+
+    // 3-4 recomendaciones, sin duplicados
+    keys = [...new Set(keys)].slice(0, 4);
+    return keys.map(k => CATALOG[k]).filter(Boolean);
   }
 
   private goalRationale(): string {
