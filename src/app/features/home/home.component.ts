@@ -17,12 +17,16 @@ export class HomeComponent {
     const user = this.authService.currentUser();
     if (!user || !user.perfil || !user.perfil.finances) return null;
     const f = user.perfil.finances;
+    const monthlyIncome = (Number(f.monthlyIncome) || 0) + (Number(f.extraIncome) || 0);
+    const fixedExpenses = Number(f.fixedExpenses) || 0;
+    const variableExpenses = Number(f.variableExpenses) || 0;
+    const activeDebts = Number(f.activeDebts) || 0;
     return {
-      monthlyIncome: f.monthlyIncome,
-      fixedExpenses: f.fixedExpenses,
-      activeDebts: f.activeDebts,
-      freeCashFlow: f.monthlyIncome - f.fixedExpenses - f.activeDebts,
-      emergencyStatus: f.emergencyFundMonths >= 3 ? 'Saludable' : 'En construcción'
+      monthlyIncome,
+      fixedExpenses: fixedExpenses + variableExpenses,
+      activeDebts,
+      freeCashFlow: monthlyIncome - fixedExpenses - variableExpenses - activeDebts,
+      emergencyStatus: (Number(f.emergencyFundMonths) || 0) >= 3 ? 'Saludable' : 'En construcción'
     };
   }
   
