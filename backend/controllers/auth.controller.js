@@ -7,14 +7,13 @@ const { JWT_SECRET } = require('../middlewares/auth.middleware');
 const AuthController = {
 
     async register(req, res) {
+        let transaction = null;
         try {
             const { nombre, email, password, perfil } = req.body;
 
-            if (!email || !password) {
-                return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
+            if (!email || !password || !perfil) {
+                return res.status(400).json({ error: 'Email, contraseña y perfil financiero son obligatorios' });
             }
-
-            const request = new sql.Request();
 
             // Verificar si el correo ya existe (parametrizado: evita inyección SQL)
             const checkReq = new sql.Request();
@@ -23,6 +22,10 @@ const AuthController = {
             if (checkResult.recordset.length > 0) {
                 return res.status(400).json({ error: 'El email ya está registrado' });
             }
+
+            // Clasificar antes de abrir la transacción: si Python falla, no se
+            // crea un usuario incompleto ni queda un segmento ausente.
+            const segmento = await AiService.clasificarPerfil(perfil);
 
             // Encriptar la contraseña
             const salt = await bcrypt.genSalt(10);
@@ -36,6 +39,9 @@ const AuthController = {
                 ciudad = perfil.personal.city || '';
             }
 
+            transaction = new sql.Transaction();
+            await transaction.begin();
+            const request = new sql.Request(transaction);
             request.input('Nombre', sql.VarChar, nombre || 'Usuario');
             request.input('Apellido', sql.VarChar, apellido);
             request.input('Email', sql.VarChar, email);
@@ -52,11 +58,9 @@ const AuthController = {
             const result = await request.query(insertQuery);
             const newUser = result.recordset[0];
 
-            // Clasificar segmento financiero del usuario
-            let segmento = null;
-            if (perfil) {
-                segmento = await AiService.clasificarYGuardarSegmento(newUser.Id, perfil);
-            }
+            await AiService.guardarSegmento(newUser.Id, segmento, transaction);
+            await transaction.commit();
+            transaction = null;
 
             // Generar JWT
             const token = jwt.sign({ id: newUser.Id, email: newUser.Email }, JWT_SECRET, { expiresIn: '24h' });
@@ -74,8 +78,11 @@ const AuthController = {
             });
 
         } catch (error) {
+            if (transaction) {
+                try { await transaction.rollback(); } catch (_) {}
+            }
             console.error('Error en register:', error);
-            res.status(500).json({ error: 'Error interno del servidor' });
+            res.status(500).json({ error: 'No fue posible registrar el usuario y su segmento financiero' });
         }
     },
 
@@ -90,7 +97,12 @@ const AuthController = {
             const request = new sql.Request();
             request.input('Email', sql.VarChar, email);
 
-            const result = await request.query(`SELECT * FROM Usuarios WHERE Email = @Email`);
+            const result = await request.query(`
+                SELECT u.*, s.SegmentId, s.SegmentName, s.ProfileScore, s.Summary AS SegmentSummary
+                FROM Usuarios u
+                LEFT JOIN SegmentosFinancierosUsuario s ON s.UsuarioId = u.Id
+                WHERE u.Email = @Email
+            `);
 
             if (result.recordset.length === 0) {
                 return res.status(401).json({ error: 'Email o contraseña incorrectos' });
@@ -112,7 +124,13 @@ const AuthController = {
                     id: usuario.Id,
                     nombre: usuario.Nombre,
                     email: usuario.Email,
-                    perfil: usuario.Perfil ? JSON.parse(usuario.Perfil) : null
+                    perfil: usuario.Perfil ? JSON.parse(usuario.Perfil) : null,
+                    segmento: usuario.SegmentId ? {
+                        segment_id: usuario.SegmentId,
+                        segment_name: usuario.SegmentName,
+                        profile_score: usuario.ProfileScore,
+                        summary: usuario.SegmentSummary
+                    } : null
                 }
             });
 
@@ -123,6 +141,7 @@ const AuthController = {
     },
 
     async updateProfile(req, res) {
+        let transaction = null;
         try {
             const userId = req.params.id;
             const { perfil } = req.body; 
@@ -135,25 +154,37 @@ const AuthController = {
                 return res.status(400).json({ error: 'Los datos del perfil son requeridos' });
             }
 
+            // Recalcular primero. Perfil y segmento se guardan juntos o ninguno
+            // cambia, evitando que la tabla quede desactualizada.
+            const segmento = await AiService.clasificarPerfil(perfil);
             const perfilJson = JSON.stringify(perfil);
-            const request = new sql.Request();
+            transaction = new sql.Transaction();
+            await transaction.begin();
+            const request = new sql.Request(transaction);
             request.input('Id', sql.Int, userId);
             request.input('Perfil', sql.NVarChar, perfilJson);
 
             const result = await request.query(`
-                UPDATE Usuarios SET Perfil = @Perfil WHERE Id = @Id
+                UPDATE Usuarios SET Perfil = @Perfil, FechaActualizacion = GETDATE() WHERE Id = @Id
             `);
 
             if (result.rowsAffected[0] === 0) {
+                await transaction.rollback();
+                transaction = null;
                 return res.status(404).json({ error: 'Usuario no encontrado' });
             }
 
-            const segmento = await AiService.clasificarYGuardarSegmento(parseInt(userId), perfil);
+            await AiService.guardarSegmento(parseInt(userId), segmento, transaction);
+            await transaction.commit();
+            transaction = null;
             res.json({ mensaje: 'Perfil actualizado exitosamente', segmento });
 
         } catch (error) {
+            if (transaction) {
+                try { await transaction.rollback(); } catch (_) {}
+            }
             console.error('Error en actualizar perfil:', error);
-            res.status(500).json({ error: 'Error interno del servidor' });
+            res.status(500).json({ error: 'No fue posible actualizar el perfil y su segmento financiero' });
         }
     }
 };

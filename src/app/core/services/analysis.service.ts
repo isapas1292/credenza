@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { AnalysisDraft, UserProfile } from '../models/financial.model';
+import { AnalysisDraft } from '../models/financial.model';
 import { Observable, tap, of } from 'rxjs';
 
 @Injectable({
@@ -26,7 +26,7 @@ export class AnalysisService {
     this.saveDraft();
   }
 
-  getRecommendation(userId: number, draft: AnalysisDraft, profile: UserProfile): Observable<any> {
+  getRecommendation(userId: number, draft: AnalysisDraft): Observable<any> {
     // Pass ALL product data to backend — the Python engine needs it for genuine analysis
     const productData = {
       name: draft.product.name || 'Producto',
@@ -48,8 +48,7 @@ export class AnalysisService {
 
     const payload = {
       userId,
-      productData,
-      perfil: profile
+      productData
     };
 
     return this.http.post(this.API_URL, payload).pipe(

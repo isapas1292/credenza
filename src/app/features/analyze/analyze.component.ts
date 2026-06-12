@@ -46,6 +46,25 @@ export class AnalyzeComponent {
     notes: ''
   };
 
+  private resetProductForCategory(category: string): void {
+    this.product = {
+      name: category === 'Préstamo' ? 'Préstamo Personal' : '',
+      price: null,
+      interestRate: null,
+      condition: 'Nuevo',
+      paymentType: category === 'Préstamo' ? 'Financiado' : 'Contado',
+      paymentDuration: category === 'Seguro' ? 1 : null,
+      provider: '',
+      squareMeters: null,
+      bedrooms: null,
+      zone: '',
+      purpose: '',
+      lifespan: '',
+      mainConstraint: '',
+      notes: ''
+    };
+  }
+
   private router = inject(Router);
   private analysisService = inject(AnalysisService);
 
@@ -122,22 +141,12 @@ export class AnalyzeComponent {
 
   // ... (select methods remain the same)
   selectCategory(title: string): void {
-    this.selectedCategory = title;
-    this.product.purpose = ''; // el propósito depende de la categoría
-    if (this.selectedCategory === 'Préstamo') {
-      this.product.paymentType = 'Financiado';
-      this.product.name = 'Préstamo Personal'; // Default name since we hide the field
-    } else if (this.selectedCategory === 'Seguro') {
-      this.product.paymentType = 'Contado'; // We'll treat it as monthly cash flow
-      this.product.paymentDuration = 1;
-    } else if (this.selectedCategory === 'Vehículo' || this.selectedCategory === 'Hogar') {
-      if (this.product.paymentType === 'Tarjeta / Cuotas') {
-        this.product.paymentType = 'Financiado';
-      }
-      if (this.selectedCategory === 'Vehículo' && this.product.condition === 'Refurbished') {
-        this.product.condition = 'Usado';
-      }
+    if (title === this.selectedCategory) {
+      return;
     }
+
+    this.selectedCategory = title;
+    this.resetProductForCategory(title);
   }
 
   nextStep(): void {

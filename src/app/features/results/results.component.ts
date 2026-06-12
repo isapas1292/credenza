@@ -46,7 +46,7 @@ export class ResultsComponent implements OnInit {
     const profile = user?.perfil;
 
     if (draft && user && profile) {
-      this.analysisService.getRecommendation(user.id, draft, profile).subscribe({
+      this.analysisService.getRecommendation(user.id, draft).subscribe({
         next: () => this.loading.set(false),
         error: (err) => {
           console.error('Error fetching recommendation', err);

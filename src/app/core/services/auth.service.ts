@@ -53,7 +53,11 @@ export class AuthService {
         // Actualizar el estado local si es exitoso
         const current = this.currentUser();
         if (current) {
-          const updatedUser = { ...current, perfil: profileData };
+          const updatedUser = {
+            ...current,
+            perfil: profileData,
+            segmento: res?.segmento || current.segmento
+          };
           this.currentUser.set(updatedUser);
           localStorage.setItem('user', JSON.stringify(updatedUser));
         }

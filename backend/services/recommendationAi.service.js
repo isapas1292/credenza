@@ -11,12 +11,13 @@ const RecommendationAiService = {
      * @param {Object} productData - Datos del producto a analizar
      * @returns {Object} Respuesta con score, viabilidad, riesgo y explicaciones
      */
-    async getRecommendation(perfil, productData) {
+    async getRecommendation(perfil, productData, segment) {
         try {
             console.log(`[AI Service] Llamando a /product/recommend para análisis detallado...`);
             const response = await axios.post(`${AI_SERVICE_URL}/product/recommend`, {
                 perfil,
-                product: productData
+                product: productData,
+                segment
             });
             return response.data;
         } catch (error) {
@@ -28,7 +29,8 @@ const RecommendationAiService = {
             return { 
                 succeeded: false, 
                 error: 'Servicio de IA no disponible',
-                fallback: this.fallbackAnalysis(perfil, productData)
+                fallback: this.fallbackAnalysis(perfil, productData, segment),
+                db_segment: segment
             };
         }
     },
@@ -36,7 +38,7 @@ const RecommendationAiService = {
     /**
      * Análisis de reglas básicas cuando el servicio AI no está disponible
      */
-    fallbackAnalysis(perfil, product) {
+    fallbackAnalysis(perfil, product, segment) {
         const finances = perfil?.finances || perfil || {};
         const income = parseFloat(finances.monthlyIncome || finances.monthly_income_avg || 0);
         const fixed = parseFloat(finances.fixedExpenses || finances.fixed_expenses_monthly || 0);
@@ -61,6 +63,7 @@ const RecommendationAiService = {
         const analysis = {
             recommendation_score: score,
             risk_band_name: band,
+            segment_name: segment?.segment_name || segment?.SegmentName || '',
             explanation: `Análisis de respaldo: El flujo libre estimado es ${freeCashFlow.toFixed(2)}.`,
             viable: freeCashFlow > installment,
             scenario_details: {
@@ -75,7 +78,9 @@ const RecommendationAiService = {
             best_option: analysis,
             all_scenarios: [analysis],
             is_optimal: true,
-            suggestion_text: 'Análisis basado en reglas de respaldo.'
+            suggestion_text: 'Análisis basado en reglas de respaldo.',
+            segment_name: segment?.segment_name || segment?.SegmentName || '',
+            profile_segment: segment || null
         };
     }
 };

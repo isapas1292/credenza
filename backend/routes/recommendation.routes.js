@@ -4,36 +4,56 @@ const sql = require('mssql');
 const RecommendationAiService = require('../services/recommendationAi.service');
 const { verifyToken } = require('../middlewares/auth.middleware');
 
-router.post('/', async (req, res) => {
+async function loadPersistedUserContext(userId) {
+    const dbReq = new sql.Request();
+    dbReq.input('UsuarioId', sql.Int, userId);
+    const result = await dbReq.query(`
+        SELECT u.Perfil, s.SegmentId, s.SegmentName, s.ProfileScore, s.Summary,
+               s.FechaCreacion, s.FechaActualizacion
+        FROM Usuarios u
+        LEFT JOIN SegmentosFinancierosUsuario s ON s.UsuarioId = u.Id
+        WHERE u.Id = @UsuarioId
+    `);
+    if (result.recordset.length === 0 || !result.recordset[0].Perfil) {
+        return null;
+    }
+    const row = result.recordset[0];
+    return {
+        perfil: JSON.parse(row.Perfil),
+        segment: row.SegmentId ? {
+            segment_id: row.SegmentId,
+            segment_name: row.SegmentName,
+            profile_score: row.ProfileScore,
+            summary: row.Summary,
+            created_at: row.FechaCreacion,
+            updated_at: row.FechaActualizacion,
+        } : null,
+    };
+}
+
+router.post('/', verifyToken, async (req, res) => {
     try {
-        let { userId, productData, perfil } = req.body;
+        const userId = req.user.id;
+        const { productData } = req.body;
 
         if (!productData) {
             return res.status(400).json({ error: 'Se requiere productData para el análisis' });
         }
 
-        if (!perfil && userId) {
-            const result = await sql.query`SELECT Perfil FROM Usuarios WHERE Id = ${userId}`;
-            if (result.recordset.length > 0 && result.recordset[0].Perfil) {
-                perfil = JSON.parse(result.recordset[0].Perfil);
-            } else {
-                return res.status(404).json({ error: 'Perfil de usuario no encontrado en la base de datos' });
-            }
+        const context = await loadPersistedUserContext(userId);
+        if (!context) {
+            return res.status(404).json({ error: 'Perfil de usuario no encontrado en la base de datos' });
+        }
+        if (!context.segment) {
+            return res.status(409).json({ error: 'El usuario no tiene un segmento financiero persistido. Actualiza su perfil antes de analizar.' });
         }
 
-        if (!perfil) {
-            return res.status(400).json({ error: 'Se requiere perfil o userId válido para el análisis' });
-        }
+        const result = await RecommendationAiService.getRecommendation(context.perfil, productData, context.segment);
 
-        const result = await RecommendationAiService.getRecommendation(perfil, productData);
+        result.db_segment = context.segment;
 
         if (userId) {
-            const segmentResult = await sql.query`SELECT * FROM SegmentosFinancierosUsuario WHERE UsuarioId = ${userId}`;
-            if (segmentResult.recordset.length > 0) {
-                result.db_segment = segmentResult.recordset[0];
-            }
-
-            // [NUEVO] Guardar en HistorialAnalisis
+            // Guardar en HistorialAnalisis
             try {
                 const histReq = new sql.Request();
                 const score = result.data?.chosen_analysis?.recommendation_score || 0;
@@ -67,13 +87,18 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.post('/analyze', async (req, res) => {
+router.post('/analyze', verifyToken, async (req, res) => {
     try {
-        const { perfil, product } = req.body;
-        if (!perfil || !product) {
-            return res.status(400).json({ error: 'perfil y product son requeridos' });
+        const { product } = req.body;
+        if (!product) {
+            return res.status(400).json({ error: 'product es requerido' });
         }
-        const result = await RecommendationAiService.getRecommendation(perfil, product);
+        const context = await loadPersistedUserContext(req.user.id);
+        if (!context?.segment) {
+            return res.status(409).json({ error: 'El usuario no tiene un segmento financiero persistido.' });
+        }
+        const result = await RecommendationAiService.getRecommendation(context.perfil, product, context.segment);
+        result.db_segment = context.segment;
         res.json(result);
     } catch (error) {
         console.error('Error en /api/recommendations/analyze:', error.message);

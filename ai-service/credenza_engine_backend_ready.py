@@ -508,6 +508,81 @@ def predict_segment(df: pd.DataFrame, seg_arts: dict) -> Tuple[List[int], List[s
     names = [seg_arts["metadata"]["cluster_to_name"].get(int(i), "desconocido") for i in ids]
     return ids.tolist(), names
 
+STABLE_SEGMENT_ID_BY_NAME = {
+    name: segment_id + 1 for segment_id, name in SEGMENT_NAME_BY_SCORE.items()
+}
+
+def stable_segment_id(segment_name: str) -> int:
+    """Return a business ID that does not depend on the internal KMeans cluster."""
+    return STABLE_SEGMENT_ID_BY_NAME.get(segment_name, 0)
+
+def calculate_profile_score(engineered_record: Dict[str, Any]) -> float:
+    """Score integral de salud financiera (0-100), independiente del producto."""
+    income = max(float(engineered_record.get("monthly_income_avg", 0)), 1.0)
+    fcf_ratio = float(engineered_record.get("free_cash_flow_current", 0)) / income
+    dti = max(float(engineered_record.get("dti_current", 0)), 0.0)
+    emergency_months = max(float(engineered_record.get("emergency_months", 0)), 0.0)
+    stability = float(engineered_record.get("job_stability_score", 0.0))
+    adherence = float(engineered_record.get("budget_adherence_score", 0.0))
+    volatility = float(engineered_record.get("income_volatility_score", 1.0))
+
+    # Flujo libre: 0 puntos en déficit, máximo al conservar 40%+ del ingreso.
+    cash_flow_score = min(max(fcf_ratio / 0.40, 0.0), 1.0) * 30
+    # Endeudamiento: máximo sin deuda; llega a cero al alcanzar 60% de DTI.
+    debt_score = (1.0 - min(dti / 0.60, 1.0)) * 25
+    # Fondo de emergencia: meta saludable de 6 meses.
+    emergency_score = min(emergency_months / 6.0, 1.0) * 20
+    stability_score = min(max(stability, 0.0), 1.0) * 10
+    adherence_score = min(max(adherence, 0.0), 1.0) * 10
+    volatility_score = (1.0 - min(max(volatility, 0.0), 1.0)) * 5
+
+    return round(min(max(
+        cash_flow_score + debt_score + emergency_score
+        + stability_score + adherence_score + volatility_score,
+        0.0,
+    ), 100.0), 2)
+
+def build_profile_summary(segment_name: str, engineered_record: Dict[str, Any], score: float) -> str:
+    fcf = float(engineered_record.get("free_cash_flow_current", 0))
+    dti = float(engineered_record.get("dti_current", 0)) * 100
+    emergency = float(engineered_record.get("emergency_months", 0))
+    return (
+        f"Perfil {segment_name} con salud financiera de {score:.0f}/100. "
+        f"Flujo libre mensual RD${fcf:,.0f}, endeudamiento {dti:.0f}% "
+        f"y fondo de emergencia de {emergency:.1f} meses."
+    )
+
+def classify_financial_profile(user_dict: Dict[str, Any], seg_arts: dict) -> Dict[str, Any]:
+    """Clasifica el perfil una vez y devuelve un contrato listo para persistir."""
+    df_engineered = add_engineered_features(pd.DataFrame([user_dict]))
+    engineered_record = df_engineered.iloc[0].to_dict()
+    income = max(float(engineered_record.get("monthly_income_avg", 0)), 1.0)
+    fcf_ratio = float(engineered_record.get("free_cash_flow_current", 0)) / income
+    dti = float(engineered_record.get("dti_current", 0))
+    emergency = float(engineered_record.get("emergency_months", 0))
+    income_type = engineered_record.get("income_type", "mixed")
+
+    # Segmentos de negocio deterministas y explicables. El modelo de clusters
+    # queda reservado para experimentación; nunca define IDs persistidos.
+    if dti >= 0.50 or fcf_ratio <= 0:
+        segment_name = SEGMENT_NAME_BY_SCORE[0]
+    elif income_type == "variable" and emergency < 4:
+        segment_name = SEGMENT_NAME_BY_SCORE[2]
+    elif fcf_ratio < 0.15 or emergency < 2:
+        segment_name = SEGMENT_NAME_BY_SCORE[1]
+    elif fcf_ratio >= 0.30 and emergency >= 4 and dti <= 0.25:
+        segment_name = SEGMENT_NAME_BY_SCORE[4]
+    else:
+        segment_name = SEGMENT_NAME_BY_SCORE[3]
+
+    score = calculate_profile_score(engineered_record)
+    return {
+        "segment_id": stable_segment_id(segment_name),
+        "segment_name": segment_name,
+        "profile_score": score,
+        "summary": build_profile_summary(segment_name, engineered_record, score),
+    }
+
 def predict_viability(df: pd.DataFrame, class_arts: dict) -> Tuple[List[int], List[float]]:
     probs = class_arts["model"].predict_proba(df)[:, 1]
     preds = (probs >= 0.5).astype(int)
@@ -1073,8 +1148,8 @@ def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: d
     df_engineered = add_engineered_features(pd.DataFrame([combined]))
     engineered_record = df_engineered.iloc[0].to_dict()
     
-    # 3. Predicciones
-    seg_ids, seg_names = predict_segment(df_engineered[SEGMENT_NUMERIC_FEATURES + SEGMENT_CATEGORICAL_FEATURES], artifacts["segmentation_artifacts"])
+    # 3. Predicción de viabilidad. El segmento persistido se recibe desde la
+    # tabla SegmentosFinancierosUsuario; no se recalcula para cada producto.
     viab_preds, viab_probs = predict_viability(df_engineered[CLASSIFIER_NUMERIC_FEATURES + CLASSIFIER_CATEGORICAL_FEATURES], artifacts["classifier_artifacts"])
     
     category = normalize_category(option_dict.get("product_category", "technology"))
@@ -1083,7 +1158,7 @@ def predict_recommendation_base(user_dict: dict, option_dict: dict, artifacts: d
     reason = primary_reason_from_row(engineered_record)
     score = compute_recommendation_score(viab_probs[0], engineered_record, category)
     
-    segment_name = seg_names[0] if seg_names else ""
+    segment_name = user_dict.get("persisted_segment_name", "")
     prod_for_explanation = original_product or option_dict
     
     details, action_plan = build_explanation_details(engineered_record, segment_name, prod_for_explanation)
@@ -1764,4 +1839,3 @@ def load_or_train_artifacts(path: str) -> dict:
     arts = train_full_pipeline(50000)
     joblib.dump(arts, path)
     return arts
-
