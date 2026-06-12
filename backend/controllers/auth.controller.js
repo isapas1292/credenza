@@ -4,6 +4,46 @@ const jwt = require('jsonwebtoken');
 const AiService = require('../services/ai.service');
 const { JWT_SECRET } = require('../middlewares/auth.middleware');
 
+const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+const isNonNegativeNumber = (value) => value !== null
+    && value !== ''
+    && Number.isFinite(Number(value))
+    && Number(value) >= 0;
+
+function validateProfile(perfil) {
+    const personal = perfil?.personal;
+    const finances = perfil?.finances;
+    const goals = perfil?.goals;
+    const preferences = perfil?.preferences;
+    const investments = perfil?.investments;
+
+    if (!personal || !finances || !goals || !preferences || !investments) {
+        return 'El perfil financiero está incompleto';
+    }
+    if (!hasText(personal.firstName) || !hasText(personal.lastName) || !hasText(personal.city)
+        || !hasText(personal.maritalStatus) || !hasText(personal.employmentType)) {
+        return 'Completa todos los datos personales obligatorios';
+    }
+    if (!Number.isFinite(Number(personal.age)) || Number(personal.age) <= 0
+        || !isNonNegativeNumber(personal.dependents)) {
+        return 'La edad debe ser mayor que 0 y los dependientes deben ser 0 o más';
+    }
+    const financialFields = [
+        finances.monthlyIncome, finances.extraIncome, finances.fixedExpenses,
+        finances.variableExpenses, finances.activeDebts, finances.monthlySavingsCapacity,
+        finances.emergencyFundMonths, finances.liquidSavings, investments.currentCapital,
+    ];
+    if (financialFields.some((value) => !isNonNegativeNumber(value))) {
+        return 'Completa todos los valores financieros con 0 o un número mayor';
+    }
+    if (!hasText(goals.mainGoal) || !hasText(goals.timeHorizon)
+        || !hasText(preferences.riskTolerance) || !hasText(preferences.bigPurchaseHabit)
+        || !hasText(preferences.expenseTracking) || !hasText(investments.hasExperience)) {
+        return 'Completa los objetivos, preferencias y experiencia de inversión';
+    }
+    return null;
+}
+
 const AuthController = {
 
     async register(req, res) {
@@ -11,11 +51,22 @@ const AuthController = {
         try {
             const { nombre, email, password, perfil } = req.body;
 
-            if (!email || !password || !perfil) {
+            if (!hasText(nombre) || !hasText(email) || !hasText(password) || !perfil) {
                 return res.status(400).json({ error: 'Email, contraseña y perfil financiero son obligatorios' });
             }
 
             // Verificar si el correo ya existe (parametrizado: evita inyección SQL)
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                return res.status(400).json({ error: 'Ingresa un correo electrónico válido' });
+            }
+            if (password.length < 8) {
+                return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+            }
+            const profileError = validateProfile(perfil);
+            if (profileError) {
+                return res.status(400).json({ error: profileError });
+            }
+
             const checkReq = new sql.Request();
             checkReq.input('Email', sql.VarChar, email);
             const checkResult = await checkReq.query('SELECT Id FROM Usuarios WHERE Email = @Email');
@@ -90,7 +141,7 @@ const AuthController = {
         try {
             const { email, password } = req.body;
 
-            if (!email || !password) {
+            if (!hasText(email) || !hasText(password)) {
                 return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
             }
 
@@ -152,6 +203,11 @@ const AuthController = {
 
             if (!perfil) {
                 return res.status(400).json({ error: 'Los datos del perfil son requeridos' });
+            }
+
+            const profileError = validateProfile(perfil);
+            if (profileError) {
+                return res.status(400).json({ error: profileError });
             }
 
             // Recalcular primero. Perfil y segmento se guardan juntos o ninguno

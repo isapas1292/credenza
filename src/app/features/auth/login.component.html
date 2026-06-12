@@ -16,15 +16,16 @@
         <span class="eyebrow">Acceso Seguro</span>
         <h2>Iniciar Sesión</h2>
       </div>
+      <div class="validation-banner" *ngIf="validationError">{{ validationError }}</div>
 
       <div class="login-fields delay-100 animate-fade-in-up">
         <div class="field">
           <label>Correo electrónico</label>
-          <input [(ngModel)]="credentials.email" name="email" type="email" placeholder="tucorreo@ejemplo.com">
+          <input [(ngModel)]="credentials.email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required>
         </div>
         <div class="field">
           <label>Contraseña</label>
-          <input [(ngModel)]="credentials.password" name="password" type="password" placeholder="••••••••">
+          <input [(ngModel)]="credentials.password" name="password" type="password" placeholder="••••••••" required>
         </div>
       </div>
 

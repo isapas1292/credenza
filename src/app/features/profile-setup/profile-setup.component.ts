@@ -87,6 +87,7 @@ export class ProfileSetupComponent implements OnInit {
   isFromRegister = false;
   isEditMode = false;
   saving = false;
+  validationError = '';
 
   ngOnInit() {
     const tempReg = this.authService.tempRegisterData();
@@ -122,7 +123,7 @@ export class ProfileSetupComponent implements OnInit {
   }
 
   nextStep(): void {
-    if (this.step < this.totalSteps) {
+    if (this.step < this.totalSteps && this.validateThrough(this.step)) {
       this.step = (this.step + 1) as StepNumber;
     }
   }
@@ -134,6 +135,11 @@ export class ProfileSetupComponent implements OnInit {
   }
 
   goToStep(step: StepNumber): void {
+    if (step > this.step && !this.validateThrough((step - 1) as StepNumber)) {
+      return;
+    }
+
+    this.validationError = '';
     this.step = step;
   }
 
@@ -149,6 +155,11 @@ export class ProfileSetupComponent implements OnInit {
     if (this.saving) {
       return;
     }
+
+    if (!this.validateThrough(4)) {
+      return;
+    }
+
     this.saving = true;
 
     if (this.isEditMode) {
@@ -188,5 +199,71 @@ export class ProfileSetupComponent implements OnInit {
         }
       });
     }
+  }
+
+  private hasText(value: unknown): boolean {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
+
+  private isNonNegativeNumber(value: unknown): boolean {
+    return value !== null
+      && value !== ''
+      && Number.isFinite(Number(value))
+      && Number(value) >= 0;
+  }
+
+  private validateThrough(lastStep: StepNumber): boolean {
+    for (let current = 1; current <= lastStep; current++) {
+      const error = this.validateStep(current as StepNumber);
+      if (error) {
+        this.validationError = error;
+        this.step = current as StepNumber;
+        return false;
+      }
+    }
+
+    this.validationError = '';
+    return true;
+  }
+
+  private validateStep(step: StepNumber): string {
+    if (step === 1) {
+      const personal = this.model.personal;
+      if (!this.hasText(personal.firstName) || !this.hasText(personal.lastName) || !this.hasText(personal.city)) {
+        return 'Completa tu nombre, apellido y ciudad.';
+      }
+      if (!Number.isFinite(Number(personal.age)) || Number(personal.age) <= 0) {
+        return 'Ingresa una edad válida mayor que 0.';
+      }
+      if (!this.isNonNegativeNumber(personal.dependents)) {
+        return 'Los dependientes deben ser 0 o un número mayor.';
+      }
+      if (!this.hasText(personal.maritalStatus) || !this.hasText(personal.employmentType)) {
+        return 'Selecciona tu estado civil y situación laboral.';
+      }
+    }
+
+    if (step === 2 && Object.values(this.model.finances).some((value) => !this.isNonNegativeNumber(value))) {
+      return 'Completa todos los datos financieros con 0 o un número mayor.';
+    }
+
+    if (step === 3 && (!this.hasText(this.model.goals.mainGoal) || !this.hasText(this.model.goals.timeHorizon))) {
+      return 'Selecciona tu objetivo principal y horizonte de decisión.';
+    }
+
+    if (step === 4) {
+      const { preferences, investments } = this.model;
+      if (!this.hasText(preferences.riskTolerance)
+        || !this.hasText(preferences.bigPurchaseHabit)
+        || !this.hasText(preferences.expenseTracking)
+        || !this.hasText(investments.hasExperience)) {
+        return 'Completa todas las preferencias y tu experiencia de inversión.';
+      }
+      if (!this.isNonNegativeNumber(investments.currentCapital)) {
+        return 'El capital actual debe ser 0 o un número mayor.';
+      }
+    }
+
+    return '';
   }
 }

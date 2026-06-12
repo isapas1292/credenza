@@ -28,6 +28,7 @@
   </div>
 
   <article class="wizard-panel">
+    <div class="validation-banner" *ngIf="validationError">{{ validationError }}</div>
 
     <!-- STEP 1: CATEGORY -->
     <div class="step-content animate-fade-in" *ngIf="currentStep === 1">

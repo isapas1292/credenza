@@ -220,6 +220,24 @@ input:focus, select:focus, textarea:focus {
   background: #fff;
 }
 
+.validation-banner {
+  margin: 16px 0 20px;
+  padding: 12px 16px;
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-md);
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+input.ng-invalid.ng-touched,
+select.ng-invalid.ng-touched,
+textarea.ng-invalid.ng-touched {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
 /* Custom Checkbox / Radio Cards */
 .radio-card-grid {
   display: grid;

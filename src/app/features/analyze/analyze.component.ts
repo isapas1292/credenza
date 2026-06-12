@@ -24,6 +24,7 @@ export class AnalyzeComponent {
 
   selectedCategory = 'Laptop';
   currentStep = 1;
+  validationError = '';
 
   product = {
     name: '',
@@ -150,13 +151,14 @@ export class AnalyzeComponent {
   }
 
   nextStep(): void {
-    if (this.currentStep < 3) {
+    if (this.currentStep < 3 && this.validateStep(this.currentStep)) {
       this.currentStep++;
     }
   }
 
   prevStep(): void {
     if (this.currentStep > 1) {
+      this.validationError = '';
       this.currentStep--;
     }
   }
@@ -178,6 +180,10 @@ export class AnalyzeComponent {
   }
 
   goToResults(): void {
+    if (!this.validateStep(3)) {
+      return;
+    }
+
     this.analysisService.setAnalysisDraft({
       category: this.selectedCategory,
       product: {
@@ -199,5 +205,68 @@ export class AnalyzeComponent {
     });
 
     this.router.navigate(['/resultados']);
+  }
+
+  private get categoryKey(): string {
+    return this.selectedCategory.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private hasText(value: unknown): boolean {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
+
+  private isNonNegativeNumber(value: unknown): boolean {
+    return value !== null
+      && value !== ''
+      && Number.isFinite(Number(value))
+      && Number(value) >= 0;
+  }
+
+  private isPositiveNumber(value: unknown): boolean {
+    return this.isNonNegativeNumber(value) && Number(value) > 0;
+  }
+
+  private validateStep(step: number): boolean {
+    let error = '';
+    const category = this.categoryKey;
+
+    if (step === 1 && !this.hasText(this.selectedCategory)) {
+      error = 'Selecciona una categoría para continuar.';
+    }
+
+    if (step === 2) {
+      if (category !== 'prestamo' && !this.hasText(this.product.name)) {
+        error = 'Ingresa el nombre o tipo del producto.';
+      } else if (!this.isPositiveNumber(this.product.price)) {
+        error = 'Ingresa un precio o monto mayor que 0.';
+      } else if (category !== 'prestamo' && category !== 'hogar' && !this.hasText(this.product.provider)) {
+        error = 'Ingresa la marca, proveedor o aseguradora.';
+      } else if (category === 'hogar' && !this.isPositiveNumber(this.product.squareMeters)) {
+        error = 'Ingresa los metros cuadrados de la propiedad.';
+      } else if (category === 'hogar' && !this.isNonNegativeNumber(this.product.bedrooms)) {
+        error = 'Ingresa las habitaciones; puedes usar 0.';
+      } else if (category === 'hogar' && !this.hasText(this.product.zone)) {
+        error = 'Ingresa la zona o sector de la propiedad.';
+      } else if (category !== 'seguro' && this.product.paymentType !== 'Contado'
+        && !this.isPositiveNumber(this.product.paymentDuration)) {
+        error = 'Ingresa una cantidad de meses mayor que 0.';
+      } else if (category !== 'seguro' && this.product.paymentType !== 'Contado'
+        && !this.isNonNegativeNumber(this.product.interestRate)) {
+        error = 'Ingresa la tasa de interés; puede ser 0.';
+      }
+    }
+
+    if (step === 3) {
+      if (!this.hasText(this.product.purpose)) {
+        error = 'Selecciona el propósito principal.';
+      } else if (!['prestamo', 'seguro', 'hogar'].includes(category) && !this.hasText(this.product.lifespan)) {
+        error = 'Selecciona el tiempo de vida esperado.';
+      } else if (!this.hasText(this.product.mainConstraint)) {
+        error = 'Selecciona qué es lo más importante para ti.';
+      }
+    }
+
+    this.validationError = error;
+    return !error;
   }
 }

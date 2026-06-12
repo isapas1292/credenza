@@ -12,6 +12,8 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './register.component.css'
 })
 export class RegisterComponent {
+  validationError = '';
+
   model = {
     firstName: '',
     lastName: '',
@@ -25,9 +27,30 @@ export class RegisterComponent {
   constructor(private router: Router, private authService: AuthService) {}
 
   register() {
+    this.validationError = '';
+    const required = [
+      this.model.firstName,
+      this.model.lastName,
+      this.model.email,
+      this.model.password,
+      this.model.confirmPassword,
+      this.model.city
+    ];
+    if (required.some(value => !value.trim())) {
+      this.validationError = 'Completa todos los campos obligatorios para continuar.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.model.email.trim())) {
+      this.validationError = 'Ingresa un correo electrónico válido.';
+      return;
+    }
+    if (this.model.password.length < 8) {
+      this.validationError = 'La contraseña debe tener al menos 8 caracteres.';
+      return;
+    }
     // Validar contraseñas
     if (this.model.password !== this.model.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      this.validationError = 'Las contraseñas no coinciden.';
       return;
     }
     

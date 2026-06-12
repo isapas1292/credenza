@@ -4,6 +4,43 @@ const sql = require('mssql');
 const RecommendationAiService = require('../services/recommendationAi.service');
 const { verifyToken } = require('../middlewares/auth.middleware');
 
+const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+const isNonNegativeNumber = (value) => value !== null
+    && value !== ''
+    && Number.isFinite(Number(value))
+    && Number(value) >= 0;
+
+function validateProduct(product) {
+    if (!product || !hasText(product.name) || !hasText(product.product_category)) {
+        return 'Completa el nombre y la categoría del producto';
+    }
+    if (!isNonNegativeNumber(product.price) || Number(product.price) <= 0) {
+        return 'El precio o monto debe ser mayor que 0';
+    }
+    if (!hasText(product.purpose) || !hasText(product.main_constraint)) {
+        return 'Completa el propósito y la prioridad principal';
+    }
+
+    const category = product.product_category.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (!['prestamo', 'seguro', 'hogar'].includes(category) && !hasText(product.lifespan)) {
+        return 'Selecciona el tiempo de vida esperado';
+    }
+    if (category === 'hogar'
+        && (!isNonNegativeNumber(product.square_meters) || Number(product.square_meters) <= 0
+            || !isNonNegativeNumber(product.bedrooms) || !hasText(product.zone))) {
+        return 'Completa los metros cuadrados, habitaciones y zona de la propiedad';
+    }
+    if (product.payment_method !== 'contado' && category !== 'seguro') {
+        if (!isNonNegativeNumber(product.term_months) || Number(product.term_months) <= 0) {
+            return 'El plazo financiado debe ser mayor que 0';
+        }
+        if (!isNonNegativeNumber(product.interest_rate)) {
+            return 'La tasa de interés debe ser 0 o un número mayor';
+        }
+    }
+    return null;
+}
+
 async function loadPersistedUserContext(userId) {
     const dbReq = new sql.Request();
     dbReq.input('UsuarioId', sql.Int, userId);
@@ -38,6 +75,11 @@ router.post('/', verifyToken, async (req, res) => {
 
         if (!productData) {
             return res.status(400).json({ error: 'Se requiere productData para el análisis' });
+        }
+
+        const productError = validateProduct(productData);
+        if (productError) {
+            return res.status(400).json({ error: productError });
         }
 
         const context = await loadPersistedUserContext(userId);
@@ -93,6 +135,11 @@ router.post('/analyze', verifyToken, async (req, res) => {
         if (!product) {
             return res.status(400).json({ error: 'product es requerido' });
         }
+        const productError = validateProduct(product);
+        if (productError) {
+            return res.status(400).json({ error: productError });
+        }
+
         const context = await loadPersistedUserContext(req.user.id);
         if (!context?.segment) {
             return res.status(409).json({ error: 'El usuario no tiene un segmento financiero persistido.' });

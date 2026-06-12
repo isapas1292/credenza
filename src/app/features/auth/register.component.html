@@ -16,31 +16,32 @@
         <span class="eyebrow">Registro Seguro</span>
         <h2>Crear Cuenta</h2>
       </div>
+      <div class="validation-banner" *ngIf="validationError">{{ validationError }}</div>
 
       <div class="login-fields field-grid delay-100 animate-fade-in-up">
         <div class="field">
           <label>Nombre</label>
-          <input [(ngModel)]="model.firstName" name="firstName" type="text" placeholder="Ej. Ramón">
+          <input [(ngModel)]="model.firstName" name="firstName" type="text" placeholder="Ej. Ramón" required>
         </div>
         <div class="field">
           <label>Apellido</label>
-          <input [(ngModel)]="model.lastName" name="lastName" type="text" placeholder="Ej. Gómez">
+          <input [(ngModel)]="model.lastName" name="lastName" type="text" placeholder="Ej. Gómez" required>
         </div>
         <div class="field field-full">
           <label>Correo electrónico</label>
-          <input [(ngModel)]="model.email" name="email" type="email" placeholder="correo@ejemplo.com">
+          <input [(ngModel)]="model.email" name="email" type="email" placeholder="correo@ejemplo.com" required>
         </div>
         <div class="field">
           <label>Contraseña</label>
-          <input [(ngModel)]="model.password" name="password" type="password" placeholder="••••••••">
+          <input [(ngModel)]="model.password" name="password" type="password" placeholder="••••••••" required minlength="8">
         </div>
         <div class="field">
           <label>Confirmar contraseña</label>
-          <input [(ngModel)]="model.confirmPassword" name="confirmPassword" type="password" placeholder="••••••••">
+          <input [(ngModel)]="model.confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required minlength="8">
         </div>
         <div class="field field-full">
           <label>Ciudad</label>
-          <input [(ngModel)]="model.city" name="city" type="text" placeholder="Ej. Santo Domingo">
+          <input [(ngModel)]="model.city" name="city" type="text" placeholder="Ej. Santo Domingo" required>
         </div>
         <div class="field field-full">
           <label>Objetivo principal (Opcional)</label>

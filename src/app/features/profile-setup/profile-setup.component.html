@@ -30,6 +30,8 @@
     </aside>
 
     <main class="wizard-main">
+      <div class="validation-banner" *ngIf="validationError">{{ validationError }}</div>
+
       <!-- STEP 1 -->
       <section class="step-card animate-fade-in" *ngIf="step === 1">
         <div class="step-head">

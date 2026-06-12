@@ -13,6 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   loading = false;
+  validationError = '';
 
   credentials = {
     email: '',
@@ -23,6 +24,15 @@ export class LoginComponent {
   private authService = inject(AuthService);
 
   login() {
+    this.validationError = '';
+    if (!this.credentials.email.trim() || !this.credentials.password) {
+      this.validationError = 'Ingresa tu correo y contraseña.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.credentials.email.trim())) {
+      this.validationError = 'Ingresa un correo electrónico válido.';
+      return;
+    }
     if (this.credentials.email && this.credentials.password && !this.loading) {
       this.loading = true;
       this.authService.login(this.credentials).subscribe({
