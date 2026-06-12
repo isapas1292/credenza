@@ -42,33 +42,6 @@ const AiService = {
         return segmento;
     },
 
-    async obtenerSegmento(usuarioId) {
-        const req = new sql.Request();
-        req.input('UsuarioId', sql.Int, usuarioId);
-        const result = await req.query(`
-            SELECT SegmentId, SegmentName, ProfileScore, Summary, FechaCreacion, FechaActualizacion
-            FROM SegmentosFinancierosUsuario
-            WHERE UsuarioId = @UsuarioId
-        `);
-        return result.recordset[0] || null;
-    },
-
-    async clasificarYGuardarSegmento(usuarioId, perfil, transaction = null) {
-        try {
-            console.log(`[AI] Clasificando perfil financiero del usuario ${usuarioId}...`);
-            const segmento = await this.clasificarPerfil(perfil);
-            await this.guardarSegmento(usuarioId, segmento, transaction);
-            console.log(`[AI] Usuario ${usuarioId} -> "${segmento.segment_name}" (${segmento.profile_score}/100).`);
-            return segmento;
-        } catch (err) {
-            console.error(`[AI] Error al clasificar/guardar segmento para usuario ${usuarioId}:`);
-            console.error('  Mensaje:', err.message || err.code || 'Error desconocido');
-            if (err.response) {
-                console.error('  Respuesta AI service:', JSON.stringify(err.response.data));
-            }
-            throw err;
-        }
-    }
 };
 
 module.exports = AiService;

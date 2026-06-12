@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AnalysisDraft } from '../models/financial.model';
-import { Observable, tap, of } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +26,7 @@ export class AnalysisService {
     this.saveDraft();
   }
 
-  getRecommendation(userId: number, draft: AnalysisDraft): Observable<any> {
+  getRecommendation(draft: AnalysisDraft): Observable<any> {
     // Pass ALL product data to backend — the Python engine needs it for genuine analysis
     const productData = {
       name: draft.product.name || 'Producto',
@@ -46,12 +46,9 @@ export class AnalysisService {
       zone: draft.product.zone
     };
 
-    const payload = {
-      userId,
-      productData
-    };
-
-    return this.http.post(this.API_URL, payload).pipe(
+    // El token identifica al usuario. El backend carga perfil y segmento desde
+    // SQL; el frontend solo envía el producto que se desea analizar.
+    return this.http.post(this.API_URL, { productData }).pipe(
       tap(res => this.latestResultSig.set(res))
     );
   }

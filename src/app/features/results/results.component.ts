@@ -43,10 +43,9 @@ export class ResultsComponent implements OnInit {
   ngOnInit(): void {
     const draft = this.draft();
     const user = this.authService.currentUser();
-    const profile = user?.perfil;
 
-    if (draft && user && profile) {
-      this.analysisService.getRecommendation(user.id, draft).subscribe({
+    if (draft && user) {
+      this.analysisService.getRecommendation(draft).subscribe({
         next: () => this.loading.set(false),
         error: (err) => {
           console.error('Error fetching recommendation', err);
