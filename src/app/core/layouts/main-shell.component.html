@@ -1,7 +1,7 @@
 <div class="app-shell animate-fade-in">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand" routerLink="/">
+      <div class="brand" routerLink="/" (click)="closeMenu()">
         <div class="brand-mark">C</div>
         <div class="brand-text">
           <h1>Credenza</h1>
@@ -9,13 +9,26 @@
         </div>
       </div>
 
-      <nav class="nav">
+      <!-- Botón hamburguesa: solo visible en celular/tablet -->
+      <button
+        class="menu-toggle"
+        type="button"
+        [class.open]="menuOpen()"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Abrir menú"
+      >
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav" [class.open]="menuOpen()">
         <div class="nav-main">
           <a
             *ngFor="let item of mainNavItems"
             [routerLink]="item.route"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+            (click)="closeMenu()"
           >
             {{ item.label }}
           </a>
@@ -23,28 +36,23 @@
 
         <div class="nav-actions">
           <ng-container *ngIf="authService.currentUser()">
-            <a
-              class="btn btn-primary"
-              routerLink="/perfil"
-              routerLinkActive="active"
-            >
+            <a class="btn btn-primary" routerLink="/perfil" routerLinkActive="active" (click)="closeMenu()">
               Mi Cuenta
             </a>
           </ng-container>
           <ng-container *ngIf="!authService.currentUser()">
-            <a
-              class="btn btn-secondary"
-              routerLink="/login"
-              routerLinkActive="active"
-            >
+            <a class="btn btn-secondary" routerLink="/login" routerLinkActive="active" (click)="closeMenu()">
               Iniciar sesión
             </a>
-            <a class="btn btn-primary" routerLink="/registro">Registrarse</a>
+            <a class="btn btn-primary" routerLink="/registro" (click)="closeMenu()">Registrarse</a>
           </ng-container>
         </div>
       </nav>
     </div>
   </header>
+
+  <!-- Fondo oscuro para cerrar el menú (solo celular/tablet) -->
+  <div class="nav-backdrop" [class.show]="menuOpen()" (click)="closeMenu()"></div>
 
   <main class="container">
     <router-outlet></router-outlet>

@@ -319,3 +319,40 @@ textarea.ng-invalid.ng-touched {
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
+
+/* ═══════════ Ajustes globales para celular y tablet (look de app) ═══════════
+   Solo afectan ≤1024px. En desktop todo queda exactamente igual. */
+@media (max-width: 1024px) {
+  .page-title h2,
+  .section-title h3 {
+    font-size: 28px;
+  }
+  .page-title p,
+  .section-title p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .eyebrow {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+  /* Mejor área táctil en botones */
+  .btn {
+    padding: 13px 20px;
+    min-height: 44px;
+  }
+  /* 16px evita el zoom automático de iOS al enfocar un campo */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    padding: 13px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title h2,
+  .section-title h3 {
+    font-size: 24px;
+  }
+}
