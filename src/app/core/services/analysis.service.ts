@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AnalysisDraft } from '../models/financial.model';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { Observable, tap } from 'rxjs';
 export class AnalysisService {
   private http = inject(HttpClient);
   private readonly STORAGE_KEY = 'credenza_analysis_draft';
-  private readonly API_URL = 'http://localhost:3000/api/recommendations';
+  private readonly API_URL = `${environment.apiUrl}/api/recommendations`;
   
   private analysisDraftSig = signal<AnalysisDraft | null>(null);
   public analysisDraft = this.analysisDraftSig.asReadonly();

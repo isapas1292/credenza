@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:vercel": "node scripts/generate-production-environment.js && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "start:backend": "node backend/server.js",
