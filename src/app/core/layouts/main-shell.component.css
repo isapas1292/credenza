@@ -1,7 +1,7 @@
 .app-shell {
   min-height: 100vh;
   /* Premium abstract gradient background */
-  background: 
+  background:
     radial-gradient(circle at 100% 0%, rgba(79, 70, 229, 0.05), transparent 40%),
     radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.05), transparent 40%),
     var(--bg);
@@ -117,28 +117,126 @@
   padding: 40px 0 60px;
 }
 
-@media (max-width: 900px) {
+/* Botón hamburguesa y backdrop: ocultos en desktop, se activan en móvil/tablet */
+.menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+}
+
+.menu-toggle span {
+  display: block;
+  width: 22px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--text-main);
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.menu-toggle.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+.menu-toggle.open span:nth-child(2) { opacity: 0; }
+.menu-toggle.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+.nav-backdrop {
+  display: none;
+}
+
+/* ═══════════ Celular y tablet: menú desplegable estilo app ═══════════ */
+@media (max-width: 1024px) {
   .topbar-inner {
-    height: auto;
-    padding: 16px 0;
-    flex-direction: column;
-    gap: 20px;
+    height: 64px;
   }
+
+  .brand-mark { width: 40px; height: 40px; font-size: 20px; }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  /* El nav pasa a ser un panel desplegable bajo el header */
   .nav {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
     flex-direction: column;
-    width: 100%;
-    gap: 20px;
+    align-items: stretch;
+    gap: 0;
+    background: var(--surface-solid);
+    border-bottom: 1px solid var(--line-light);
+    box-shadow: 0 24px 40px -12px rgba(15, 23, 42, 0.20);
+    padding: 12px 20px 20px;
+    z-index: 60;
+    transform: translateY(-14px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
   }
+
+  .nav.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
   .nav-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 8px;
   }
+
+  .nav-main a {
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: var(--radius-md);
+  }
+
   .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
     width: 100%;
-    justify-content: stretch;
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-light);
   }
+
   .nav-actions .btn {
-    flex: 1;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    justify-content: center;
+  }
+
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 64px 0 0 0;
+    background: rgba(15, 23, 42, 0.40);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, visibility 0.22s;
+    z-index: 55;
+  }
+
+  .nav-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Más aire de app: menos margen lateral, más respiración abajo */
+  .container {
+    width: min(1280px, calc(100% - 32px));
+    padding: 22px 0 56px;
   }
 }

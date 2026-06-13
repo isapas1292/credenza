@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -18,4 +19,23 @@ export class MainShellComponent {
   ];
 
   public authService = inject(AuthService);
+  private router = inject(Router);
+
+  // Estado del menú desplegable (solo se usa en celular/tablet vía CSS).
+  menuOpen = signal(false);
+
+  constructor() {
+    // Cerrar el menú al navegar a otra pantalla.
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => this.menuOpen.set(false));
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((v) => !v);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 }
