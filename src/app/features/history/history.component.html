@@ -1,0 +1,38 @@
+<section class="history-top animate-fade-in">
+  <div class="page-title">
+    <span class="eyebrow">Mi actividad</span>
+    <h2>Historial completo de análisis</h2>
+    <p>Todos los productos que has analizado, del más reciente al más antiguo.</p>
+  </div>
+  <button class="btn btn-secondary" type="button" (click)="goBack()">← Volver a mi perfil</button>
+</section>
+
+<section class="history-wrap animate-fade-in-up">
+  <p class="state" *ngIf="loading()">Cargando tu historial…</p>
+  <p class="state error" *ngIf="error()">{{ error() }}</p>
+
+  <div class="empty" *ngIf="!loading() && !error() && history().length === 0">
+    <span class="empty-icon">📭</span>
+    <p>Aún no has analizado ningún producto.</p>
+    <button class="btn btn-primary" (click)="goBack()">Volver al perfil</button>
+  </div>
+
+  <p class="count" *ngIf="!loading() && history().length > 0">{{ history().length }} análisis en total</p>
+
+  <div class="full-list" *ngIf="!loading() && history().length > 0">
+    <article class="full-item" *ngFor="let item of history()">
+      <div class="full-main">
+        <div class="full-head">
+          <strong>{{ item.ProductoNombre }}</strong>
+          <span class="full-cat" *ngIf="item.ProductoCategoria">{{ item.ProductoCategoria }}</span>
+        </div>
+        <p class="full-meta">RD${{ item.ProductoPrecio | number:'1.0-0' }} · {{ item.FechaAnalisis | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p class="full-msg" *ngIf="item.MensajeSugerencia">{{ item.MensajeSugerencia }}</p>
+      </div>
+      <div class="full-verdict">
+        <span class="full-pct">{{ (item.RecomendacionScore * 100) | number:'1.0-0' }}%</span>
+        <span [class]="scoreClass(item.RecomendacionScore)">{{ item.Viable ? 'Viable' : 'No viable' }}</span>
+      </div>
+    </article>
+  </div>
+</section>

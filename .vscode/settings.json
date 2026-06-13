@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\Isaias\\AppData\\Roaming\\Python\\Python314\\Scripts\\python.exe",
+  "python.analysis.extraPaths": [
+    "C:\\Users\\Isaias\\AppData\\Roaming\\Python\\Python314\\site-packages"
+  ],
+  "python.languageServer": "Pylance"
+}

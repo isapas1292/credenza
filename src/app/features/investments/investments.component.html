@@ -1,141 +1,118 @@
 <section class="page-title spacing-bottom">
   <span class="eyebrow">Inversiones</span>
-  <h2>Explora oportunidades y monitorea tu estrategia</h2>
+  <h2>Dónde poner tu dinero, según tu perfil</h2>
   <p>
-    Esta pantalla permite revisar rendimiento, comportamiento reciente y sugerencias
-    visuales de acciones dentro de una experiencia más atractiva y fácil de interpretar.
+    Recomendaciones basadas en los datos que registraste y en instrumentos reales
+    disponibles en República Dominicana. Sin precios inventados ni promesas de rendimiento.
   </p>
 </section>
 
+<!-- Aviso de preparación: el fondo de emergencia va primero -->
+<div class="readiness-banner" *ngIf="!readiness.ready">
+  <span class="readiness-icon">🛟</span>
+  <div>
+    <strong>Primero lo primero</strong>
+    <p>{{ readiness.message }}</p>
+  </div>
+</div>
+
+<!-- Estrategia personalizada según el grupo del usuario -->
+<div class="strategy-banner">
+  <span class="strategy-icon">🎯</span>
+  <div>
+    <strong>Tu estrategia recomendada</strong>
+    <p>{{ strategySummary }}</p>
+  </div>
+</div>
+
 <section class="investment-hero-grid">
+  <!-- Tu perfil de inversión (datos reales) -->
   <article class="hero-panel">
     <div class="hero-head">
       <div>
-        <span class="mini-label">Resumen del portafolio</span>
-        <h3>Panel de inversiones</h3>
+        <span class="mini-label">Tu perfil de inversión</span>
+        <h3>Lo que sabemos de ti</h3>
       </div>
-      <span class="badge-success">Rendimiento positivo</span>
+      <span class="badge-neutral">{{ riskProfile }}</span>
     </div>
 
-    <p class="hero-text">
-      Visualiza el capital invertido, la evolución reciente y las oportunidades
-      que mejor encajan con un perfil de riesgo moderado.
-    </p>
-
     <div class="portfolio-grid">
-      <article class="portfolio-card" *ngFor="let item of portfolio">
-        <span>{{ item.title }}</span>
+      <article class="portfolio-card" *ngFor="let item of profileFacts">
+        <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
       </article>
     </div>
+
+    <!-- Plan de aporte mensual sugerido -->
+    <div class="monthly-plan" *ngIf="readiness.ready && suggestedMonthly > 0">
+      <span class="monthly-plan-icon">📅</span>
+      <p>
+        Con tu capacidad de ahorro podrías destinar
+        <strong>RD${{ suggestedMonthly.toLocaleString() }}/mes</strong>
+        a un aporte automático, manteniendo la otra mitad como margen. La constancia
+        importa más que el monto.
+      </p>
+    </div>
   </article>
 
+  <!-- Distribución sugerida -->
   <article class="hero-side-panel">
-    <span class="mini-label muted">Perfil actual</span>
-    <h3>Moderado</h3>
-    <p>
-      Balance entre crecimiento y estabilidad, priorizando oportunidades con
-      potencial atractivo sin asumir una volatilidad extrema.
+    <span class="mini-label muted">Distribución sugerida</span>
+    <h3>Cómo repartir tu capital</h3>
+    <p class="side-intro">
+      Reparto orientativo para un perfil <strong>{{ effectiveRisk }}</strong>.
+      <ng-container *ngIf="capital > 0">Calculado sobre tu capital de RD${{ capital.toLocaleString() }}.</ng-container>
     </p>
 
     <div class="allocation-preview">
       <div class="allocation-bar">
-        <span class="fixed-income"></span>
-        <span class="index-funds"></span>
-        <span class="stocks"></span>
+        <span *ngFor="let item of allocation"
+              [style.width.%]="item.pct"
+              [style.background]="item.color">
+        </span>
       </div>
+    </div>
 
-      <div class="allocation-legend">
-        <div><i class="dot fixed"></i> Renta fija</div>
-        <div><i class="dot index"></i> Fondos indexados</div>
-        <div><i class="dot stock"></i> Acciones</div>
+    <div class="allocation-list">
+      <div class="allocation-row" *ngFor="let item of allocation">
+        <span class="allocation-name"><i class="dot" [style.background]="item.color"></i> {{ item.title }}</span>
+        <span class="allocation-val">
+          {{ item.pct }}%<small *ngIf="capital > 0"> · RD${{ item.amount.toLocaleString() }}</small>
+        </span>
       </div>
     </div>
   </article>
 </section>
 
-<section class="investment-content-grid">
-  <article class="chart-panel">
-    <div class="panel-head">
-      <div>
-        <span class="mini-label muted">Rendimiento semanal</span>
-        <h3>Crecimiento en días</h3>
-      </div>
-      <span class="chart-badge">+8.4% esta semana</span>
-    </div>
-
-    <div class="chart-area">
-      <div class="chart-grid-lines">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
-      <div class="bars-wrap">
-        <div class="bar-item" *ngFor="let day of trendDays">
-          <div class="bar-outer">
-            <div class="bar-inner" [style.height.%]="day.value"></div>
-          </div>
-          <small>{{ day.day }}</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="chart-footer">
-      <div>
-        <span>Pico reciente</span>
-        <strong>Domingo</strong>
-      </div>
-      <div>
-        <span>Mejor tramo</span>
-        <strong>Jue → Dom</strong>
-      </div>
-      <div>
-        <span>Tendencia</span>
-        <strong>Alcista</strong>
-      </div>
-    </div>
-  </article>
-
-  <article class="stocks-panel">
-    <div class="panel-head">
-      <div>
-        <span class="mini-label muted">Sugerencias</span>
-        <h3>Mejores acciones a vigilar</h3>
-      </div>
-      <span class="badge-neutral">Top picks</span>
-    </div>
-
-    <div class="stocks-grid">
-      <article class="stock-card" *ngFor="let stock of topStocks">
-        <div class="stock-top">
-          <div class="stock-badge">{{ stock.symbol }}</div>
-          <span [class]="stock.type === 'positive' ? 'stock-change positive' : 'stock-change neutral'">
-            {{ stock.change }}
-          </span>
-        </div>
-
-        <strong>{{ stock.name }}</strong>
-        <p class="stock-price">{{ stock.price }}</p>
-        <p class="stock-note">{{ stock.sentiment }}</p>
-      </article>
-    </div>
-  </article>
-</section>
-
-<section class="allocation-section">
+<!-- Vehículos reales recomendados -->
+<section class="vehicles-section">
   <div class="panel-head">
     <div>
-      <span class="mini-label muted">Distribución sugerida</span>
-      <h3>Asignación del portafolio</h3>
+      <span class="mini-label muted">Recomendado para tu perfil {{ effectiveRisk }}</span>
+      <h3>Dónde invertir en República Dominicana</h3>
     </div>
   </div>
 
-  <div class="allocation-grid">
-    <article class="allocation-card" *ngFor="let item of allocation">
-      <span>{{ item.title }}</span>
-      <strong>{{ item.value }}</strong>
+  <div class="vehicles-grid">
+    <article class="vehicle-card" *ngFor="let v of recommendations">
+      <div class="vehicle-top">
+        <strong>{{ v.name }}</strong>
+        <span class="risk-chip" [class]="riskClass(v.risk)">Riesgo {{ v.risk }}</span>
+      </div>
+
+      <div class="vehicle-meta">
+        <span class="vehicle-type">{{ v.type }}</span>
+        <span class="vehicle-yield">{{ v.yield }}</span>
+      </div>
+
+      <p class="vehicle-what">{{ v.what }}</p>
+      <p class="vehicle-why"><span class="why-icon">✓</span> {{ v.why }}</p>
+      <p class="vehicle-where"><span class="where-icon">📍</span> {{ v.where }}</p>
     </article>
   </div>
+
+  <p class="vehicles-disclaimer">
+    Rendimientos referenciales del mercado dominicano; no son garantías. Toda inversión
+    implica riesgo. Confirma condiciones y tasas con cada entidad antes de invertir.
+  </p>
 </section>

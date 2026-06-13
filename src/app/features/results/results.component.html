@@ -1,78 +1,219 @@
-<section class="page-title spacing-bottom">
-    <span class="eyebrow">Resultados</span>
-    <h2>Recomendaciones del análisis</h2>
-    <p>Esta pantalla existe por separado para que el usuario pueda enfocarse en las opciones, compararlas y entender mejor el impacto de cada una.</p>
-  </section>
-  
-  <section class="results-grid">
-    <div>
-      <article class="result-hero">
-        <div class="result-head">
-          <div>
-            <span class="mini-label">Resultado general</span>
-            <h3>Laptop de trabajo</h3>
-          </div>
-          <span class="badge-success">88% compatible</span>
-        </div>
-    
-        <p>
-          Según la situación financiera guardada en tu perfil, esta compra es viable y mantiene un margen mensual saludable.
-        </p>
-    
-        <div class="result-summary">
-          <small>Impacto estimado</small>
-          <strong>RD$3,500/mes</strong>
-          <p>Quedaría una capacidad libre cómoda luego de asumir este producto.</p>
-        </div>
-    
-        <div class="scenario-grid">
-          <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
-            <small>{{ scenario.subtitle }}</small>
-            <strong>{{ scenario.title }}</strong>
-            <p>{{ scenario.description }}</p>
-          </article>
-        </div>
-      </article>
+<section class="page-title spacing-bottom animate-fade-in">
+  <span class="eyebrow">Dashboard Interactivo</span>
+  <h2>Impacto de tu Análisis</h2>
+  <p>Evalúa cómo afectaría esta compra a tu presupuesto mensual y revisa opciones recomendadas por IA.</p>
+</section>
 
-      <div style="margin-top: 24px; margin-bottom: 24px; display: flex; justify-content: center;">
-        <a routerLink="/base-analisis" class="btn btn-dark btn-inline" style="background-color: var(--primary); color: white; border: 1px solid var(--primary);">
-          👁 Ver base financiera del análisis
-        </a>
+<div *ngIf="loading()" class="loading-state animate-fade-in-up">
+  <div class="spinner"></div>
+  <h3>Analizando tu perfil...</h3>
+  <p>Procesando variables financieras, buscando opciones de mercado y estructurando recomendaciones con Inteligencia Artificial.</p>
+</div>
+
+<div *ngIf="!loading() && error()" class="error-banner animate-fade-in">
+  <div class="error-icon">⚠️</div>
+  <span>{{ error() }}</span>
+</div>
+
+<section class="results-grid animate-fade-in-up" *ngIf="!loading() && !error()">
+  
+  <!-- Panel Principal Gráfico -->
+  <article class="results-panel main-panel">
+    <!-- Veredicto del método ELEGIDO por el usuario -->
+    <div class="results-head">
+      <div>
+        <span class="mini-label accent">{{ chosenMethodEyebrow }}</span>
+        <h3>{{ chosenMethodTitle }}</h3>
+      </div>
+      <span [class]="overallCompatibility.class + ' compatibility-badge'">{{ overallCompatibility.score }} · {{ overallCompatibility.label }}</span>
+    </div>
+
+    <p class="compatibility-msg">{{ overallCompatibility.message }}</p>
+
+    <!-- Simulador: si pagó al contado, esto es un "¿y si lo financio?" -->
+    <div class="sim-divider">
+      <span class="mini-label">{{ simulatorEyebrow }}</span>
+      <h4>Tu Dinero en Acción</h4>
+    </div>
+
+    <!-- Visualización Gráfica -->
+    <div class="chart-container">
+      <canvas baseChart
+              [data]="pieChartData"
+              [options]="pieChartOptions"
+              [type]="pieChartType">
+      </canvas>
+      <div class="chart-center-text">
+        <span>Flujo Libre</span>
+        <strong>RD${{ simulatedFreeCashFlow | number:'1.0-0' }}</strong>
       </div>
     </div>
-  
+
+    <!-- Controles del Simulador -->
+    <div class="simulator-controls">
+      <div class="simulator-top">
+        <label>Plazo a simular: <strong>{{ sliderMonths() }} meses</strong></label>
+        <strong class="simulator-price">Cuota: RD${{ simulatedInstallment | number:'1.0-0' }}/mes</strong>
+      </div>
+      <input type="range" [min]="1" [max]="60" [step]="1" [ngModel]="sliderMonths()" (ngModelChange)="sliderMonths.set($event)" class="modern-range">
+      <div class="simulator-bottom">
+        <span>1 mes (Contado)</span>
+        <span>60 meses</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Panel Lateral Inteligente -->
+  <div class="side-panels">
+
+    <!-- Plan de Acción -->
+    <article class="results-panel action-plan-panel" *ngIf="actionPlan.length > 0">
+      <div class="results-head">
+        <div>
+          <span class="mini-label accent">Sugerencias Clave</span>
+          <h3>Plan de Acción Personalizado</h3>
+        </div>
+      </div>
+      <ul class="action-plan-list">
+        <li *ngFor="let step of actionPlan; let i = index" class="action-plan-item animate-fade-in-up" [style.animation-delay]="i * 0.1 + 's'">
+          <div class="step-number">{{ i + 1 }}</div>
+          <p>{{ step }}</p>
+        </li>
+      </ul>
+    </article>
+    
+    
+    <!-- Comparación de Tasa (préstamo / vehículo / hipoteca) -->
+    <article class="results-panel rate-analysis-panel" *ngIf="rateAnalysis">
+      <div class="results-head">
+        <div>
+          <span class="mini-label accent">Mercado Dominicano</span>
+          <h3>Comparación de tu Tasa</h3>
+        </div>
+        <span class="ai-badge"
+              [class.badge-danger]="rateAnalysis.verdict === 'alta'"
+              [class.badge-success]="rateAnalysis.verdict === 'baja'"
+              [class.badge-warn]="rateAnalysis.verdict === 'mercado'">
+          Tasa {{ rateAnalysis.verdict }}
+        </span>
+      </div>
+
+      <div class="rate-summary">
+        <div class="rate-stat">
+          <span class="rate-label">Tu tasa</span>
+          <strong>{{ rateAnalysis.user_rate_pct }}%</strong>
+        </div>
+        <div class="rate-stat">
+          <span class="rate-label">Mercado típico RD</span>
+          <strong>~{{ rateAnalysis.market_typical_pct }}%</strong>
+        </div>
+        <div class="rate-stat" *ngIf="rateAnalysis.potential_total_savings > 0">
+          <span class="rate-label">Ahorro potencial</span>
+          <strong class="rate-save">RD${{ rateAnalysis.potential_total_savings | number:'1.0-0' }}</strong>
+        </div>
+      </div>
+
+      <p class="rate-hint" *ngIf="rateAnalysis.verdict === 'alta' && rateAnalysis.better_providers.length > 0">
+        Estás pagando por encima del mercado. Estas entidades dominicanas podrían ofrecerte una mejor tasa:
+      </p>
+      <p class="rate-hint" *ngIf="rateAnalysis.verdict !== 'alta'">
+        Tu tasa está dentro de lo razonable para el mercado dominicano. Aun así, puedes comparar:
+      </p>
+
+      <div class="rate-providers">
+        <article class="rate-provider-card" *ngFor="let p of rateAnalysis.better_providers">
+          <div class="rate-provider-top">
+            <strong>{{ p.name }}</strong>
+            <span class="badge-neutral mini-badge">{{ p.rate_range }}</span>
+          </div>
+          <p class="rate-provider-note">{{ p.note }}</p>
+          <div class="rate-provider-bottom">
+            <span class="metric-chip">💳 ~RD${{ p.est_installment | number:'1.0-0' }}/mes</span>
+            <span class="metric-chip" *ngIf="p.monthly_saving_vs_user > 0">🟢 Ahorras RD${{ p.monthly_saving_vs_user | number:'1.0-0' }}/mes</span>
+          </div>
+        </article>
+      </div>
+      <p class="rate-disclaimer">{{ rateAnalysis.disclaimer }}</p>
+    </article>
+
+    <!-- Escenarios -->
     <article class="results-panel">
       <div class="results-head">
         <div>
-          <span class="mini-label muted">Opciones comparadas</span>
-          <h3>Comparación de recomendaciones</h3>
+          <span class="mini-label">Opciones Técnicas</span>
+          <h3>Escenarios Calculados</h3>
         </div>
-        <span class="badge-neutral">Pantalla dedicada</span>
       </div>
-  
-      <div class="recommendation-grid">
-        <article class="recommendation-card" *ngFor="let item of recommendations">
-          <div class="recommendation-top">
-            <div>
-              <strong>{{ item.title }}</strong>
-              <p>{{ item.description }}</p>
-            </div>
-            <span [class]="item.labelType === 'success' ? 'badge-success' : item.labelType === 'warn' ? 'badge-warn' : 'badge-danger'">
-              {{ item.label }}
-            </span>
+
+      <!-- Si ninguna forma de pago es viable, no marcamos nada como recomendado -->
+      <div class="no-recommend-note" *ngIf="noRecommendableScenario">
+        <span class="no-recommend-icon">🚫</span>
+        <p>Con tu situación financiera actual, <strong>ninguna forma de pago resulta recomendable</strong> para este producto. Revisa el plan de acción o considera una opción más accesible.</p>
+      </div>
+
+      <div class="scenario-grid">
+        <article class="scenario-card" *ngFor="let scenario of scenarios" [class.highlight]="scenario.highlight">
+          <div class="scenario-header">
+            <strong>{{ scenario.title }}</strong>
+            <span *ngIf="scenario.highlight" class="badge-success mini-badge">Recomendado</span>
+            <span *ngIf="!scenario.highlight" class="badge-neutral mini-badge">{{ scenario.score }}%</span>
           </div>
-  
-          <div class="metric-grid">
-            <article class="metric-card">
-              <span>Compatibilidad</span>
-              <strong>{{ item.compatibility }}</strong>
-            </article>
-            <article class="metric-card">
-              <span>Impacto mensual</span>
-              <strong>{{ item.impact }}</strong>
-            </article>
+          <p>{{ scenario.description }}</p>
+          <div class="scenario-metrics" *ngIf="scenario.installment > 0 || scenario.dtiPost">
+            <span *ngIf="scenario.installment > 0" class="metric-chip">💳 RD${{ scenario.installment | number:'1.0-0' }}/mes</span>
+            <span *ngIf="scenario.dtiPost" class="metric-chip">📊 DTI {{ scenario.dtiPost }}%</span>
+            <span *ngIf="scenario.fcfPost" class="metric-chip" [class.metric-danger]="scenario.fcfPost < 0">
+              {{ scenario.fcfPost < 0 ? '🔴' : '🟢' }} Flujo: RD${{ scenario.fcfPost | number:'1.0-0' }}
+            </span>
           </div>
         </article>
       </div>
     </article>
-  </section>
+
+    <!-- Alternativas IA -->
+    <article class="results-panel flex-1 ai-alternatives-panel">
+      <div class="results-head">
+        <div>
+          <span class="mini-label accent">Inteligencia de Mercado</span>
+          <h3>Alternativas Sugeridas</h3>
+        </div>
+        <span class="ai-badge">
+          <span class="ai-sparkle">✦</span> Powered by AI
+        </span>
+      </div>
+
+      <!-- Loading skeleton para alternativas -->
+      <div class="recommendation-grid" *ngIf="loading() && similarProducts.length === 0">
+        <div class="recommendation-card skeleton-card" *ngFor="let i of [1, 2, 3]">
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-desc"></div>
+          <div class="skeleton-line skeleton-desc short"></div>
+          <div class="skeleton-line skeleton-badge"></div>
+        </div>
+      </div>
+
+      <!-- Contenido real -->
+      <div class="recommendation-grid" *ngIf="similarProducts.length > 0">
+        <article class="recommendation-card animate-fade-in-up" *ngFor="let item of similarProducts; let i = index" [style.animation-delay]="i * 0.12 + 's'">
+          <div class="recommendation-top">
+            <div class="recommendation-info">
+              <strong>{{ item.name }}</strong>
+              <p>{{ item.desc }}</p>
+            </div>
+            <span class="badge-neutral price-badge">{{ item.price }}</span>
+          </div>
+          <div class="recommendation-bottom">
+             Sugerencia: <strong>{{ item.payment }}</strong>
+          </div>
+        </article>
+      </div>
+
+      <!-- Empty state -->
+      <div class="ai-empty-state" *ngIf="!loading() && similarProducts.length === 0">
+        <span class="ai-empty-icon">🔍</span>
+        <p>No se encontraron alternativas para este producto. La IA no pudo generar sugerencias en este momento.</p>
+      </div>
+    </article>
+
+  </div>
+</section>

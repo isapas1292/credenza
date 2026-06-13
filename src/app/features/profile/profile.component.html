@@ -1,66 +1,91 @@
-<section class="profile-top">
-    <div class="page-title">
-      <span class="eyebrow">Mi perfil</span>
-      <h2>Perfil de usuario y situación financiera</h2>
-      <p>Aquí se concentra toda la información financiera para que el usuario no tenga que volver a escribirla cuando quiera analizar un producto.</p>
-    </div>
-    <button class="btn btn-dark btn-inline" type="button">Editar perfil</button>
-  </section>
-  
-  <section class="stats-grid">
-    <article class="stat-card" *ngFor="let stat of stats">
+<section class="profile-top animate-fade-in">
+  <div class="page-title">
+    <span class="eyebrow">Mi perfil</span>
+    <h2>Situación Financiera</h2>
+    <p>Tu información centralizada para análisis instantáneos.</p>
+  </div>
+  <div class="profile-actions">
+    <button class="btn btn-secondary" type="button" (click)="editProfile()">Editar perfil</button>
+    <button class="btn btn-dark" type="button" (click)="logout()">Cerrar sesión</button>
+  </div>
+</section>
+
+<section class="stats-grid delay-100 animate-fade-in-up">
+  <article class="stat-card" *ngFor="let stat of stats">
+    <div class="stat-icon">📈</div>
+    <div class="stat-info">
       <span>{{ stat.title }}</span>
       <strong>{{ stat.value }}</strong>
       <p>{{ stat.hint }}</p>
-    </article>
-  </section>
-  
-  <section class="profile-grid">
-    <article class="panel">
-      <div class="panel-header">
-        <h3>Situación financiera</h3>
-        <span>Base del análisis</span>
+    </div>
+  </article>
+</section>
+
+<section class="profile-grid delay-200 animate-fade-in-up">
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h3>Base de Análisis</h3>
+        <p class="subtitle">Datos utilizados para las proyecciones</p>
       </div>
-  
-      <div class="metric-grid">
-        <article class="metric-card" *ngFor="let metric of metrics">
-          <span>{{ metric.title }}</span>
-          <strong>{{ metric.value }}</strong>
-        </article>
-      </div>
-  
-      <div class="financial-note">
-        <strong>¿Para qué sirve esto?</strong>
+      <span class="badge-neutral">Activo</span>
+    </div>
+
+    <div class="metric-grid">
+      <article class="metric-card" *ngFor="let metric of metrics">
+        <span>{{ metric.title }}</span>
+        <strong>{{ metric.value }}</strong>
+      </article>
+    </div>
+
+    <div class="financial-note">
+      <div class="note-icon">💡</div>
+      <div>
+        <strong>¿Por qué pedimos esto?</strong>
         <p>
-          Cada análisis de producto toma estos datos automáticamente para calcular compatibilidad,
-          impacto mensual y nivel de recomendación.
+          Calculamos el impacto mensual real de cualquier compra basada en tus deudas y gastos fijos actuales.
         </p>
       </div>
-    </article>
-  
-    <article class="panel">
-      <div class="panel-header">
-        <h3>Análisis recientes</h3>
-        <span>Historial</span>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h3>Historial</h3>
+        <p class="subtitle">Tus análisis realizados</p>
       </div>
-  
-      <div class="history-list">
-        <div class="history-item" *ngFor="let item of history">
-          <div>
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.amount }}</p>
-          </div>
-          <span [class]="item.type === 'warn' ? 'badge-warn' : 'badge-success'">{{ item.label }}</span>
+      <button class="btn btn-secondary history-refresh" (click)="loadHistory()" [disabled]="loadingHistory()">Actualizar</button>
+    </div>
+
+    <p class="history-state" *ngIf="loadingHistory()">Cargando tu historial…</p>
+    <p class="history-state error" *ngIf="historyError()">{{ historyError() }}</p>
+
+    <div class="history-empty" *ngIf="!loadingHistory() && !historyError() && history().length === 0">
+      <span class="history-empty-icon">📭</span>
+      <p>Aún no has analizado ningún producto. Cuando lo hagas, aparecerá aquí.</p>
+    </div>
+
+    <div class="history-list" *ngIf="!loadingHistory() && history().length > 0">
+      <div class="history-item" *ngFor="let item of recentHistory()">
+        <div class="history-details">
+          <strong>{{ item.ProductoNombre }}</strong>
+          <p>
+            <span class="history-cat" *ngIf="item.ProductoCategoria">{{ item.ProductoCategoria }}</span>
+            RD${{ item.ProductoPrecio | number:'1.0-0' }} · {{ item.FechaAnalisis | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+        <div class="history-verdict">
+          <span class="history-pct">{{ (item.RecomendacionScore * 100) | number:'1.0-0' }}%</span>
+          <span [class]="scoreClass(item.RecomendacionScore)">{{ item.Viable ? 'Viable' : 'No viable' }}</span>
         </div>
       </div>
-  
-      <div class="goal-box">
-        <div class="goal-head">
-          <strong>Meta de ahorro actual</strong>
-          <span>68%</span>
-        </div>
-        <div class="progress"><span style="width:68%"></span></div>
-        <p>Fondo para compra tecnológica.</p>
-      </div>
-    </article>
-  </section>
+    </div>
+
+    <button class="btn btn-secondary history-toggle"
+            *ngIf="!loadingHistory() && history().length > 3"
+            (click)="goToFullHistory()">
+      Ver todo el historial ({{ history().length }})
+    </button>
+  </article>
+</section>

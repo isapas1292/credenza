@@ -1,120 +1,144 @@
 .app-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top right, rgba(109,40,217,.12), transparent 22%),
-    radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 24%),
+  /* Premium abstract gradient background */
+  background: 
+    radial-gradient(circle at 100% 0%, rgba(79, 70, 229, 0.05), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.05), transparent 40%),
     var(--bg);
+  display: flex;
+  flex-direction: column;
 }
 
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 50;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line-light);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+.topbar-inner {
+  width: min(1280px, calc(100% - 48px));
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
-  padding: 18px 28px;
-  background: rgba(255,255,255,.75);
-  backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(226,232,240,.7);
+  height: 80px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
+  font-family: 'Outfit', sans-serif;
   font-weight: 800;
+  font-size: 22px;
   color: white;
-  background: linear-gradient(135deg, #111827, var(--primary));
-  box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+  background: linear-gradient(135deg, var(--primary), #818CF8);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease;
 }
 
-.brand h1 {
+.brand:hover .brand-mark {
+  transform: rotate(-5deg) scale(1.05);
+}
+
+.brand-text h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.brand p {
+.brand-text p {
   margin: 2px 0 0;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  gap: 32px;
 }
 
 .nav-main {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.10);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  gap: 8px;
 }
 
-.nav-main a,
-.account-btn {
+.nav-main a {
   text-decoration: none;
-  border: none;
-  color: var(--muted);
-  padding: 11px 16px;
-  border-radius: 999px;
-  font-weight: 700;
-  transition: .2s ease;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
 }
 
-.nav-main a:hover,
+.nav-main a:hover {
+  color: var(--text-main);
+  background: rgba(15, 23, 42, 0.04);
+}
+
 .nav-main a.active {
-  background: #111827;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  color: var(--primary);
+  background: var(--primary-light);
 }
 
-.account-btn {
-  background: linear-gradient(135deg, #111827, #312e81);
-  color: #fff;
-  padding: 11px 18px;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
-}
-
-.account-btn:hover,
-.account-btn.active {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+.nav-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .container {
-  width: min(1280px, calc(100% - 32px));
+  flex: 1;
+  width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 26px 0 36px;
+  padding: 40px 0 60px;
 }
 
-@media (max-width: 1100px) {
-  .topbar {
+@media (max-width: 900px) {
+  .topbar-inner {
+    height: auto;
+    padding: 16px 0;
     flex-direction: column;
-    align-items: flex-start;
+    gap: 20px;
   }
-
   .nav {
+    flex-direction: column;
     width: 100%;
-    justify-content: space-between;
+    gap: 20px;
   }
-
-  .container {
-    width: min(100% - 20px, 1280px);
+  .nav-main {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .nav-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .nav-actions .btn {
+    flex: 1;
   }
 }

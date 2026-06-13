@@ -1,175 +1,109 @@
-<section class="hero">
+<section class="hero animate-fade-in-up">
   <div class="hero-copy">
-    <span class="eyebrow inverse">Decisiones económicas con más claridad</span>
-    <h2>Analiza productos antes de comprarlos y entiende su impacto real en tu bolsillo.</h2>
+    <span class="eyebrow">Plataforma Financiera Inteligente</span>
+    <h2>Toma decisiones económicas con total claridad</h2>
     <p>
       Credenza te ayuda a evaluar compras, servicios, préstamos o productos de alto valor usando
-      tu información financiera registrada dentro de la plataforma. Todo se presenta de forma clara,
-      visual y fácil de entender.
+      tu perfil financiero en tiempo real. Obtén recomendaciones precisas y visuales.
     </p>
 
     <div class="actions">
-      <a class="btn btn-primary" routerLink="/analizar">Analizar productos</a>
-      <a class="btn btn-secondary" routerLink="/cuenta">Crear cuenta</a>
+      <a class="btn btn-primary" routerLink="/analizar">Nuevo Análisis</a>
+      <a class="btn btn-secondary" routerLink="/registro" *ngIf="!authService.currentUser()">Crear cuenta gratis</a>
+      <a class="btn btn-secondary" routerLink="/perfil" *ngIf="authService.currentUser()">Ver mi perfil</a>
     </div>
 
     <div class="hero-stats">
       <article>
-        <strong>Selección visual</strong>
-        <span>categorías en cuadros con iconos</span>
+        <strong>Rápido</strong>
+        <span>Análisis en segundos</span>
       </article>
       <article>
-        <strong>Perfil financiero</strong>
-        <span>datos guardados en una sola pantalla</span>
+        <strong>Preciso</strong>
+        <span>Basado en tus finanzas</span>
       </article>
       <article>
-        <strong>Resultados aparte</strong>
-        <span>para analizar mejor las recomendaciones</span>
+        <strong>Seguro</strong>
+        <span>Tus datos son privados</span>
       </article>
     </div>
   </div>
 
-  <div class="dashboard">
+  <div class="dashboard delay-100 animate-fade-in-up" *ngIf="authService.currentUser() && financialSummary as summary">
     <div class="head-row">
       <div>
-        <small>Resumen ejemplo</small>
-        <h3>Estado financiero</h3>
+        <small>Mi Perfil Financiero</small>
+        <h3>Tu Resumen</h3>
       </div>
-      <span class="badge-success">Saludable</span>
+      <span class="badge-success">{{ summary.emergencyStatus }}</span>
     </div>
 
     <div class="summary-grid">
       <article class="mini-card">
         <span>Ingresos</span>
-        <strong>RD$85,000</strong>
+        <strong>${{ summary.monthlyIncome.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
-        <span>Gastos fijos</span>
-        <strong>RD$38,500</strong>
+        <span>Gastos recurrentes</span>
+        <strong>${{ summary.fixedExpenses.toLocaleString() }}</strong>
       </article>
       <article class="mini-card">
         <span>Compromisos</span>
-        <strong>RD$20,000</strong>
+        <strong>${{ summary.activeDebts.toLocaleString() }}</strong>
       </article>
-      <article class="mini-card">
-        <span>Capacidad libre</span>
-        <strong>RD$26,500</strong>
+      <article class="mini-card highlight">
+        <span>Capacidad Libre</span>
+        <strong>${{ summary.freeCashFlow.toLocaleString() }}</strong>
       </article>
     </div>
+  </div>
 
+  <div class="dashboard delay-100 animate-fade-in-up" *ngIf="!authService.currentUser()">
+    <div class="head-row">
+      <div>
+        <small>Vista Previa</small>
+        <h3>Tu Resumen Financiero</h3>
+      </div>
+    </div>
+    <div class="summary-grid blur-content">
+      <article class="mini-card">
+        <span>Ingresos</span>
+        <strong>$0,000</strong>
+      </article>
+      <article class="mini-card">
+        <span>Gastos</span>
+        <strong>$0,000</strong>
+      </article>
+    </div>
     <div class="compat-box">
-      <div class="metrics-head">
-        <span>Compatibilidad del último análisis</span>
-        <strong>88%</strong>
-      </div>
-      <div class="bar">
-        <span></span>
-      </div>
-      <p>La mejor alternativa evaluada se ajusta bien a tu presupuesto mensual.</p>
+      <p>Crea una cuenta o inicia sesión para descubrir tu verdadera capacidad financiera.</p>
     </div>
   </div>
 </section>
 
-<section class="section">
-  <div class="section-title">
+<section class="section animate-fade-in-up delay-200">
+  <div class="section-title center">
     <span class="eyebrow">Beneficios</span>
-    <h3>Una experiencia simple, moderna y centrada en el usuario</h3>
+    <h3>Una experiencia moderna y proactiva</h3>
   </div>
 
   <div class="feature-grid">
     <article class="feature-card" *ngFor="let benefit of benefits">
+      <div class="feature-icon">✨</div>
       <h4>{{ benefit.title }}</h4>
       <p>{{ benefit.description }}</p>
     </article>
   </div>
 </section>
 
-<section class="section culture-section">
-  <div class="culture-hero">
-    <div class="culture-copy">
-      <span class="culture-tag">Sobre nosotros</span>
-      <h3>Toma decisiones financieras con claridad y confianza</h3>
-      <p>
-        Credenza combina organización, diseño y análisis para que el usuario pueda entender mejor
-        su situación, comparar alternativas y actuar con más seguridad. La plataforma no se limita
-        a mostrar datos: los ordena de una forma que tenga sentido para la vida real.
-      </p>
-      <p>
-        Nuestro enfoque es simple: reducir fricción, eliminar ruido y convertir el análisis en una
-        experiencia visual, confiable y profesional.
-      </p>
-    </div>
-
-    <div class="culture-visual">
-      <div class="visual-block visual-block-main">
-        <div class="visual-badge">CULTURA CREDENZA</div>
-        <div class="visual-shape shape-one"></div>
-        <div class="visual-shape shape-two"></div>
-        <div class="visual-shape shape-three"></div>
-      </div>
-
-      <div class="visual-block visual-block-card">
-        <span>Producto + experiencia</span>
-        <strong>Una plataforma financiera diseñada para acompañar decisiones con criterio.</strong>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section values-section">
-  <div class="section-title">
-    <span class="eyebrow">Cómo trabajamos</span>
-    <h3>Los principios que le dan forma a la experiencia</h3>
-  </div>
-
-  <div class="values-grid">
-    <article class="value-card" *ngFor="let card of cultureCards">
-      <div class="value-icon">{{ card.icon }}</div>
-      <h4>{{ card.title }}</h4>
-      <p>{{ card.description }}</p>
-    </article>
-  </div>
-</section>
-
-<section class="section contact-section">
-  <div class="contact-layout">
-    <article class="contact-copy">
-      <span class="eyebrow">Contacto</span>
-      <h3>Empieza a explorar la plataforma o gestiona tu cuenta desde un solo lugar.</h3>
-      <p>
-        Reunimos acceso, registro y perfil dentro de una experiencia más limpia para que el menú
-        principal se mantenga profesional, claro y enfocado en lo importante.
-      </p>
-
-      <div class="contact-actions">
-        <a class="btn btn-dark btn-inline" routerLink="/cuenta">Ir a cuenta</a>
-        <a class="btn contact-light-btn" routerLink="/analizar">Explorar análisis</a>
-      </div>
-    </article>
-
-    <div class="contact-info-grid">
-      <article class="contact-info-card" *ngFor="let item of contactMethods">
-        <span>{{ item.label }}</span>
-        <strong>{{ item.value }}</strong>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="section closing-section">
+<section class="section closing-section animate-fade-in-up delay-300">
   <div class="closing-banner">
     <div class="closing-copy">
-      <span class="eyebrow inverse">Empieza hoy</span>
-      <h3>Organiza tu perfil, analiza productos y revisa oportunidades dentro de una sola experiencia.</h3>
-      <p>
-        Desde el registro hasta el análisis y la exploración de inversiones, todo vive en una
-        navegación más limpia, ordenada y coherente.
-      </p>
+      <h3>Empieza a analizar tu futuro hoy mismo</h3>
+      <p>Organiza tu perfil, analiza productos y descubre oportunidades en una sola plataforma de alto nivel.</p>
     </div>
-
     <div class="closing-actions">
-      <a class="btn btn-primary" routerLink="/cuenta">Acceder a cuenta</a>
-      <a class="btn btn-secondary" routerLink="/inversiones">Ver inversiones</a>
+      <a class="btn btn-primary" routerLink="/perfil">Ir a mi cuenta</a>
     </div>
   </div>
 </section>

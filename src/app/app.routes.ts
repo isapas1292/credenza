@@ -7,9 +7,10 @@ import { ProfileComponent } from './features/profile/profile.component';
 import { AnalyzeComponent } from './features/analyze/analyze.component';
 import { ResultsComponent } from './features/results/results.component';
 import { InvestmentsComponent } from './features/investments/investments.component';
-import { AccountComponent } from './features/account/account.component';
+import { HistoryComponent } from './features/history/history.component';
 import { ProfileSetupComponent } from './features/profile-setup/profile-setup.component';
 import { AnalysisBasisComponent } from './features/analysis-basis/analysis-basis.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,16 +18,17 @@ export const routes: Routes = [
     component: MainShellComponent,
     children: [
       { path: '', component: HomeComponent, title: 'Credenza | Inicio' },
-      { path: 'analizar', component: AnalyzeComponent, title: 'Credenza | Analizar' },
-      { path: 'inversiones', component: InvestmentsComponent, title: 'Credenza | Inversiones' },
-      { path: 'cuenta', component: AccountComponent, title: 'Credenza | Cuenta' },
-
       { path: 'login', component: LoginComponent, title: 'Credenza | Iniciar sesión' },
       { path: 'registro', component: RegisterComponent, title: 'Credenza | Registro' },
-      { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil' },
+
+      // Rutas protegidas
+      { path: 'analizar', component: AnalyzeComponent, title: 'Credenza | Analizar', canActivate: [authGuard] },
+      { path: 'inversiones', component: InvestmentsComponent, title: 'Credenza | Inversiones', canActivate: [authGuard] },
+      { path: 'perfil', component: ProfileComponent, title: 'Credenza | Perfil', canActivate: [authGuard] },
+      { path: 'historial', component: HistoryComponent, title: 'Credenza | Historial', canActivate: [authGuard] },
       { path: 'perfil-configuracion', component: ProfileSetupComponent, title: 'Credenza | Configurar perfil' },
-      { path: 'base-analisis', component: AnalysisBasisComponent, title: 'Credenza | Base del Análisis' },
-      { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados' }
+      { path: 'base-analisis', component: AnalysisBasisComponent, title: 'Credenza | Base del Análisis', canActivate: [authGuard] },
+      { path: 'resultados', component: ResultsComponent, title: 'Credenza | Resultados', canActivate: [authGuard] }
     ]
   },
   { path: '**', redirectTo: '' }
