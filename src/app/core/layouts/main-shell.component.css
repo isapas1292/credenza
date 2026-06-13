@@ -179,6 +179,7 @@
     transform: translateY(-14px);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
   }
 
@@ -186,6 +187,7 @@
     transform: translateY(0);
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
   }
 
   .nav-main {
@@ -225,13 +227,18 @@
     background: rgba(15, 23, 42, 0.40);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.22s ease, visibility 0.22s;
-    z-index: 55;
+    /* DEBE ir por debajo del header (z-index 50), porque el header crea su
+       propio contexto de apilamiento por el backdrop-filter y el menú vive
+       dentro de él. Si el backdrop quedara por encima, taparía los enlaces. */
+    z-index: 45;
   }
 
   .nav-backdrop.show {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
   }
 
   /* Más aire de app: menos margen lateral, más respiración abajo */
