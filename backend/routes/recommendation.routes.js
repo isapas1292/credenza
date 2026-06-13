@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const sql = require('mssql');
+const { pool } = require('../db');
 const RecommendationAiService = require('../services/recommendationAi.service');
 const { verifyToken } = require('../middlewares/auth.middleware');
 
@@ -21,7 +21,7 @@ function validateProduct(product) {
         return 'Completa el propósito y la prioridad principal';
     }
 
-    const category = product.product_category.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const category = product.product_category.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     if (!['prestamo', 'seguro', 'hogar'].includes(category) && !hasText(product.lifespan)) {
         return 'Selecciona el tiempo de vida esperado';
     }
@@ -42,21 +42,21 @@ function validateProduct(product) {
 }
 
 async function loadPersistedUserContext(userId) {
-    const dbReq = new sql.Request();
-    dbReq.input('UsuarioId', sql.Int, userId);
-    const result = await dbReq.query(`
-        SELECT u.Perfil, s.SegmentId, s.SegmentName, s.ProfileScore, s.Summary,
-               s.FechaCreacion, s.FechaActualizacion
-        FROM Usuarios u
-        LEFT JOIN SegmentosFinancierosUsuario s ON s.UsuarioId = u.Id
-        WHERE u.Id = @UsuarioId
-    `);
-    if (result.recordset.length === 0 || !result.recordset[0].Perfil) {
+    const result = await pool.query(`
+        SELECT u."Perfil",
+               s."SegmentId", s."SegmentName", s."ProfileScore", s."Summary",
+               s."FechaCreacion", s."FechaActualizacion"
+        FROM "Usuarios" u
+        LEFT JOIN "SegmentosFinancierosUsuario" s ON s."UsuarioId" = u."Id"
+        WHERE u."Id" = $1
+    `, [userId]);
+
+    if (result.rows.length === 0 || !result.rows[0].Perfil) {
         return null;
     }
-    const row = result.recordset[0];
+    const row = result.rows[0];
     return {
-        perfil: JSON.parse(row.Perfil),
+        perfil: row.Perfil,   // jsonb → ya es objeto
         segment: row.SegmentId ? {
             segment_id: row.SegmentId,
             segment_name: row.SegmentName,
@@ -76,7 +76,6 @@ router.post('/', verifyToken, async (req, res) => {
         if (!productData) {
             return res.status(400).json({ error: 'Se requiere productData para el análisis' });
         }
-
         const productError = validateProduct(productData);
         if (productError) {
             return res.status(400).json({ error: productError });
@@ -91,35 +90,33 @@ router.post('/', verifyToken, async (req, res) => {
         }
 
         const result = await RecommendationAiService.getRecommendation(context.perfil, productData, context.segment);
-
         result.db_segment = context.segment;
 
-        if (userId) {
-            // Guardar en HistorialAnalisis
-            try {
-                const histReq = new sql.Request();
-                const score = result.data?.chosen_analysis?.recommendation_score || 0;
-                const viable = result.data?.chosen_analysis?.viable ? 1 : 0;
-                const msg = result.data?.suggestion_text || '';
-                const jsonRes = JSON.stringify(result.data || {});
+        // Guardar en HistorialAnalisis (no bloqueante)
+        try {
+            const score = result.data?.chosen_analysis?.recommendation_score || 0;
+            const viable = !!(result.data?.chosen_analysis?.viable);
+            const msg = result.data?.suggestion_text || '';
+            const jsonRes = result.data || {};
 
-                histReq.input('UsuarioId', sql.Int, userId);
-                histReq.input('ProductoNombre', sql.NVarChar(255), productData.name || 'Desconocido');
-                histReq.input('ProductoPrecio', sql.Decimal(18, 2), productData.price || 0);
-                histReq.input('ProductoCategoria', sql.NVarChar(100), productData.product_category || 'General');
-                histReq.input('Score', sql.Decimal(5, 2), score);
-                histReq.input('Viable', sql.Bit, viable);
-                histReq.input('Mensaje', sql.NVarChar(1000), msg);
-                histReq.input('Json', sql.NVarChar(sql.MAX), jsonRes);
-
-                await histReq.query(`
-                    INSERT INTO HistorialAnalisis (UsuarioId, ProductoNombre, ProductoPrecio, ProductoCategoria, RecomendacionScore, Viable, MensajeSugerencia, ResultadoCompletoJSON, FechaAnalisis)
-                    VALUES (@UsuarioId, @ProductoNombre, @ProductoPrecio, @ProductoCategoria, @Score, @Viable, @Mensaje, @Json, GETDATE())
-                `);
-            } catch (err) {
-                console.error('Error guardando historial:', err);
-                // No detenemos el request por esto
-            }
+            await pool.query(`
+                INSERT INTO "HistorialAnalisis"
+                    ("UsuarioId", "ProductoNombre", "ProductoPrecio", "ProductoCategoria",
+                     "RecomendacionScore", "Viable", "MensajeSugerencia", "ResultadoCompletoJSON", "FechaAnalisis")
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+            `, [
+                userId,
+                productData.name || 'Desconocido',
+                productData.price || 0,
+                productData.product_category || 'General',
+                score,
+                viable,
+                msg,
+                jsonRes,
+            ]);
+        } catch (err) {
+            console.error('Error guardando historial:', err.message);
+            // No detenemos el request por esto
         }
 
         res.json(result);
@@ -157,17 +154,15 @@ router.post('/analyze', verifyToken, async (req, res) => {
 router.get('/history', verifyToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const dbReq = new sql.Request();
-        dbReq.input('UsuarioId', sql.Int, userId);
-        const result = await dbReq.query(`
-            SELECT TOP 200
-                Id, ProductoNombre, ProductoPrecio, ProductoCategoria,
-                RecomendacionScore, Viable, MensajeSugerencia, FechaAnalisis
-            FROM HistorialAnalisis
-            WHERE UsuarioId = @UsuarioId
-            ORDER BY FechaAnalisis DESC
-        `);
-        res.json({ succeeded: true, data: result.recordset });
+        const result = await pool.query(`
+            SELECT "Id", "ProductoNombre", "ProductoPrecio", "ProductoCategoria",
+                   "RecomendacionScore", "Viable", "MensajeSugerencia", "FechaAnalisis"
+            FROM "HistorialAnalisis"
+            WHERE "UsuarioId" = $1
+            ORDER BY "FechaAnalisis" DESC
+            LIMIT 200
+        `, [userId]);
+        res.json({ succeeded: true, data: result.rows });
     } catch (error) {
         console.error('Error obteniendo historial:', error.message);
         res.status(500).json({ error: 'Error al obtener el historial' });

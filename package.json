@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:backend": "node backend/server.js"
+    "start:backend": "node backend/server.js",
+    "setup:db": "node backend/setup_db.js"
   },
   "private": true,
   "packageManager": "npm@11.9.0",
@@ -24,8 +25,8 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mssql": "^12.5.0",
     "ng2-charts": "^10.0.0",
+    "pg": "^8.21.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
