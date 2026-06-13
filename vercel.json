@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "dist/credenza/browser",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
