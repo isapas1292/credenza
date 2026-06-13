@@ -5,7 +5,7 @@ const recommendationRoutes = require('./routes/recommendation.routes');
 const authRoutes = require('./routes/auth.routes');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -13,6 +13,14 @@ app.use(express.json({ limit: '10mb' }));
 // Rutas
 app.use('/api/auth', authRoutes); // Contiene register, login, y /usuarios/:id/perfil
 app.use('/api/recommendations', recommendationRoutes);
+app.get('/health', async (req, res, next) => {
+    try {
+        await pool.query('SELECT 1');
+        res.json({ status: 'ok', database: 'connected' });
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Middleware Global de Manejo de Errores
 app.use((err, req, res, next) => {
