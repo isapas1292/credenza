@@ -356,3 +356,75 @@ textarea.ng-invalid.ng-touched {
     font-size: 24px;
   }
 }
+
+@media (max-width: 600px) {
+  :root {
+    --radius-xl: 18px;
+    --radius-lg: 14px;
+    --radius-md: 11px;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .page-title,
+  .section-title {
+    margin-bottom: 20px !important;
+  }
+
+  .page-title h2,
+  .section-title h3 {
+    margin-top: 8px;
+    font-size: 25px;
+    line-height: 1.12;
+  }
+
+  .page-title p,
+  .section-title p {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .eyebrow {
+    max-width: 100%;
+    padding: 4px 10px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    white-space: normal;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: 11px 16px;
+    font-size: 14px;
+  }
+
+  .field {
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  label {
+    font-size: 13px;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 46px;
+    padding: 11px 13px;
+    font-size: 16px;
+  }
+
+  .badge-success,
+  .badge-warn,
+  .badge-danger,
+  .badge-neutral {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}

@@ -358,3 +358,127 @@
   line-height: 1.6;
   font-size: 14px;
 }
+
+@media (max-width: 600px) {
+  .investment-hero-grid,
+  .portfolio-grid,
+  .vehicles-grid {
+    gap: 10px;
+  }
+
+  .readiness-banner,
+  .strategy-banner {
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+
+  .readiness-banner p,
+  .strategy-banner p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .hero-panel,
+  .hero-side-panel,
+  .vehicles-section {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .hero-head,
+  .panel-head {
+    gap: 10px;
+  }
+
+  .hero-head h3,
+  .panel-head h3,
+  .hero-side-panel h3 {
+    font-size: 21px;
+    line-height: 1.15;
+  }
+
+  .mini-label {
+    font-size: 10px;
+  }
+
+  .portfolio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+  }
+
+  .portfolio-card {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .portfolio-card span {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .portfolio-card strong {
+    min-width: 0;
+    margin-top: 5px;
+    font-size: 17px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .monthly-plan {
+    padding-top: 14px;
+  }
+
+  .monthly-plan p,
+  .side-intro,
+  .vehicle-what {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .allocation-preview {
+    margin-top: 14px;
+  }
+
+  .allocation-list {
+    gap: 9px;
+    margin-top: 14px;
+  }
+
+  .allocation-row {
+    align-items: flex-start;
+    font-size: 12px;
+  }
+
+  .allocation-name {
+    min-width: 0;
+  }
+
+  .allocation-val {
+    white-space: normal;
+    text-align: right;
+  }
+
+  .vehicles-section {
+    margin-top: 14px;
+  }
+
+  .vehicles-grid {
+    margin-top: 14px;
+  }
+
+  .vehicle-card {
+    padding: 13px;
+  }
+
+  .vehicle-top strong {
+    font-size: 14px;
+  }
+
+  .vehicle-why,
+  .vehicle-where,
+  .vehicles-disclaimer {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+}

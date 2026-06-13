@@ -247,3 +247,59 @@
     padding: 22px 0 56px;
   }
 }
+
+@media (max-width: 600px) {
+  .topbar-inner {
+    width: calc(100% - 24px);
+    height: 58px;
+  }
+
+  .brand {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+
+  .brand-text h1 {
+    font-size: 18px;
+  }
+
+  .brand-text p {
+    margin-top: 0;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  .menu-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav {
+    top: 58px;
+    max-height: calc(100dvh - 58px);
+    overflow-y: auto;
+    padding: 8px 12px 14px;
+  }
+
+  .nav-main a,
+  .nav-actions .btn {
+    padding: 11px 13px;
+    font-size: 14px;
+  }
+
+  .nav-backdrop {
+    inset: 58px 0 0;
+  }
+
+  .container {
+    width: calc(100% - 24px);
+    padding: 16px 0 calc(40px + env(safe-area-inset-bottom));
+  }
+}

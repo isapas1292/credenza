@@ -122,3 +122,25 @@
     display: none;
   }
 }
+
+@media (max-width: 600px) {
+  .auth-layout {
+    min-height: auto;
+    margin: 0;
+  }
+
+  .auth-form-container {
+    align-items: flex-start;
+    padding: 8px 0 24px;
+  }
+
+  .login-fields,
+  .button-wrap,
+  .auth-switch {
+    margin-top: 18px;
+  }
+
+  .auth-switch {
+    font-size: 13px;
+  }
+}

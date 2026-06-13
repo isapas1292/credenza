@@ -398,3 +398,147 @@
     font-size: 32px;
   }
 }
+
+@media (max-width: 600px) {
+  .setup-shell {
+    gap: 12px;
+  }
+
+  .setup-header {
+    gap: 10px;
+  }
+
+  .setup-heading,
+  .progress-card,
+  .wizard-sidebar,
+  .step-card,
+  .summary-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .setup-heading h2 {
+    margin: 8px 0 6px;
+    font-size: 23px;
+  }
+
+  .setup-heading p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .progress-card {
+    padding: 10px 14px;
+  }
+
+  .progress-top span {
+    font-size: 10px;
+  }
+
+  .progress-top strong {
+    font-size: 20px;
+  }
+
+  .progress-bar {
+    height: 7px;
+    margin-top: 8px;
+  }
+
+  .wizard-layout,
+  .wizard-main {
+    gap: 12px;
+  }
+
+  .wizard-sidebar {
+    gap: 5px;
+    padding: 7px;
+    scrollbar-width: none;
+  }
+
+  .wizard-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .step-pill {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+
+  .step-head {
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .step-head small {
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+
+  .step-head h3 {
+    font-size: 21px;
+  }
+
+  .question-grid,
+  .option-grid,
+  .risk-grid,
+  .summary-grid {
+    gap: 10px;
+  }
+
+  .option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .option-card,
+  .risk-card {
+    min-width: 0;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .risk-card strong {
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+
+  .risk-card p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .block-group {
+    gap: 10px;
+  }
+
+  .block-label {
+    font-size: 13px;
+  }
+
+  .top-gap {
+    margin-top: 16px;
+  }
+
+  .summary-card strong {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .summary-card p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .wizard-actions {
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .wizard-actions .btn {
+    flex: 1;
+    padding-inline: 10px;
+  }
+}

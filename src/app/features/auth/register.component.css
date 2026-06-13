@@ -141,3 +141,33 @@
     padding: 40px 20px;
   }
 }
+
+@media (max-width: 600px) {
+  .auth-layout {
+    min-height: auto;
+    margin: 0;
+  }
+
+  .auth-form-container {
+    align-items: flex-start;
+    padding: 8px 0 24px;
+  }
+
+  .login-fields {
+    margin-top: 18px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .button-wrap,
+  .auth-switch {
+    margin-top: 18px;
+  }
+
+  .auth-switch {
+    font-size: 13px;
+  }
+}

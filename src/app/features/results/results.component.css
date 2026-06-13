@@ -859,3 +859,187 @@
   color: #991b1b;
   line-height: 1.55;
 }
+
+@media (max-width: 600px) {
+  .results-grid,
+  .side-panels {
+    gap: 12px;
+  }
+
+  .results-panel {
+    min-width: 0;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .results-head {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .results-head h3 {
+    margin-top: 3px;
+    font-size: 21px;
+    line-height: 1.15;
+  }
+
+  .mini-label {
+    font-size: 10px;
+  }
+
+  .compatibility-badge,
+  .ai-badge {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .compatibility-msg {
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .sim-divider {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .sim-divider h4 {
+    font-size: 17px;
+  }
+
+  .chart-container {
+    height: 220px;
+    margin-bottom: 20px;
+  }
+
+  .chart-center-text span {
+    font-size: 10px;
+  }
+
+  .chart-center-text strong {
+    max-width: 150px;
+    font-size: 21px;
+    overflow-wrap: anywhere;
+  }
+
+  .simulator-controls {
+    padding: 13px;
+  }
+
+  .simulator-top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .simulator-top label,
+  .simulator-price {
+    font-size: 13px;
+  }
+
+  .simulator-bottom {
+    font-size: 10px;
+  }
+
+  .action-plan-list {
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .action-plan-item {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .step-number {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+  }
+
+  .action-plan-item p,
+  .scenario-card p,
+  .rate-hint,
+  .no-recommend-note p {
+    font-size: 12px;
+    line-height: 1.48;
+  }
+
+  .rate-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .rate-stat {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .rate-stat .rate-label {
+    font-size: 9px;
+  }
+
+  .rate-stat strong {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+  }
+
+  .rate-provider-card,
+  .scenario-card,
+  .recommendation-card,
+  .similar-card,
+  .viable-card {
+    min-width: 0;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .scenario-header,
+  .recommendation-top,
+  .similar-top,
+  .viable-top,
+  .rate-provider-top {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .scenario-header strong,
+  .recommendation-info strong,
+  .similar-info strong,
+  .viable-info strong {
+    font-size: 14px;
+  }
+
+  .metric-chip,
+  .price-badge,
+  .similar-price,
+  .viable-price {
+    max-width: 100%;
+    font-size: 10px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .recommendation-info p,
+  .similar-desc,
+  .viable-desc,
+  .recommendation-bottom,
+  .similar-bottom,
+  .viable-bottom,
+  .rate-provider-note,
+  .rate-disclaimer {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .panel-subtitle {
+    margin-top: -6px;
+    font-size: 11px;
+  }
+}
