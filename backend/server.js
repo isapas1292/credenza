@@ -8,6 +8,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const allowedOrigins = new Set([
     'http://localhost:4200',
+    'https://credenza-tau.vercel.app',
     ...(process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
         .split(',')
         .map((origin) => origin.trim().replace(/\/+$/, ''))

@@ -4,6 +4,7 @@
 
 - Backend Node: `https://credenza.onrender.com`
 - Python AI: `https://credenza-1.onrender.com`
+- Frontend Angular: `https://credenza-tau.vercel.app`
 - Supabase: configurado mediante `DATABASE_URL`
 
 ## Render: backend Node
@@ -14,7 +15,7 @@ Configura estas variables en el servicio `credenza`:
 DATABASE_URL=postgresql://...
 AI_SERVICE_URL=https://credenza-1.onrender.com
 JWT_SECRET=una-clave-larga-y-aleatoria
-FRONTEND_URL=https://tu-frontend.vercel.app
+FRONTEND_URL=https://credenza-tau.vercel.app
 ```
 
 Usa:
@@ -47,8 +48,8 @@ Opcionalmente, agrega esta variable para sobrescribirla durante el build:
 API_URL=https://credenza.onrender.com
 ```
 
-Después de obtener la URL final de Vercel, colócala como `FRONTEND_URL` en el
-backend de Render y vuelve a desplegarlo.
+La URL final de Vercel es `https://credenza-tau.vercel.app` y debe estar
+configurada como `FRONTEND_URL` en el backend de Render.
 
 Mientras `FRONTEND_URL` no esté configurada, el backend solo acepta solicitudes
 del desarrollo local. Esta variable debe contener únicamente el origen, sin
