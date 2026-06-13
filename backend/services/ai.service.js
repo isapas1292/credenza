@@ -1,5 +1,5 @@
 const axios = require('axios');
-const sql = require('mssql');
+const { pool } = require('../db');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
 
@@ -13,35 +13,28 @@ const AiService = {
         return segmento;
     },
 
-    async guardarSegmento(usuarioId, segmento, transaction = null) {
+    /**
+     * Upsert del segmento (una fila por usuario). Acepta un client de pg para
+     * participar en una transacción; si no, usa el pool.
+     */
+    async guardarSegmento(usuarioId, segmento, client = null) {
         const { segment_id, segment_name, profile_score, summary } = segmento;
-        const req = transaction ? new sql.Request(transaction) : new sql.Request();
-        req.input('UsuarioId', sql.Int, usuarioId);
-        req.input('SegmentId', sql.Int, segment_id);
-        req.input('SegmentName', sql.NVarChar(150), segment_name);
-        req.input('ProfileScore', sql.Decimal(10, 2), profile_score);
-        req.input('Summary', sql.NVarChar(1000), summary);
+        const db = client || pool;
 
-        // HOLDLOCK + indice UNIQUE garantizan exactamente una fila por usuario,
-        // incluso si dos actualizaciones llegan al mismo tiempo.
-        await req.query(`
-            MERGE SegmentosFinancierosUsuario WITH (HOLDLOCK) AS target
-            USING (SELECT @UsuarioId AS UsuarioId) AS source
-                ON target.UsuarioId = source.UsuarioId
-            WHEN MATCHED THEN
-                UPDATE SET
-                    SegmentId = @SegmentId,
-                    SegmentName = @SegmentName,
-                    ProfileScore = @ProfileScore,
-                    Summary = @Summary,
-                    FechaActualizacion = GETDATE()
-            WHEN NOT MATCHED THEN
-                INSERT (UsuarioId, SegmentId, SegmentName, ProfileScore, Summary, FechaCreacion, FechaActualizacion)
-                VALUES (@UsuarioId, @SegmentId, @SegmentName, @ProfileScore, @Summary, GETDATE(), GETDATE());
-        `);
+        // El índice UNIQUE en "UsuarioId" garantiza exactamente una fila por usuario.
+        await db.query(`
+            INSERT INTO "SegmentosFinancierosUsuario"
+                ("UsuarioId", "SegmentId", "SegmentName", "ProfileScore", "Summary", "FechaCreacion", "FechaActualizacion")
+            VALUES ($1, $2, $3, $4, $5, now(), now())
+            ON CONFLICT ("UsuarioId") DO UPDATE SET
+                "SegmentId"          = EXCLUDED."SegmentId",
+                "SegmentName"        = EXCLUDED."SegmentName",
+                "ProfileScore"       = EXCLUDED."ProfileScore",
+                "Summary"            = EXCLUDED."Summary",
+                "FechaActualizacion" = now()
+        `, [usuarioId, segment_id, segment_name, profile_score, summary]);
         return segmento;
     },
-
 };
 
 module.exports = AiService;
