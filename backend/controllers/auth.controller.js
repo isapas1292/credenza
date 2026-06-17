@@ -10,6 +10,33 @@ const isNonNegativeNumber = (value) => value !== null
     && Number.isFinite(Number(value))
     && Number(value) >= 0;
 
+// Validación de contraseña FUERTE (servidor = fuente de verdad).
+// Requiere: 8+ caracteres, mayúscula, minúscula, número, símbolo y sin espacios.
+function validatePassword(password) {
+    if (typeof password !== 'string' || password.length < 8) {
+        return 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (password.length > 64) {
+        return 'La contraseña es demasiado larga (máximo 64 caracteres)';
+    }
+    if (/\s/.test(password)) {
+        return 'La contraseña no debe contener espacios';
+    }
+    if (!/[A-Z]/.test(password)) {
+        return 'La contraseña debe incluir al menos una letra mayúscula';
+    }
+    if (!/[a-z]/.test(password)) {
+        return 'La contraseña debe incluir al menos una letra minúscula';
+    }
+    if (!/[0-9]/.test(password)) {
+        return 'La contraseña debe incluir al menos un número';
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        return 'La contraseña debe incluir al menos un símbolo especial (ej. ! @ # $ %)';
+    }
+    return null;
+}
+
 function validateProfile(perfil) {
     const personal = perfil?.personal;
     const finances = perfil?.finances;
@@ -57,8 +84,9 @@ const AuthController = {
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
                 return res.status(400).json({ error: 'Ingresa un correo electrónico válido' });
             }
-            if (password.length < 8) {
-                return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+            const passwordError = validatePassword(password);
+            if (passwordError) {
+                return res.status(400).json({ error: passwordError });
             }
             const profileError = validateProfile(perfil);
             if (profileError) {

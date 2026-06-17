@@ -34,6 +34,11 @@
         <div class="field">
           <label>Contraseña</label>
           <input [(ngModel)]="model.password" name="password" type="password" placeholder="••••••••" required minlength="8">
+          <ul class="password-reqs" *ngIf="model.password">
+            <li *ngFor="let r of passwordRequirements" [class.met]="r.met">
+              <span class="req-icon">{{ r.met ? '✓' : '○' }}</span> {{ r.label }}
+            </li>
+          </ul>
         </div>
         <div class="field">
           <label>Confirmar contraseña</label>

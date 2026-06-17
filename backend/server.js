@@ -27,6 +27,16 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
+// Las respuestas de la API contienen datos del usuario autenticado. NUNCA deben
+// cachearse (navegador, proxy o CDN), para que un usuario no reciba la respuesta
+// cacheada de otro. 'private' + 'no-store' lo impiden.
+app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
+
 // Rutas
 app.use('/api/auth', authRoutes); // Contiene register, login, y /usuarios/:id/perfil
 app.use('/api/recommendations', recommendationRoutes);
