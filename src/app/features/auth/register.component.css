@@ -171,3 +171,36 @@
     font-size: 13px;
   }
 }
+
+/* Lista de requisitos de contraseña fuerte */
+.password-reqs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.password-reqs li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
+  transition: color 0.2s ease;
+}
+
+.password-reqs li .req-icon {
+  font-weight: 800;
+  width: 14px;
+  text-align: center;
+  color: var(--line-strong, #cbd5e1);
+}
+
+.password-reqs li.met {
+  color: #15803d;
+}
+
+.password-reqs li.met .req-icon {
+  color: #16a34a;
+}

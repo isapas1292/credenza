@@ -1,15 +1,17 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { AnalysisService } from './analysis.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly API_URL = `${environment.apiUrl}/api/auth`;
-  
+  private analysisService = inject(AnalysisService);
+
   // Estado reactivo usando Signals
   currentUser = signal<any | null>(null);
   token = signal<string | null>(null);
@@ -41,11 +43,19 @@ export class AuthService {
   }
 
   logout() {
+    this.clearSession();
+    this.router.navigate(['/login']);
+  }
+
+  /** Borra TODO rastro del usuario actual (token, datos y análisis en memoria
+   *  y en localStorage) para evitar que otro usuario vea datos ajenos. */
+  private clearSession() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.token.set(null);
     this.currentUser.set(null);
-    this.router.navigate(['/login']);
+    this._tempRegisterData.set(null);
+    this.analysisService.reset();   // borrador y resultado de análisis
   }
 
   updateProfile(userId: number, profileData: any) {
@@ -68,6 +78,9 @@ export class AuthService {
 
   private handleAuthResponse(res: any) {
     if (res && res.token) {
+      // Antes de establecer la nueva sesión, limpiar cualquier dato del usuario
+      // anterior (análisis, borrador, etc.) para que NO se filtre entre cuentas.
+      this.analysisService.reset();
       localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.usuario));
       this.token.set(res.token);

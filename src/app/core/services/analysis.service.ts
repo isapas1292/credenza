@@ -65,6 +65,17 @@ export class AnalysisService {
     localStorage.removeItem(this.STORAGE_KEY);
   }
 
+  /**
+   * Limpia TODO el estado de análisis (borrador en memoria, resultado en
+   * memoria y lo guardado en localStorage). Se llama al iniciar o cerrar sesión
+   * para que un usuario NUNCA vea datos del análisis de otro usuario.
+   */
+  reset() {
+    this.analysisDraftSig.set(null);
+    this.latestResultSig.set(null);
+    localStorage.removeItem(this.STORAGE_KEY);
+  }
+
   private saveDraft() {
     const draft = this.analysisDraftSig();
     if (draft) {
